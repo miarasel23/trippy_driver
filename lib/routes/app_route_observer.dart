@@ -10,7 +10,7 @@ class AppRouteObserver extends NavigatorObserver {
       // We don't want to save the splash screen or error screens as the last route.
       // And we might only want to save specific root-level routes, but the user requested:
       // "any exiting route when user open apps apps should be open same route"
-      if (routeName != AppRoutes.splash && routeName != AppRoutes.error) {
+      if (routeName != AppRoutes.splash) {
         UserDataStore.saveLastRoute(routeName);
       }
     }

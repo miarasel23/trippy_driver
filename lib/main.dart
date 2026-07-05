@@ -14,27 +14,17 @@ import 'modules/editProfile/controller/edit_profile_picture_bloc.dart';
 import 'modules/editProfile/repository/edit_profile_repository.dart';
 import 'modules/localization/Controller/localization_controller.dart';
 
-import 'modules/mainBottomNavBar/controller/main_bottom_nav_bar_bloc.dart';
-import 'modules/myTrip/controller/my_trip_bloc.dart';
 import 'modules/otp/controller/otp_receive_bloc.dart';
 import 'modules/otp/repository/otp_receive_repository.dart';
-import 'modules/points/controller/points_bloc.dart';
 import 'modules/splash/controller/splash_bloc.dart';
 import 'modules/splash/repository/splash_repository.dart';
-import 'modules/userLevel/controller/user_level_bloc.dart';
 import 'routes/app_routes.dart';
 import 'routes/route_generator.dart';
 import 'store/user_data_store.dart';
-import 'modules/dashboard/choose_car_bottom_sheet/controller/choose_car_bottom_sheet_bloc.dart';
-import 'modules/dashboard/choose_car_bottom_sheet/repository/choose_car_bottom_sheet_repository.dart';
-import 'modules/dashboard/controller/trip_price_details_bloc.dart';
-import 'modules/dashboard/repository/trip_price_details_repository.dart';
 
-import 'modules/dashboard/controller/active_trip_bloc.dart';
 import 'store/app_globals.dart';
 import 'core/utils/theme/app_theme.dart';
 import 'modules/theme/controller/theme_bloc.dart';
-import 'widgets/global_trip_overlay.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,7 +45,7 @@ class MyRouteObserver extends NavigatorObserver {
   final ValueNotifier<String?> routeNotifier = ValueNotifier<String?>(null);
 
   void _persistRoute(String? routeName) {
-    if (routeName != null && routeName != AppRoutes.splash && routeName != AppRoutes.error) {
+    if (routeName != null && routeName != AppRoutes.splash) {
       UserDataStore.saveLastRoute(routeName);
     }
   }
@@ -158,10 +148,6 @@ class _MyAppState extends State<MyApp> {
       providers: [
         BlocProvider(create: (_) => ThemeBloc()),
         BlocProvider(create: (_) => LocalizationBloc(Locale(widget.initialLanguageCode ?? 'en'))),
-        BlocProvider(create: (_) => MainBottomNavBarBloc()),
-        BlocProvider(create: (_) => PointsBloc()),
-        BlocProvider(create: (_) => MyTripBloc()),
-        BlocProvider(create: (_) => UserLevelBloc()),
         BlocProvider(
           create: (_) => OtpReceiveBloc(repository: OtpReceiveRepository()),
         ),
@@ -179,13 +165,6 @@ class _MyAppState extends State<MyApp> {
             repository: EditProfileRepository(repository: SplashRepository()),
           ),
         ),
-        BlocProvider(
-          create: (_) => ChooseCarBottomSheetBloc(repository: ChooseCarBottomSheetRepository()),
-        ),
-        BlocProvider(
-          create: (_) => TripPriceDetailsBloc(repository: TripPriceDetailsRepository()),
-        ),
-        BlocProvider(create: (_) => ActiveTripBloc()),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
@@ -214,7 +193,7 @@ class _MyAppState extends State<MyApp> {
             onGenerateRoute: RouteGenerator.generateRoute,
             navigatorObservers: [globalRouteObserver],
             builder: (context, child) {
-              return GlobalTripOverlay(child: child!);
+              return child!;
             },
           );
         },

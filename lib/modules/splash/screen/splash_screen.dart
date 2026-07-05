@@ -52,9 +52,9 @@ class _SplashScreenState extends State<SplashScreen> {
           await UserDataStore.clearAllData();
           Navigator.pushReplacementNamed(context, AppRoutes.numberInput);
         } else {
-          debugPrint("Splash: Token found, redirecting to bottomNav");
-          // If already logged in, automatically open home page (bottomNav)
-          Navigator.pushReplacementNamed(context, AppRoutes.bottomNav);
+          debugPrint("Splash: Token found, redirecting to profile");
+          // If already logged in, automatically open home page (profile)
+          Navigator.pushReplacementNamed(context, AppRoutes.profile);
         }
       }
     });

@@ -426,7 +426,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildListItem(
                 icon: Icons.help_outline,
                 title: loc.translate("help"),
-                onTap: () => Navigator.pushNamed(context, AppRoutes.helpCenter),
+                onTap: () {},
               ),
               _buildListItem(
                 icon: Icons.article_outlined,
