@@ -14,7 +14,7 @@ class EditProfileInfo extends EditProfileEvent {
   final String fullName;
   final String email;
   final String? nidNumber;
-  final String? isNotificationEnabled;
+  final bool? isNotificationEnabled;
   final String? deviceTokenForNotification;
   final String? isActive;
 

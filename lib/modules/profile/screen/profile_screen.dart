@@ -10,7 +10,7 @@ import '../../splash/model/current_user_model.dart';
 import '../../../core/utils/localization/app_localization.dart';
 import '../../../routes/app_routes.dart';
 import '../../../utils/app_urls.dart';
-import '../../../utils/colors_code.dart';
+// import '../../../utils/colors_code.dart'; // Unused
 import '../../../store/user_data_store.dart';
 import '../../../utils/to_title_case.dart';
 import '../../../core/utils/ui_utils.dart';
@@ -37,7 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = AppUrls.profileImageUrl;
+    // final imageUrl = AppUrls.profileImageUrl; // Unused
     final loc = AppLocalizations.of(context);
     final user = UserDataStore.userData?.data?.user;
     final name = toTiTleCase(user?.fullName ?? loc.translate("user_name"));
@@ -330,7 +330,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 trailingWidget: _isNotifLoading 
                     ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
                     : Switch(
-                        value: user?.isNotificationEnabled ?? false,
+                        value: UserDataStore.userData?.data?.user?.isNotificationEnabled ?? false,
                         onChanged: (val) async {
                           setState(() {
                             _isNotifLoading = true;
@@ -341,8 +341,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             languageCode: loc.locale.languageCode,
                             data: {
                               "uuid": UserDataStore.uuid,
-                              "is_notification_enabled": val ? "true" : "false",
-                              "device_token_for_notification": user?.deviceTokenForNotification ?? "",
+                              "is_notification_enabled": val,
+                              "device_token_for_notification": UserDataStore.userData?.data?.user?.deviceTokenForNotification ?? "",
                             },
                           );
 

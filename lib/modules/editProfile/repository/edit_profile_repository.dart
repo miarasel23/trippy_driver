@@ -107,7 +107,7 @@ class EditProfileRepository {
     required String fullName,
     required String email,
     String? nidNumber,
-    String? isNotificationEnabled,
+    bool? isNotificationEnabled,
     String? deviceTokenForNotification,
     String? isActive,
   }) async {
@@ -130,7 +130,7 @@ class EditProfileRepository {
         "full_name": fullName,
         "email": email,
         "nid_number": nidNumber,
-        "is_notification_enabled": isNotificationEnabled,
+        "is_notification_enabled": UserDataStore.userData?.data?.user?.isNotificationEnabled ?? false,
         "device_token_for_notification": deviceTokenForNotification,
         "is_active": isActive,
       },
