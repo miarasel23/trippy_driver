@@ -52,7 +52,8 @@ class User {
   String? email;
   String? phoneNumber;
   String? profilePicture;
-  bool? isActive;
+  String? countryCode;
+  String? isActive;  // API returns "ACTIVE" / "INACTIVE" string
   Role? role;
   List<Permissions>? permissions;
 
@@ -72,7 +73,8 @@ class User {
     email = json['email'];
     phoneNumber = json['phone_number'];
     profilePicture = json['profile_picture'];
-    isActive = json['is_active'];
+    countryCode = json['country_code'];
+    isActive = json['is_active']?.toString();
     role = json['role'] != null ? Role.fromJson(json['role']) : null;
     if (json['permissions'] != null) {
       permissions = <Permissions>[];
@@ -89,6 +91,7 @@ class User {
     data['email'] = email;
     data['phone_number'] = phoneNumber;
     data['profile_picture'] = profilePicture;
+    data['country_code'] = countryCode;
     data['is_active'] = isActive;
     if (role != null) {
       data['role'] = role!.toJson();

@@ -22,7 +22,7 @@ class OtpReceiveRepository {
     final Map<String, dynamic> data = {
       "platform": AppGlobals.platform,
       "language_code": languageCode,
-      "action_when": "customer_login",
+      "action_when": "driver_login",
       "phone_number": number,
       "country_code": AppGlobals.countryCode,
       "otp": otp,
@@ -40,9 +40,7 @@ class OtpReceiveRepository {
         await UserDataStore.saveAccessToken(
           otpReceiveModel.data!.accessToken!,
         );
-        final token = await UserDataStore.getAccessToken();
         await UserDataStore.saveUuid(otpReceiveModel.data!.user!.uuid!);
-        final uuid = await UserDataStore.getUuid();
         // Save full user data to UserDataStore
         CurrentUserModel currentUserModel = CurrentUserModel.fromJson(jsonData);
         await UserDataStore.saveUserData(currentUserModel);

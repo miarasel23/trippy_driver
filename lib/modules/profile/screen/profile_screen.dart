@@ -348,7 +348,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                           try {
                             final response = await http.post(
-                              Uri.parse(AppUrls.customerProfileUpdate),
+                              Uri.parse(AppUrls.driverProfileUpdate),
                               body: data,
                               headers: {
                                 'Authorization': 'Bearer ${UserDataStore.accessToken}'
@@ -357,7 +357,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                             if (response.statusCode == 200) {
                               final getResponse = await http.get(
-                                Uri.parse(AppUrls.getCurrentCustomerUser).replace(
+                                Uri.parse(AppUrls.getCurrentDriverUser).replace(
                                   queryParameters: {
                                     "platform": CustomMapBodyBuilder.getPlatform(),
                                     "language_code": loc.locale.languageCode,
@@ -633,7 +633,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                       try {
                         final response = await http.post(
-                          Uri.parse(AppUrls.customerProfileUpdate),
+                          Uri.parse(AppUrls.driverProfileUpdate),
                           body: data,
                           headers: {
                             'Authorization': 'Bearer ${UserDataStore.accessToken}'
@@ -643,7 +643,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         if (response.statusCode == 200) {
                           // Success! Now fetch updated user
                           final getResponse = await http.get(
-                            Uri.parse(AppUrls.getCurrentCustomerUser).replace(
+                            Uri.parse(AppUrls.getCurrentDriverUser).replace(
                               queryParameters: {
                                 "platform": CustomMapBodyBuilder.getPlatform(),
                                 "language_code": langCode,

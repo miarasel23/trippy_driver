@@ -19,7 +19,7 @@ class SplashRepository {
   }) async {
     try {
       final response = await ApiService().get(
-        Uri.parse(AppUrls.getCurrentCustomerUser).replace(
+        Uri.parse(AppUrls.getCurrentDriverUser).replace(
           queryParameters: {
             "platform": plaform,
             "language_code": languageCode,

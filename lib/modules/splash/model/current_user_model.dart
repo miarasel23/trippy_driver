@@ -24,11 +24,15 @@ class CurrentUserModel {
 
 class Data {
   User? user;
+  String? accessToken;
+  String? tokenType;
 
-  Data({this.user});
+  Data({this.user, this.accessToken, this.tokenType});
 
   Data.fromJson(Map<String, dynamic> json) {
     user = json['user'] != null ? User.fromJson(json['user']) : null;
+    accessToken = json['access_token'];
+    tokenType = json['token_type'];
   }
 
   Map<String, dynamic> toJson() {
@@ -36,6 +40,8 @@ class Data {
     if (user != null) {
       data['user'] = user!.toJson();
     }
+    data['access_token'] = accessToken;
+    data['token_type'] = tokenType;
     return data;
   }
 }
@@ -46,7 +52,8 @@ class User {
   String? email;
   String? phoneNumber;
   String? profilePicture;
-  bool? isActive;
+  String? countryCode;
+  String? isActive;    // API returns "ACTIVE" / "INACTIVE" string
   String? nidNumber;
   Role? role;
   List<Permissions>? permissions;
@@ -72,7 +79,8 @@ class User {
     email = json['email'];
     phoneNumber = json['phone_number'];
     profilePicture = json['profile_picture'];
-    isActive = json['is_active'];
+    countryCode = json['country_code'];
+    isActive = json['is_active']?.toString();
     nidNumber = json['nid_number'];
     isNotificationEnabled = json['is_notification_enabled'];
     deviceTokenForNotification = json['device_token_for_notification'];
@@ -92,6 +100,7 @@ class User {
     data['email'] = email;
     data['phone_number'] = phoneNumber;
     data['profile_picture'] = profilePicture;
+    data['country_code'] = countryCode;
     data['is_active'] = isActive;
     data['nid_number'] = nidNumber;
     data['is_notification_enabled'] = isNotificationEnabled;

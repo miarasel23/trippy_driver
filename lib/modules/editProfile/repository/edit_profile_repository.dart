@@ -26,14 +26,14 @@ class EditProfileRepository {
     try {
       var request = MultipartRequest(
         'POST',
-        Uri.parse(AppUrls.customerProfilePictureUpdate),
+        Uri.parse(AppUrls.driverProfilePictureUpdate),
       );
 
       request.fields.addAll(
         CustomMapBodyBuilder.build(
-          actionWhen: 'customer_profile_picture_upload',
+          actionWhen: 'driver_profile_picture_upload',
           languageCode: languageCode,
-          data: {'customer_uuid': UserDataStore.uuid},
+          data: {'driver_uuid': UserDataStore.uuid},
         ).map((key, value) => MapEntry(key, value.toString())),
       );
 
@@ -68,7 +68,7 @@ class EditProfileRepository {
     final response = await request.send();
     print('response.statusCode: ${response.statusCode}');
     if (response.statusCode == 200) {
-     final uri = Uri.parse(AppUrls.getCurrentCustomerUser).replace(
+     final uri = Uri.parse(AppUrls.getCurrentDriverUser).replace(
           queryParameters: {
             "platform": platform,
             "language_code": languageCode,
@@ -120,7 +120,7 @@ class EditProfileRepository {
           platform = "ios";
         }
     final Map<String, dynamic> data = CustomMapBodyBuilder.build(
-      actionWhen: "customer_profile_edit",
+      actionWhen: "driver_profile_edit",
       languageCode: languageCode,
       data: {
         "phone_number": phone_number,
@@ -138,7 +138,7 @@ class EditProfileRepository {
     try {
       var request = MultipartRequest(
         'POST',
-        Uri.parse(AppUrls.customerProfileUpdate),
+        Uri.parse(AppUrls.driverProfileUpdate),
       );
       request.fields.addAll(
         Map.fromEntries(
@@ -155,7 +155,7 @@ class EditProfileRepository {
       if (response.statusCode == 200) {
        
 
-        final uri = Uri.parse(AppUrls.getCurrentCustomerUser).replace(
+        final uri = Uri.parse(AppUrls.getCurrentDriverUser).replace(
           queryParameters: {
             "platform": platform,
             "language_code": languageCode,
