@@ -132,7 +132,7 @@ class EditProfileRepository {
         "nid_number": nidNumber,
         "is_notification_enabled": UserDataStore.userData?.data?.user?.isNotificationEnabled ?? false,
         "device_token_for_notification": deviceTokenForNotification,
-        "is_active": isActive,
+        "is_active": isActive ?? UserDataStore.userData?.data?.user?.isActive ?? "ACTIVE",
       },
     );
     try {

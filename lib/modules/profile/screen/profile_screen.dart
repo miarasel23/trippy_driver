@@ -337,12 +337,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           });
                           
                           final Map<String, dynamic> data = CustomMapBodyBuilder.build(
-                            actionWhen: "customer_profile_edit",
+                            actionWhen: "driver_profile_edit",
                             languageCode: loc.locale.languageCode,
                             data: {
                               "uuid": UserDataStore.uuid,
-                              "is_notification_enabled": val,
+                              "is_notification_enabled": val ? "1" : "0",
                               "device_token_for_notification": UserDataStore.userData?.data?.user?.deviceTokenForNotification ?? "",
+                              "is_active": UserDataStore.userData?.data?.user?.isActive ?? "ACTIVE",
                             },
                           );
 
@@ -617,7 +618,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       setDialogState(() => isLoading = true);
                       
                       final Map<String, dynamic> data = CustomMapBodyBuilder.build(
-                        actionWhen: "customer_profile_edit",
+                        actionWhen: "driver_profile_edit",
                         languageCode: langCode,
                         data: {
                           "phone_number": phoneController.text,
@@ -626,8 +627,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           "full_name": nameController.text,
                           "email": emailController.text,
                           "nid_number": nidController.text.trim(),
-                          "is_notification_enabled": (UserDataStore.userData?.data?.user?.isNotificationEnabled ?? false).toString(),
+                          "is_notification_enabled": (UserDataStore.userData?.data?.user?.isNotificationEnabled ?? false) ? "1" : "0",
                           "device_token_for_notification": UserDataStore.userData?.data?.user?.deviceTokenForNotification ?? "",
+                          "is_active": UserDataStore.userData?.data?.user?.isActive ?? "ACTIVE",
                         },
                       );
 

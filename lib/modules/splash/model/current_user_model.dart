@@ -82,7 +82,16 @@ class User {
     countryCode = json['country_code'];
     isActive = json['is_active']?.toString();
     nidNumber = json['nid_number'];
-    isNotificationEnabled = json['is_notification_enabled'];
+    var rawNotif = json['is_notification_enabled'];
+    if (rawNotif is bool) {
+      isNotificationEnabled = rawNotif;
+    } else if (rawNotif is num) {
+      isNotificationEnabled = rawNotif == 1;
+    } else if (rawNotif is String) {
+      isNotificationEnabled = rawNotif == '1' || rawNotif.toLowerCase() == 'true';
+    } else {
+      isNotificationEnabled = false;
+    }
     deviceTokenForNotification = json['device_token_for_notification'];
     role = json['role'] != null ? Role.fromJson(json['role']) : null;
     if (json['permissions'] != null) {
