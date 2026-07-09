@@ -237,5 +237,21 @@
   "overlay_no_bids": "বিডের জন্য অপেক্ষা করা হচ্ছে...",
   "offer_price": "আপনার অফার",
   "pending_bids": "মোট বিড",
-  "lowest_bid": "সর্বনিম্ন বিড"
+  "lowest_bid": "সর্বনিম্ন বিড",
+  "online_status": "অনলাইন",
+  "current_session": "বর্তমান সেশন",
+  "active": "সক্রিয়",
+  "trips_count": "ট্রিপস",
+  "earned": "উপার্জন",
+  "daily_goal": "দৈনিক লক্ষ্য: {amount}",
+  "new_rental_request": "নতুন ভাড়ার অনুরোধ",
+  "est_fare": "আনুমানিক ভাড়া",
+  "pickup_away": "দূরে",
+  "distance": "দূরত্ব",
+  "bid_now": "এখনই বিড করুন",
+  "nav_bids": "বিড",
+  "nav_history": "ইতিহাস",
+  "nav_profile": "প্রোফাইল",
+  "today_earn": "আজকের আয়",
+  "trippy_due": "ট্রিপি বকেয়া"
 }

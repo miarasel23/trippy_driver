@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../modules/auth/screen/number_Input_screen.dart';
 import '../modules/editProfile/screen/edit_profile_screen.dart';
+import '../modules/home/screen/home_screen.dart';
+import '../modules/navbar/screen/navbar_screen.dart';
 import '../modules/otp/screen/otp_signin_screen.dart';
 import '../modules/profile/screen/profile_screen.dart';
 import '../modules/splash/screen/splash_screen.dart';
@@ -12,6 +14,12 @@ class RouteGenerator {
     switch (settings.name) {
       case AppRoutes.splash:
         return MaterialPageRoute(settings: settings, builder: (_) => const SplashScreen());
+
+      case AppRoutes.home:
+        return MaterialPageRoute(settings: settings, builder: (_) => const NavbarScreen());
+
+      case AppRoutes.navbar:
+        return MaterialPageRoute(settings: settings, builder: (_) => const NavbarScreen());
 
       case AppRoutes.numberInput:
         return MaterialPageRoute(settings: settings, builder: (_) => NumberInputScreen());

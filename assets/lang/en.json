@@ -235,5 +235,21 @@
   "view_bids": "View Bids",
   "offer_price": "Your Offer",
   "pending_bids": "Total Bids",
-  "lowest_bid": "Lowest Bid"
+  "lowest_bid": "Lowest Bid",
+  "online_status": "ONLINE",
+  "current_session": "CURRENT SESSION",
+  "active": "ACTIVE",
+  "trips_count": "TRIPS",
+  "earned": "EARNED",
+  "daily_goal": "DAILY GOAL: {amount}",
+  "new_rental_request": "NEW RENTAL REQUEST",
+  "est_fare": "EST. FARE",
+  "pickup_away": "away",
+  "distance": "DISTANCE",
+  "bid_now": "BID NOW",
+  "nav_bids": "Bids",
+  "nav_history": "History",
+  "nav_profile": "Profile",
+  "today_earn": "Today Earn",
+  "trippy_due": "Trippy Due"
 }

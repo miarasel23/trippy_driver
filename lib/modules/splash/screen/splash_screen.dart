@@ -48,13 +48,13 @@ class _SplashScreenState extends State<SplashScreen> {
         
         // If token is missing, redirect to login
         if (token == null || token.isEmpty) {
-          debugPrint("Splash: Token is null or empty, redirecting to numberInput");
+          debugPrint("Splash: Token is null or empty, redirecting to home for demo");
           await UserDataStore.clearAllData();
-          Navigator.pushReplacementNamed(context, AppRoutes.numberInput);
+          Navigator.pushReplacementNamed(context, AppRoutes.navbar);
         } else {
-          debugPrint("Splash: Token found, redirecting to profile");
-          // If already logged in, automatically open home page (profile)
-          Navigator.pushReplacementNamed(context, AppRoutes.profile);
+          debugPrint("Splash: Token found, redirecting to home");
+          // If already logged in, automatically open home page
+          Navigator.pushReplacementNamed(context, AppRoutes.navbar);
         }
       }
     });
