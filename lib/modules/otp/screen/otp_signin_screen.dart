@@ -96,7 +96,7 @@ class _OtpSignInState extends State<OtpSignIn> {
                 if (state.status == OtpReceiveStatus.success) {
                   Navigator.pushNamedAndRemoveUntil(
                     context,
-                    AppRoutes.profile,
+                    AppRoutes.navbar,
                     (route) => false,
                   );
                 }

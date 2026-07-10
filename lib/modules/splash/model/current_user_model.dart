@@ -55,6 +55,7 @@ class User {
   String? countryCode;
   String? isActive;    // API returns "ACTIVE" / "INACTIVE" string
   String? nidNumber;
+  String? currentRideStatus;
   Role? role;
   List<Permissions>? permissions;
   bool? isNotificationEnabled;
@@ -68,6 +69,7 @@ class User {
       this.profilePicture,
       this.isActive,
       this.nidNumber,
+      this.currentRideStatus,
       this.role,
       this.permissions,
       this.isNotificationEnabled,
@@ -82,6 +84,7 @@ class User {
     countryCode = json['country_code'];
     isActive = json['is_active']?.toString();
     nidNumber = json['nid_number'];
+    currentRideStatus = json['current_ride_status'];
     var rawNotif = json['is_notification_enabled'];
     if (rawNotif is bool) {
       isNotificationEnabled = rawNotif;
@@ -112,6 +115,7 @@ class User {
     data['country_code'] = countryCode;
     data['is_active'] = isActive;
     data['nid_number'] = nidNumber;
+    data['current_ride_status'] = currentRideStatus;
     data['is_notification_enabled'] = isNotificationEnabled;
     data['device_token_for_notification'] = deviceTokenForNotification;
     if (role != null) {

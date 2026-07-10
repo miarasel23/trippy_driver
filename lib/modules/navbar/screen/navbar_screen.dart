@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/localization/app_localization.dart';
 import '../../home/screen/home_screen.dart';
+import '../../profile/screen/profile_screen.dart';
 
 class NavbarScreen extends StatefulWidget {
   const NavbarScreen({super.key});
@@ -16,7 +17,7 @@ class _NavbarScreenState extends State<NavbarScreen> {
     const HomeScreen(),
     const Center(child: Text('Bids')), // Placeholder
     const Center(child: Text('History')), // Placeholder
-    const Center(child: Text('Profile')), // Placeholder
+    const ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {

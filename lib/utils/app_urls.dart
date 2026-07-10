@@ -11,6 +11,8 @@ class AppUrls {
       "$baseUrl/v1/driver/otp-verification-with-login";
   static const String getCurrentDriverUser =
       "$baseUrl/v1/driver/get-current-driver-user";
+  static const String currentRideStatus =
+      "$baseUrl/v1/driver/current-ride-status";
   static const String driverProfileUpdate =
       "$baseUrl/v1/driver/profile-update";
   static const String driverProfilePictureUpdate =
