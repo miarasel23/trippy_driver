@@ -1,36 +1,66 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:equatable/equatable.dart';
 
 import '../../../store/user_data_store.dart';
+import '../model/rental_trip_model.dart';
 import '../repository/home_repository.dart';
 
 class HomeState extends Equatable {
   final bool isOnline;
   final String serviceMode;
+  final List<RentalTripModel> rentalTrips;
+  final bool isLoadingTrips;
 
   const HomeState({
     required this.isOnline,
     required this.serviceMode,
+    this.rentalTrips = const [],
+    this.isLoadingTrips = false,
   });
 
   HomeState copyWith({
     bool? isOnline,
     String? serviceMode,
+    List<RentalTripModel>? rentalTrips,
+    bool? isLoadingTrips,
   }) {
     return HomeState(
       isOnline: isOnline ?? this.isOnline,
       serviceMode: serviceMode ?? this.serviceMode,
+      rentalTrips: rentalTrips ?? this.rentalTrips,
+      isLoadingTrips: isLoadingTrips ?? this.isLoadingTrips,
     );
   }
 
   @override
-  List<Object?> get props => [isOnline, serviceMode];
+  List<Object?> get props => [isOnline, serviceMode, rentalTrips, isLoadingTrips];
 }
 
 class HomeController extends Cubit<HomeState> {
   final HomeRepository repository;
+  Timer? _pollingTimer;
 
-  HomeController(this.repository) : super(_getInitialState());
+  HomeController(this.repository) : super(_getInitialState()) {
+    _startPolling();
+  }
+
+  void _startPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (state.isOnline) {
+        fetchRentalTrips(showLoading: false);
+      }
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _pollingTimer?.cancel();
+    return super.close();
+  }
 
   static HomeState _getInitialState() {
     String status = UserDataStore.userData?.data?.user?.currentRideStatus ?? 'OFFLINE';
@@ -75,6 +105,38 @@ class HomeController extends Cubit<HomeState> {
     } else {
       // API failed, state remains unchanged. Error snackbar is handled by ApiService.
     }
+  }
+
+  void fetchRentalTrips({bool showLoading = true}) async {
+    if (showLoading) {
+      emit(state.copyWith(isLoadingTrips: true));
+    }
+    final trips = await repository.getRentalTrips();
+    
+    if (trips != null) {
+      final currentTripIds = state.rentalTrips.map((t) => t.uuid).toSet();
+      final newTripIds = trips.map((t) => t.uuid).toSet();
+      
+      final hasNewTrips = newTripIds.difference(currentTripIds).isNotEmpty;
+      
+      if (hasNewTrips) {
+        try {
+          FlutterRingtonePlayer().play(fromAsset: "assets/sounds/ride_request.wav");
+        } catch (e) {
+          debugPrint("Could not play sound: $e");
+        }
+      }
+    }
+
+    emit(state.copyWith(
+      isLoadingTrips: false,
+      rentalTrips: trips ?? [],
+    ));
+  }
+
+  void removeTrip(String uuid) {
+    final updatedTrips = state.rentalTrips.where((t) => t.uuid != uuid).toList();
+    emit(state.copyWith(rentalTrips: updatedTrips));
   }
 }
 

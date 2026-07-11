@@ -1,17 +1,223 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/localization/app_localization.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:translator/translator.dart';
+import 'package:geocoding/geocoding.dart';
+import '../model/rental_trip_model.dart';
+import '../controller/home_controller.dart';
 
-class NewRequestCard extends StatelessWidget {
-  const NewRequestCard({super.key});
+class NewRequestCard extends StatefulWidget {
+  final RentalTripModel trip;
+
+  const NewRequestCard({super.key, required this.trip});
+
+  @override
+  State<NewRequestCard> createState() => _NewRequestCardState();
+}
+
+class _NewRequestCardState extends State<NewRequestCard> {
+  final GoogleTranslator _translator = GoogleTranslator();
+  final Map<String, String> _translatedAddresses = {};
+  bool _isBangla = false;
+  bool _translationsLoaded = false;
+  
+  late final TextEditingController _bidController;
+  String? _bidError;
+
+  @override
+  void initState() {
+    super.initState();
+    _bidController = TextEditingController(text: widget.trip.customerOfferAmmount.round().toString());
+  }
+
+  @override
+  void dispose() {
+    _bidController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final newIsBangla = Localizations.localeOf(context).languageCode == 'bn';
+    if (newIsBangla != _isBangla || !_translationsLoaded) {
+      _isBangla = newIsBangla;
+      _loadTranslations();
+    }
+  }
+
+  Future<void> _loadTranslations() async {
+    if (!_isBangla) {
+      if (mounted) setState(() => _translationsLoaded = true);
+      return;
+    }
+
+    final allLocations = [
+      ...widget.trip.pickupLocations,
+      ...widget.trip.dropoffLocations,
+    ];
+
+    final Map<String, String> results = {};
+    for (final loc in allLocations) {
+      if (!results.containsKey(loc.uuid)) {
+        results[loc.uuid] = await _translateLocationToBangla(loc);
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _translatedAddresses.addAll(results);
+        _translationsLoaded = true;
+      });
+    }
+  }
+
+  Future<String> _translateLocationToBangla(LocationModel locModel) async {
+    try {
+      await setLocaleIdentifier("bn_BD");
+      final placemarks = await placemarkFromCoordinates(
+        locModel.latitude,
+        locModel.longitude,
+      ).timeout(const Duration(seconds: 3));
+
+      if (placemarks.isNotEmpty) {
+        final p = placemarks.first;
+        final parts = <String>[];
+        if (p.street != null && p.street!.isNotEmpty && !p.street!.contains('+')) parts.add(p.street!);
+        if (p.subLocality != null && p.subLocality!.isNotEmpty) parts.add(p.subLocality!);
+        if (p.locality != null && p.locality!.isNotEmpty) parts.add(p.locality!);
+        if (p.country != null && p.country!.isNotEmpty) parts.add(p.country!);
+        if (parts.isNotEmpty) return parts.join(', ');
+      }
+    } catch (e) {
+      debugPrint("Geocoding failed: $e");
+    }
+
+    try {
+      final translation = await _translator
+          .translate(locModel.address, from: 'auto', to: 'bn')
+          .timeout(const Duration(seconds: 3));
+      return translation.text;
+    } catch (e) {
+      debugPrint("Translator failed: $e");
+      return locModel.address;
+    }
+  }
+
+  String _translateNumbersAndCommonWords(String text) {
+    if (!_isBangla) return text;
+    const englishToBangla = {
+      '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪',
+      '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯',
+    };
+    String result = text.split('').map((e) => englishToBangla[e] ?? e).join('');
+    result = result.replaceAll('km', 'কি.মি.');
+    result = result.replaceAll(' m', ' মি.');
+    result = result.replaceAll('away', 'দূরে');
+    result = result.replaceAll('min', 'মিনিট');
+    return result;
+  }
+
+  String _formatEnum(String text, AppLocalizations loc) {
+    final key = text.toLowerCase();
+    final translated = loc.translate(key);
+    if (translated != null && translated != key) return translated;
+    return text.replaceAll('_', ' ').split(' ').map((word) {
+      if (word.isEmpty) return '';
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
+  }
+
+  String _calculateMinutes(String pickupKmStr) {
+    double distanceKm = 0.0;
+    final lower = pickupKmStr.toLowerCase();
+    if (lower.contains('km')) {
+      distanceKm = double.tryParse(lower.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+    } else if (lower.contains('m')) {
+      distanceKm = (double.tryParse(lower.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0) / 1000.0;
+    }
+    final minutes = (distanceKm * 2.4).ceil();
+    return minutes == 0 ? "1 min" : "$minutes min";
+  }
+
+  String _getAddress(LocationModel locModel) {
+    if (!_isBangla) return locModel.address;
+    return _translatedAddresses[locModel.uuid] ?? locModel.address;
+  }
+
+  DateTime _parseCreatedAt(String createdAtStr) {
+    DateTime parsed = DateTime.tryParse(createdAtStr) ?? DateTime.now();
+    // Fix for backend bug: The backend mistakenly adds 7 hours to local time
+    // (1 hour manual + 6 hours timezone conversion on an already local naive datetime).
+    if (parsed.difference(DateTime.now()).inHours >= 5) {
+      return parsed.subtract(const Duration(hours: 7));
+    }
+    return parsed;
+  }
+
+  void _validateBid(String val) {
+    final amount = double.tryParse(val);
+    if (amount == null) {
+      setState(() => _bidError = "Invalid");
+      return;
+    }
+    
+    final baseAmount = widget.trip.customerOfferAmmount;
+    final maxAllowed = baseAmount * 1.5;
+    final minAllowed = baseAmount * 0.85;
+
+    if (amount > maxAllowed) {
+      setState(() => _bidError = "Max ${maxAllowed.round()}");
+    } else if (amount < minAllowed) {
+      setState(() => _bidError = "Min ${minAllowed.round()}");
+    } else {
+      setState(() => _bidError = null);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final createdAt = _parseCreatedAt(widget.trip.createdAt);
+    final isRideShare = widget.trip.carService.serviceName == 'RIDE_SHARE';
+    final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
+    final expireTime = createdAt.add(totalDuration);
+    final remaining = expireTime.difference(DateTime.now());
+
+    if (remaining.isNegative) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<HomeController>().removeTrip(widget.trip.uuid);
+      });
+      return const SizedBox.shrink();
+    }
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: remaining.inSeconds.toDouble(), end: 0),
+      duration: remaining,
+      onEnd: () {
+        context.read<HomeController>().removeTrip(widget.trip.uuid);
+      },
+      builder: (context, value, child) {
+        return _buildCardContent(context, value, totalDuration.inSeconds.toDouble(), isRideShare);
+      },
+    );
+  }
+
+  Widget _buildCardContent(BuildContext context, double remainingSeconds, double totalSeconds, bool isRideShare) {
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context);
-    final currency = Localizations.localeOf(context).languageCode == 'bn' ? '৳' : 'BDT';
+    final currency = _isBangla ? '৳' : 'BDT';
+
+    final formattedCarType = _formatEnum(widget.trip.carCategory.carType, loc);
+    final formattedService = _formatEnum(widget.trip.carService.serviceName, loc);
+    final formattedAmount = _translateNumbersAndCommonWords("${widget.trip.customerOfferAmmount.round()}");
+    final formattedTotalDistance = _translateNumbersAndCommonWords("${widget.trip.totalDistance} km");
+    final formattedPickupDistance = _translateNumbersAndCommonWords(
+        "${widget.trip.pickupKm} away\n(~${_calculateMinutes(widget.trip.pickupKm)})");
+    final progress = remainingSeconds / totalSeconds;
+    final isLow = progress < 0.2;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -28,39 +234,72 @@ class NewRequestCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header row: title + countdown timer
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.stars, color: theme.colorScheme.onSurface.withOpacity(0.7), size: 16),
-              const SizedBox(width: 8),
-              Text(
-                loc.translate('new_rental_request'),
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                ),
+              Row(
+                children: [
+                  Icon(Icons.stars, color: theme.colorScheme.onSurface.withOpacity(0.7), size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    loc.translate('new_request') ?? 'New Request',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Icon(Icons.timer_outlined, size: 16, color: isLow ? Colors.red : theme.colorScheme.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${(remainingSeconds / 60).floor().toString().padLeft(2, '0')}:${(remainingSeconds % 60).floor().toString().padLeft(2, '0')}',
+                    style: TextStyle(
+                      color: isLow ? Colors.red : theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
           const SizedBox(height: 8),
+          // Progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 4,
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation<Color>(isLow ? Colors.red : theme.colorScheme.primary),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Car type + amount
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "Premium Van",
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
+              Expanded(
+                child: Text(
+                  "$formattedCarType • $formattedService",
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    "42.00 $currency",
+                    "$formattedAmount $currency",
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
                       fontSize: 24,
@@ -68,7 +307,7 @@ class NewRequestCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    loc.translate('est_fare'),
+                    loc.translate('est_fare') ?? 'Est. Fare',
                     style: TextStyle(
                       color: theme.colorScheme.onSurface.withOpacity(0.6),
                       fontSize: 10,
@@ -80,58 +319,155 @@ class NewRequestCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+          // Pickup locations
+          ...widget.trip.pickupLocations.map((locModel) => Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: _buildInfoTile(
+              icon: Icons.my_location,
+              title: loc.translate('pickup') ?? 'Pickup',
+              value: _translationsLoaded
+                  ? _getAddress(locModel)
+                  : (_isBangla ? '...' : locModel.address),
+              theme: theme,
+            ),
+          )),
+          // Dropoff locations
+          ...widget.trip.dropoffLocations.map((locModel) => Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: _buildInfoTile(
+              icon: Icons.location_on,
+              title: loc.translate('dropoff') ?? 'Dropoff',
+              value: _translationsLoaded
+                  ? _getAddress(locModel)
+                  : (_isBangla ? '...' : locModel.address),
+              theme: theme,
+            ),
+          )),
+          // Distance tiles
           Row(
             children: [
               Expanded(
                 child: _buildInfoTile(
-                  icon: Icons.access_time,
-                  title: loc.translate('pickup'),
-                  value: "3 mins\n${loc.translate('pickup_away')}",
+                  icon: Icons.route,
+                  title: loc.translate('total_distance') ?? 'Total Distance',
+                  value: formattedTotalDistance,
                   theme: theme,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildInfoTile(
-                  icon: Icons.location_on_outlined,
-                  title: loc.translate('distance'),
-                  value: "\n1.2 miles",
+                  icon: Icons.social_distance,
+                  title: loc.translate('pickup_distance') ?? 'Pickup Distance',
+                  value: formattedPickupDistance,
                   theme: theme,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {},
-              icon: Icon(Icons.gavel, color: theme.colorScheme.surface),
-              label: Text(
-                loc.translate('bid_now'),
-                style: TextStyle(
-                  color: theme.colorScheme.surface,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.0,
+          // Bid button
+          if (isRideShare)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: _bidController,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: loc.translate('offer_amount') ?? 'Offer Amount',
+                      labelStyle: TextStyle(fontSize: 12),
+                      errorText: _bidError,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: theme.colorScheme.primary.withOpacity(0.5)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: theme.colorScheme.primary.withOpacity(0.5)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      prefixText: currency + ' ',
+                    ),
+                    onChanged: (val) {
+                      _validateBid(val);
+                    },
+                  ),
                 ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.onSurface,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: SizedBox(
+                    height: _bidError != null ? 76 : 56, // Match height of textfield considering error text
+                    child: ElevatedButton(
+                      onPressed: _bidError == null ? () {} : null,
+                      child: Text(
+                        loc.translate('bid_now') ?? 'Bid Now',
+                        style: TextStyle(
+                          color: _bidError == null ? theme.colorScheme.surface : theme.colorScheme.onSurface.withOpacity(0.5),
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.onSurface,
+                        disabledBackgroundColor: theme.colorScheme.onSurface.withOpacity(0.1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
                 ),
-                elevation: 0,
+              ],
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {},
+                child: Text(
+                  loc.translate('bid_now') ?? 'Bid Now',
+                  style: TextStyle(
+                    color: theme.colorScheme.surface,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.onSurface,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoTile({required IconData icon, required String title, required String value, required ThemeData theme}) {
+  Widget _buildInfoTile({
+    required IconData icon,
+    required String title,
+    required String value,
+    required ThemeData theme,
+  }) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -143,27 +479,31 @@ class NewRequestCard extends StatelessWidget {
         children: [
           Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.7), size: 20),
           const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
