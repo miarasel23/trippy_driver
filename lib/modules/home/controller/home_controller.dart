@@ -90,7 +90,8 @@ class HomeController extends Cubit<HomeState> {
       if (permission == LocationPermission.deniedForever) return;
 
       Position position = await Geolocator.getCurrentPosition();
-      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude).timeout(const Duration(seconds: 3));
+      final _geocoder = Geocoding();
+      List<Placemark> placemarks = await _geocoder.placemarkFromCoordinates(position.latitude, position.longitude).timeout(const Duration(seconds: 3));
       
       if (placemarks.isNotEmpty) {
         final p = placemarks.first;

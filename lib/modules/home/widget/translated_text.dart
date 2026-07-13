@@ -8,6 +8,7 @@ class TranslatedText extends StatefulWidget {
   final TextStyle? style;
   final int? maxLines;
   final TextAlign? textAlign;
+  final TextOverflow? overflow;
   final bool isBangla;
   final LocationModel? location;
 
@@ -69,8 +70,8 @@ class _TranslatedTextState extends State<TranslatedText> {
     // Attempt geocoding first if location is provided
     if (widget.location != null) {
       try {
-        await setLocaleIdentifier("bn_BD");
-        final placemarks = await placemarkFromCoordinates(
+        final _geocoder = Geocoding(locale: const Locale('bn', 'BD'));
+        final placemarks = await _geocoder.placemarkFromCoordinates(
           widget.location!.latitude,
           widget.location!.longitude,
         ).timeout(const Duration(seconds: 3));

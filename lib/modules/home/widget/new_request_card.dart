@@ -75,8 +75,8 @@ class _NewRequestCardState extends State<NewRequestCard> {
 
   Future<String> _translateLocationToBangla(LocationModel locModel) async {
     try {
-      await setLocaleIdentifier("bn_BD");
-      final placemarks = await placemarkFromCoordinates(
+      final _geocoder = Geocoding(locale: const Locale('bn', 'BD'));
+      final placemarks = await _geocoder.placemarkFromCoordinates(
         locModel.latitude,
         locModel.longitude,
       ).timeout(const Duration(seconds: 3));

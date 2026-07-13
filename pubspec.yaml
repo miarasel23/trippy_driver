@@ -52,12 +52,20 @@ dependencies:
   geolocator: ^14.0.3
   shimmer: ^3.0.0
   flutter_polyline_points: ^2.0.1
-  geocoding: ^3.0.0
+  geocoding: ^5.0.0
   flutter_ringtone_player: ^4.0.0+4
   url_launcher: ^6.3.2
   flutter_background_service: ^5.1.0
   flutter_local_notifications: ^22.0.1
   translator: ^1.0.4+1
+
+dependency_overrides:
+  # Pin path_provider_android to the last version before JNI was introduced (2.3.0).
+  # JNI pulls in the jni/jni_flutter packages which require NDK 28 + CMake 3.31.6.
+  # NDK 28 is incompatible with the installed CMake 3.22.1, causing build failures.
+  # The API surface of 2.2.x is identical to 2.3.x from callers' perspective.
+  path_provider_android: 2.2.12
+
 
 dev_dependencies:
   flutter_test:
