@@ -182,6 +182,12 @@ class HomeController extends Cubit<HomeState> {
       bool stateChanged = false;
       bool hasNewTrips = false;
 
+      final currentIds = currentMap.keys.toSet();
+      final newIds = validTrips.map((t) => t.uuid).toSet();
+      if (currentIds.length != newIds.length || !currentIds.containsAll(newIds)) {
+        stateChanged = true;
+      }
+
       for (var apiTrip in validTrips) {
         if (!currentMap.containsKey(apiTrip.uuid)) {
           currentMap[apiTrip.uuid] = apiTrip;
@@ -205,9 +211,10 @@ class HomeController extends Cubit<HomeState> {
       }
 
       if (stateChanged) {
+        final updatedList = validTrips.map((t) => currentMap[t.uuid]!).toList();
         emit(state.copyWith(
           isLoadingTrips: false,
-          rentalTrips: currentMap.values.toList(),
+          rentalTrips: updatedList,
         ));
       } else {
         emit(state.copyWith(isLoadingTrips: false));
@@ -225,6 +232,12 @@ class HomeController extends Cubit<HomeState> {
       final currentMap = { for (var t in state.bidTrips) t.uuid: t };
       bool stateChanged = false;
       
+      final currentIds = currentMap.keys.toSet();
+      final newIds = validBids.map((t) => t.uuid).toSet();
+      if (currentIds.length != newIds.length || !currentIds.containsAll(newIds)) {
+        stateChanged = true;
+      }
+
       for (var apiBid in validBids) {
         if (!currentMap.containsKey(apiBid.uuid)) {
           currentMap[apiBid.uuid] = apiBid;
@@ -239,7 +252,8 @@ class HomeController extends Cubit<HomeState> {
       }
 
       if (stateChanged) {
-        emit(state.copyWith(bidTrips: currentMap.values.toList()));
+        final updatedList = validBids.map((t) => currentMap[t.uuid]!).toList();
+        emit(state.copyWith(bidTrips: updatedList));
       }
     }
   }

@@ -229,14 +229,26 @@ class _BidTripItemState extends State<_BidTripItem> {
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                   const SizedBox(width: 8),
-                  Icon(Icons.timer_outlined, size: 14, color: isExpired ? Colors.red : theme.colorScheme.onSurface.withOpacity(0.7)),
-                  const SizedBox(width: 4),
-                  Text(
-                    timeString,
-                    style: TextStyle(
-                      color: isExpired ? Colors.red : theme.colorScheme.onSurface.withOpacity(0.7), 
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isExpired ? Colors.red.withOpacity(0.1) : theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.timer_outlined, size: 14, color: isExpired ? Colors.red : theme.colorScheme.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          timeString,
+                          style: TextStyle(
+                            color: isExpired ? Colors.red : theme.colorScheme.primary, 
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -275,6 +287,36 @@ class _BidTripItemState extends State<_BidTripItem> {
                   ),
                 ],
               ),
+              if (widget.trip.note.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.notes, size: 12, color: Colors.amber[800]),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          widget.trip.note,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12, 
+                            color: theme.colorScheme.onSurface.withOpacity(0.85), 
+                            fontStyle: FontStyle.italic
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),

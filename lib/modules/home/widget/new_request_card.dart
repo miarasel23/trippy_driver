@@ -333,9 +333,8 @@ class _NewRequestCardState extends State<NewRequestCard> {
             child: _buildInfoTile(
               icon: Icons.my_location,
               title: loc.translate('pickup') ?? 'Pickup',
-              value: _translationsLoaded
-                  ? _getAddress(locModel)
-                  : (_isBangla ? '...' : locModel.address),
+              value: _translationsLoaded ? _getAddress(locModel) : locModel.address,
+              isLoading: !_translationsLoaded && _isBangla,
               theme: theme,
             ),
           )),
@@ -345,9 +344,8 @@ class _NewRequestCardState extends State<NewRequestCard> {
             child: _buildInfoTile(
               icon: Icons.location_on,
               title: loc.translate('dropoff') ?? 'Dropoff',
-              value: _translationsLoaded
-                  ? _getAddress(locModel)
-                  : (_isBangla ? '...' : locModel.address),
+              value: _translationsLoaded ? _getAddress(locModel) : locModel.address,
+              isLoading: !_translationsLoaded && _isBangla,
               theme: theme,
             ),
           )),
@@ -373,6 +371,16 @@ class _NewRequestCardState extends State<NewRequestCard> {
               ),
             ],
           ),
+          if (widget.trip.note.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: _buildInfoTile(
+                icon: Icons.notes,
+                title: loc.translate('note') ?? 'Note',
+                value: widget.trip.note,
+                theme: theme,
+              ),
+            ),
           const SizedBox(height: 20),
           // Bid button
           if (isRideShare)
@@ -492,6 +500,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
     required String title,
     required String value,
     required ThemeData theme,
+    bool isLoading = false,
   }) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -517,16 +526,23 @@ class _NewRequestCardState extends State<NewRequestCard> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                if (isLoading)
+                  const SizedBox(
+                    height: 14,
+                    width: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  Text(
+                    value,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
               ],
             ),
           ),

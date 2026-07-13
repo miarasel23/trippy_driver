@@ -15,6 +15,7 @@ class RentalTripModel {
   final List<LocationModel> dropoffLocations;
   final String createdAt;
   final MyBid? myBid;
+  final String note;
 
   RentalTripModel({
     required this.id,
@@ -33,6 +34,7 @@ class RentalTripModel {
     required this.dropoffLocations,
     required this.createdAt,
     this.myBid,
+    this.note = '',
   });
 
   factory RentalTripModel.fromJson(Map<String, dynamic> json) {
@@ -62,6 +64,7 @@ class RentalTripModel {
               .toList() ??
           [],
       myBid: json['my_bid'] != null ? MyBid.fromJson(json['my_bid']) : null,
+      note: json['note'] ?? json['trip_details']?['note'] ?? '',
     );
   }
 }

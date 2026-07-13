@@ -122,33 +122,39 @@ class _HomeViewState extends State<HomeView> {
                 // 3. Current Session Card
                 const CurrentSessionCard(),
                 
-                // Active Bids Overlay
-                const BidTripOverlay(),
-                
-                // 4. New Rental Request Cards
-                BlocBuilder<HomeController, HomeState>(
-                  builder: (context, state) {
-                    if (state.isLoadingTrips) {
-                      return const Expanded(
-                        child: Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
-                    if (state.rentalTrips.isEmpty) {
-                      return const Spacer();
-                    }
-                    return Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.only(top: 16, bottom: 100),
-                        itemCount: state.rentalTrips.length,
-                        itemBuilder: (context, index) {
-                          final trip = state.rentalTrips[index];
-                          return NewRequestCard(key: ValueKey(trip.uuid), trip: trip);
+                // 4. Content Area (Stack for overlapping)
+                Expanded(
+                  child: Stack(
+                    children: [
+                      // Lower z-index: Active Bids Overlay
+                      const Align(
+                        alignment: Alignment.topCenter,
+                        child: BidTripOverlay(),
+                      ),
+                      
+                      // Higher z-index: New Rental Request Cards
+                      BlocBuilder<HomeController, HomeState>(
+                        builder: (context, state) {
+                          if (state.isLoadingTrips) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+                          if (state.rentalTrips.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+                          return ListView.builder(
+                            padding: const EdgeInsets.only(top: 8, bottom: 100),
+                            itemCount: state.rentalTrips.length,
+                            itemBuilder: (context, index) {
+                              final trip = state.rentalTrips[index];
+                              return NewRequestCard(key: ValueKey(trip.uuid), trip: trip);
+                            },
+                          );
                         },
                       ),
-                    );
-                  },
+                    ],
+                  ),
                 ),
               ],
             ),
