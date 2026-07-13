@@ -21,6 +21,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
   bool _isBangla = false;
   bool _translationsLoaded = false;
   bool _isSubmitting = false;
+  bool _hasBidded = false;
   
   late final TextEditingController _bidController;
   String? _bidError;
@@ -75,32 +76,12 @@ class _NewRequestCardState extends State<NewRequestCard> {
 
   Future<String> _translateLocationToBangla(LocationModel locModel) async {
     try {
-      final _geocoder = Geocoding(locale: const Locale('bn', 'BD'));
-      final placemarks = await _geocoder.placemarkFromCoordinates(
-        locModel.latitude,
-        locModel.longitude,
-      ).timeout(const Duration(seconds: 3));
-
-      if (placemarks.isNotEmpty) {
-        final p = placemarks.first;
-        final parts = <String>[];
-        if (p.street != null && p.street!.isNotEmpty && !p.street!.contains('+')) parts.add(p.street!);
-        if (p.subLocality != null && p.subLocality!.isNotEmpty) parts.add(p.subLocality!);
-        if (p.locality != null && p.locality!.isNotEmpty) parts.add(p.locality!);
-        if (p.country != null && p.country!.isNotEmpty) parts.add(p.country!);
-        if (parts.isNotEmpty) return parts.join(', ');
-      }
-    } catch (e) {
-      debugPrint("Geocoding failed: $e");
-    }
-
-    try {
       final translation = await _translator
           .translate(locModel.address, from: 'auto', to: 'bn')
-          .timeout(const Duration(seconds: 3));
+          .timeout(const Duration(seconds: 10));
       return translation.text;
     } catch (e) {
-      debugPrint("Translator failed: $e");
+      // print removed
       return locModel.address;
     }
   }
@@ -191,8 +172,10 @@ class _NewRequestCardState extends State<NewRequestCard> {
           SnackBar(content: Text(error), backgroundColor: Colors.red),
         );
       } else {
+        setState(() => _hasBidded = true);
+        final loc = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Bid submitted successfully!'), backgroundColor: Colors.green),
+          SnackBar(content: Text(loc.translate('wait_customer_acceptance') ?? 'Waiting for customer acceptance...'), backgroundColor: Colors.green),
         );
       }
     }
@@ -266,7 +249,9 @@ class _NewRequestCardState extends State<NewRequestCard> {
                   Icon(Icons.stars, color: theme.colorScheme.onSurface.withOpacity(0.7), size: 16),
                   const SizedBox(width: 4),
                   Text(
-                    loc.translate('new_request') ?? 'New Request',
+                    _hasBidded 
+                        ? (loc.translate('wait_customer_acceptance') ?? 'Waiting for customer acceptance...')
+                        : (loc.translate('new_request') ?? 'New Request'),
                     style: TextStyle(
                       color: theme.colorScheme.onSurface.withOpacity(0.7),
                       fontSize: 12,
@@ -471,7 +456,8 @@ class _NewRequestCardState extends State<NewRequestCard> {
                     if (error != null) {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: Colors.red));
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Bid submitted successfully!'), backgroundColor: Colors.green));
+                      setState(() => _hasBidded = true);
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.translate('wait_customer_acceptance') ?? 'Waiting for customer acceptance...'), backgroundColor: Colors.green));
                     }
                   }
                 },

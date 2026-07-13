@@ -62,7 +62,7 @@ class ApiService {
         ),
       );
     } else {
-      debugPrint('Error SnackBar failed: globalNavigatorKey.currentContext is null');
+      // print removed
     }
   }
 

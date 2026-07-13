@@ -673,11 +673,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               );
                             }
                           } else {
-                            print("GET ERROR: ${getResponse.statusCode} - ${getResponse.body}");
+                            // print removed
                             throw Exception("Failed to fetch user: ${getResponse.body}");
                           }
                         } else {
-                           print("POST ERROR: ${response.statusCode} - ${response.body}");
+                           // print removed
                            throw Exception("Failed to update profile: ${response.body}");
                         }
                       } catch (e) {

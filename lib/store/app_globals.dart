@@ -19,7 +19,7 @@ class AppGlobals {
         countryCode = localeName.split('_').last;
       }
     } catch (e) {
-      debugPrint('AppGlobals: $e');
+      // print removed
     }
   }
 }

@@ -110,7 +110,7 @@ class HomeController extends Cubit<HomeState> {
         }
       }
     } catch (e) {
-      debugPrint("Tracking error: $e");
+      // print removed
     }
   }
 
@@ -166,6 +166,9 @@ class HomeController extends Cubit<HomeState> {
     }
   }
 
+  final Set<String> _ignoredRentalTripIds = {};
+  final Set<String> _ignoredBidTripIds = {};
+
   void fetchRentalTrips({bool showLoading = true}) async {
     if (showLoading) {
       emit(state.copyWith(isLoadingTrips: true));
@@ -173,36 +176,84 @@ class HomeController extends Cubit<HomeState> {
     final trips = await repository.getRentalTrips();
     
     if (trips != null) {
-      final currentTripIds = state.rentalTrips.map((t) => t.uuid).toSet();
-      final newTripIds = trips.map((t) => t.uuid).toSet();
+      final validTrips = trips.where((t) => !_ignoredRentalTripIds.contains(t.uuid)).toList();
       
-      final hasNewTrips = newTripIds.difference(currentTripIds).isNotEmpty;
+      final currentMap = { for (var t in state.rentalTrips) t.uuid: t };
+      bool stateChanged = false;
+      bool hasNewTrips = false;
+
+      for (var apiTrip in validTrips) {
+        if (!currentMap.containsKey(apiTrip.uuid)) {
+          currentMap[apiTrip.uuid] = apiTrip;
+          stateChanged = true;
+          hasNewTrips = true;
+        } else {
+          final old = currentMap[apiTrip.uuid]!;
+          if (old.tripStatus != apiTrip.tripStatus) {
+            currentMap[apiTrip.uuid] = apiTrip;
+            stateChanged = true;
+          }
+        }
+      }
       
       if (hasNewTrips) {
         try {
           FlutterRingtonePlayer().play(fromAsset: "assets/sounds/ride_request.wav");
         } catch (e) {
-          debugPrint("Could not play sound: $e");
+          // print removed
         }
       }
-    }
 
-    emit(state.copyWith(
-      isLoadingTrips: false,
-      rentalTrips: trips ?? [],
-    ));
+      if (stateChanged) {
+        emit(state.copyWith(
+          isLoadingTrips: false,
+          rentalTrips: currentMap.values.toList(),
+        ));
+      } else {
+        emit(state.copyWith(isLoadingTrips: false));
+      }
+    } else {
+      emit(state.copyWith(isLoadingTrips: false));
+    }
   }
 
   void fetchBidTrips() async {
     final bids = await repository.getBidTripList();
     if (bids != null) {
-      emit(state.copyWith(bidTrips: bids));
+      final validBids = bids.where((t) => !_ignoredBidTripIds.contains(t.uuid)).toList();
+      
+      final currentMap = { for (var t in state.bidTrips) t.uuid: t };
+      bool stateChanged = false;
+      
+      for (var apiBid in validBids) {
+        if (!currentMap.containsKey(apiBid.uuid)) {
+          currentMap[apiBid.uuid] = apiBid;
+          stateChanged = true;
+        } else {
+          final old = currentMap[apiBid.uuid]!;
+          if (old.tripStatus != apiBid.tripStatus || old.myBid?.status != apiBid.myBid?.status) {
+            currentMap[apiBid.uuid] = apiBid;
+            stateChanged = true;
+          }
+        }
+      }
+
+      if (stateChanged) {
+        emit(state.copyWith(bidTrips: currentMap.values.toList()));
+      }
     }
   }
 
   void removeTrip(String uuid) {
+    _ignoredRentalTripIds.add(uuid);
     final updatedTrips = state.rentalTrips.where((t) => t.uuid != uuid).toList();
     emit(state.copyWith(rentalTrips: updatedTrips));
+  }
+
+  void removeBidTrip(String uuid) {
+    _ignoredBidTripIds.add(uuid);
+    final updatedTrips = state.bidTrips.where((t) => t.uuid != uuid).toList();
+    emit(state.copyWith(bidTrips: updatedTrips));
   }
 
   Future<String?> submitBid(String tripUuid, double bidAmount) async {

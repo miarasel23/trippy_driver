@@ -256,7 +256,7 @@ class HomeRepository {
         },
         body: data,
       );
-      print("Response: ${response.body}");
+      // print removed
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final body = jsonDecode(response.body);

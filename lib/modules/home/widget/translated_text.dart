@@ -50,7 +50,7 @@ class _TranslatedTextState extends State<TranslatedText> {
   @override
   void didUpdateWidget(TranslatedText oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.text != widget.text) {
+    if (oldWidget.text != widget.text || oldWidget.isBangla != widget.isBangla) {
       _translatedText = widget.text;
       _translate();
     }
@@ -67,36 +67,8 @@ class _TranslatedTextState extends State<TranslatedText> {
       return;
     }
 
-    // Attempt geocoding first if location is provided
-    if (widget.location != null) {
-      try {
-        final _geocoder = Geocoding(locale: const Locale('bn', 'BD'));
-        final placemarks = await _geocoder.placemarkFromCoordinates(
-          widget.location!.latitude,
-          widget.location!.longitude,
-        ).timeout(const Duration(seconds: 3));
-
-        if (placemarks.isNotEmpty) {
-          final p = placemarks.first;
-          final parts = <String>[];
-          if (p.street != null && p.street!.isNotEmpty && !p.street!.contains('+')) parts.add(p.street!);
-          if (p.subLocality != null && p.subLocality!.isNotEmpty) parts.add(p.subLocality!);
-          if (p.locality != null && p.locality!.isNotEmpty) parts.add(p.locality!);
-          if (p.country != null && p.country!.isNotEmpty) parts.add(p.country!);
-          if (parts.isNotEmpty) {
-            final translated = parts.join(', ');
-            _cache[widget.text] = translated;
-            if (mounted) setState(() => _translatedText = translated);
-            return;
-          }
-        }
-      } catch (e) {
-        // Fallback to text translation
-      }
-    }
-
     try {
-      final res = await _translator.translate(widget.text, from: 'auto', to: 'bn').timeout(const Duration(seconds: 3));
+      final res = await _translator.translate(widget.text, from: 'auto', to: 'bn').timeout(const Duration(seconds: 10));
       _cache[widget.text] = res.text;
       if (mounted) {
         setState(() => _translatedText = res.text);

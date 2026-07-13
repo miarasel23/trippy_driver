@@ -56,7 +56,29 @@ class BidTripOverlay extends StatelessWidget {
                       loc.translate('active_bid') ?? 'Active Bid',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            loc.translate('wait_customer_acceptance') ?? 'Waiting for customer acceptance...',
+                            style: const TextStyle(
+                              color: Colors.orange, 
+                              fontSize: 10, 
+                              fontWeight: FontWeight.bold
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
@@ -144,6 +166,14 @@ class _BidTripItemState extends State<_BidTripItem> {
     }
   }
 
+  String _toBanglaDigits(String input) {
+    const englishToBanglaDigits = {
+      '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪',
+      '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯',
+    };
+    return input.split('').map((char) => englishToBanglaDigits[char] ?? char).join();
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -166,9 +196,24 @@ class _BidTripItemState extends State<_BidTripItem> {
     final dropoff = dropoffLoc?.address ?? 'Unknown';
 
     bool isExpired = _remaining.isNegative;
-    String timeString = isExpired 
-        ? (loc.translate('expired') ?? "Expired")
-        : "${_remaining.inMinutes}:${(_remaining.inSeconds % 60).toString().padLeft(2, '0')}";
+
+    if (isExpired) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<HomeController>().removeBidTrip(widget.trip.uuid);
+        }
+      });
+      return const SizedBox.shrink();
+    }
+
+    String timeString = "${_remaining.inMinutes}:${(_remaining.inSeconds % 60).toString().padLeft(2, '0')}";
+
+    if (isBangla) {
+      timeString = _toBanglaDigits(timeString);
+    }
+    
+    final displayAmount = isBangla ? _toBanglaDigits(amount.toString()) : amount.toString();
+    final displayStatus = isBangla ? (loc.translate(status?.toLowerCase() ?? '') ?? status ?? '') : (status ?? '');
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -180,7 +225,7 @@ class _BidTripItemState extends State<_BidTripItem> {
               Row(
                 children: [
                   Text(
-                    "${loc.translate('my_bid') ?? 'My Bid'}: \৳$amount",
+                    "${loc.translate('my_bid') ?? 'My Bid'}: \৳$displayAmount",
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                   const SizedBox(width: 8),
@@ -232,27 +277,6 @@ class _BidTripItemState extends State<_BidTripItem> {
               ),
             ],
           ),
-        ),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isExpired ? Colors.red.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                isExpired ? (loc.translate('expired') ?? 'EXPIRED').toUpperCase() : status,
-                style: TextStyle(
-                  color: isExpired ? Colors.red : Colors.orange, 
-                  fontSize: 10, 
-                  fontWeight: FontWeight.bold
-                ),
-              ),
-            ),
-          ],
         ),
       ],
     );

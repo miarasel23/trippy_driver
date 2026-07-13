@@ -258,5 +258,6 @@
   "message": "Message",
   "navigate": "Navigate",
   "my_bid": "My Bid",
-  "expired": "EXPIRED"
+  "expired": "EXPIRED",
+  "wait_customer_acceptance": "Waiting for customer acceptance..."
 }

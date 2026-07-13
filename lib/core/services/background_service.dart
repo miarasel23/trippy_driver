@@ -69,7 +69,7 @@ void onStart(ServiceInstance service) async {
   Timer.periodic(const Duration(seconds: 30), (timer) async {
     if (service is AndroidServiceInstance) {
       if (await service.isForegroundService()) {
-        debugPrint('BackgroundService: heartbeat');
+        // print removed
       }
     }
   });

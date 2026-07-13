@@ -20,24 +20,24 @@ class _SplashScreenState extends State<SplashScreen> {
       // Attempt to load user data from local store safely
       try {
         await UserDataStore.getUserData();
-        debugPrint("Splash: Loaded user data successfully: ${UserDataStore.userData?.data?.user?.fullName}");
+        // print removed
       } catch (e, stack) {
-        debugPrint("Splash: Error loading user data: $e");
-        debugPrint(stack.toString());
+        // print removed
+        // print removed
       }
 
       try {
         await UserDataStore.getAccessToken();
-        debugPrint("Splash: Loaded access token: ${UserDataStore.accessToken}");
+        // print removed
       } catch (e) {
-        debugPrint("Splash: Error loading token: $e");
+        // print removed
       }
 
       try {
         await UserDataStore.getUuid();
-        debugPrint("Splash: Loaded UUID: ${UserDataStore.uuid}");
+        // print removed
       } catch (e) {
-        debugPrint("Splash: Error loading UUID: $e");
+        // print removed
       }
       
       // Let the beautiful Trippy animation play for 4 seconds
@@ -48,11 +48,11 @@ class _SplashScreenState extends State<SplashScreen> {
         
         // If token is missing, redirect to login
         if (token == null || token.isEmpty) {
-          debugPrint("Splash: Token is null or empty, redirecting to home for demo");
+          // print removed
           await UserDataStore.clearAllData();
           Navigator.pushReplacementNamed(context, AppRoutes.navbar);
         } else {
-          debugPrint("Splash: Token found, redirecting to home");
+          // print removed
           // If already logged in, automatically open home page
           Navigator.pushReplacementNamed(context, AppRoutes.navbar);
         }
