@@ -11,39 +11,37 @@ class CurrentSessionCard extends StatelessWidget {
     final currency = Localizations.localeOf(context).languageCode == 'bn' ? '৳' : 'BDT';
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
-        border: Border.all(
-          color: theme.colorScheme.onSurface.withOpacity(0.05),
-        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildCompactStat(
             theme,
-            title: loc.translate('today_earn'),
+            title: loc.translate('today_earn') ?? 'Earn',
             value: "142.50 $currency",
             icon: Icons.account_balance_wallet_rounded,
           ),
           Container(
             width: 1,
-            height: 36,
+            height: 30,
+            margin: const EdgeInsets.symmetric(horizontal: 12),
             color: theme.colorScheme.onSurface.withOpacity(0.1),
           ),
           _buildCompactStat(
             theme,
-            title: loc.translate('trippy_due'),
+            title: loc.translate('trippy_due') ?? 'Due',
             value: "20.00 $currency",
             icon: Icons.receipt_long_rounded,
             valueColor: Colors.red,
@@ -57,15 +55,8 @@ class CurrentSessionCard extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.onSurface.withOpacity(0.04),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 16, color: theme.colorScheme.onSurface),
-        ),
-        const SizedBox(width: 10),
+        Icon(icon, size: 24, color: valueColor ?? theme.colorScheme.onSurface),
+        const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -75,17 +66,15 @@ class CurrentSessionCard extends StatelessWidget {
               style: TextStyle(
                 color: theme.colorScheme.onSurface.withOpacity(0.5),
                 fontSize: 10,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.3,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 2),
             Text(
               value,
               style: TextStyle(
                 color: valueColor ?? theme.colorScheme.onSurface,
                 fontSize: 14,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ],

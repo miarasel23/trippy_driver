@@ -251,5 +251,12 @@
   "nav_history": "History",
   "nav_profile": "Profile",
   "today_earn": "Today Earn",
-  "trippy_due": "Trippy Due"
+  "trippy_due": "Trippy Due",
+  "active_bid": "Active bid",
+  "trip_accepted": "Trip Accepted",
+  "call": "Call",
+  "message": "Message",
+  "navigate": "Navigate",
+  "my_bid": "My Bid",
+  "expired": "EXPIRED"
 }

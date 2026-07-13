@@ -21,6 +21,9 @@ class AppUrls {
   static const String rentalTripList = "$baseUrl/v1/rental-trip/rental-trip-list";
   static const String searchLocation = "$baseUrl/v1/global-api/search-location";
   static const String getCustomerLocations = "$baseUrl/v1/customer/get-locations";
+  static const String createTripBid = "$baseUrl/v1/rental-trip/create-trip-bid";
+  static const String rentalBidTripList = "$baseUrl/v1/rental-trip/rental-bid-trip-list";
+  static const String createDriverTrack = "$baseUrl/v1/customer-driver-track/create";
 
 
   static String? get profileImageUrl {

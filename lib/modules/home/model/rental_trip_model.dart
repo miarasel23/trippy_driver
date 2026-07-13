@@ -14,6 +14,7 @@ class RentalTripModel {
   final List<LocationModel> pickupLocations;
   final List<LocationModel> dropoffLocations;
   final String createdAt;
+  final MyBid? myBid;
 
   RentalTripModel({
     required this.id,
@@ -31,6 +32,7 @@ class RentalTripModel {
     required this.pickupLocations,
     required this.dropoffLocations,
     required this.createdAt,
+    this.myBid,
   });
 
   factory RentalTripModel.fromJson(Map<String, dynamic> json) {
@@ -59,6 +61,30 @@ class RentalTripModel {
               ?.map((e) => LocationModel.fromJson(e))
               .toList() ??
           [],
+      myBid: json['my_bid'] != null ? MyBid.fromJson(json['my_bid']) : null,
+    );
+  }
+}
+
+class MyBid {
+  final String uuid;
+  final double amount;
+  final String status;
+  final String createdAt;
+
+  MyBid({
+    required this.uuid,
+    required this.amount,
+    required this.status,
+    required this.createdAt,
+  });
+
+  factory MyBid.fromJson(Map<String, dynamic> json) {
+    return MyBid(
+      uuid: json['uuid'] ?? '',
+      amount: (json['amount'] ?? 0).toDouble(),
+      status: json['status'] ?? '',
+      createdAt: json['created_at'] ?? '',
     );
   }
 }

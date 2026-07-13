@@ -20,6 +20,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
   final Map<String, String> _translatedAddresses = {};
   bool _isBangla = false;
   bool _translationsLoaded = false;
+  bool _isSubmitting = false;
   
   late final TextEditingController _bidController;
   String? _bidError;
@@ -163,15 +164,37 @@ class _NewRequestCardState extends State<NewRequestCard> {
     }
     
     final baseAmount = widget.trip.customerOfferAmmount;
-    final maxAllowed = baseAmount * 1.5;
-    final minAllowed = baseAmount * 0.85;
+    final maxAllowed = (baseAmount * 1.5).round();
+    final minAllowed = (baseAmount * 0.85).round();
 
     if (amount > maxAllowed) {
-      setState(() => _bidError = "Max ${maxAllowed.round()}");
+      setState(() => _bidError = "Max $maxAllowed");
     } else if (amount < minAllowed) {
-      setState(() => _bidError = "Min ${minAllowed.round()}");
+      setState(() => _bidError = "Min $minAllowed");
     } else {
       setState(() => _bidError = null);
+    }
+  }
+
+  Future<void> _submitBid() async {
+    final amount = double.tryParse(_bidController.text);
+    if (amount == null || _bidError != null) return;
+
+    setState(() => _isSubmitting = true);
+
+    final error = await context.read<HomeController>().submitBid(widget.trip.uuid, amount);
+
+    if (mounted) {
+      setState(() => _isSubmitting = false);
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Bid submitted successfully!'), backgroundColor: Colors.green),
+        );
+      }
     }
   }
 
@@ -410,16 +433,18 @@ class _NewRequestCardState extends State<NewRequestCard> {
                   child: SizedBox(
                     height: _bidError != null ? 76 : 56, // Match height of textfield considering error text
                     child: ElevatedButton(
-                      onPressed: _bidError == null ? () {} : null,
-                      child: Text(
-                        loc.translate('bid_now') ?? 'Bid Now',
-                        style: TextStyle(
-                          color: _bidError == null ? theme.colorScheme.surface : theme.colorScheme.onSurface.withOpacity(0.5),
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                      onPressed: (_bidError == null && !_isSubmitting) ? _submitBid : null,
+                      child: _isSubmitting 
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                        : Text(
+                            loc.translate('bid_now') ?? 'Bid Now',
+                            style: TextStyle(
+                              color: _bidError == null ? theme.colorScheme.surface : theme.colorScheme.onSurface.withOpacity(0.5),
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.onSurface,
                         disabledBackgroundColor: theme.colorScheme.onSurface.withOpacity(0.1),
@@ -437,16 +462,30 @@ class _NewRequestCardState extends State<NewRequestCard> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
-                child: Text(
-                  loc.translate('bid_now') ?? 'Bid Now',
-                  style: TextStyle(
-                    color: theme.colorScheme.surface,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.0,
-                  ),
-                ),
+                onPressed: _isSubmitting ? null : () async {
+                  setState(() => _isSubmitting = true);
+                  final amount = widget.trip.customerOfferAmmount;
+                  final error = await context.read<HomeController>().submitBid(widget.trip.uuid, amount);
+                  if (mounted) {
+                    setState(() => _isSubmitting = false);
+                    if (error != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: Colors.red));
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Bid submitted successfully!'), backgroundColor: Colors.green));
+                    }
+                  }
+                },
+                child: _isSubmitting
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text(
+                      loc.translate('bid_now') ?? 'Bid Now',
+                      style: TextStyle(
+                        color: theme.colorScheme.surface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.onSurface,
                   padding: const EdgeInsets.symmetric(vertical: 16),
