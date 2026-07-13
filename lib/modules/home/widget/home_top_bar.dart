@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/utils/localization/app_localization.dart';
+import '../../../../utils/app_urls.dart';
 import '../controller/home_controller.dart';
 
 class HomeTopBar extends StatelessWidget {
@@ -70,7 +71,9 @@ class HomeTopBar extends StatelessWidget {
               const SizedBox(width: 12),
               CircleAvatar(
                 radius: 18,
-                backgroundImage: const AssetImage('assets/images/placeholder_profile.png'),
+                backgroundImage: AppUrls.profileImageUrl != null 
+                    ? NetworkImage(AppUrls.profileImageUrl!) 
+                    : const AssetImage('assets/images/placeholder_profile.png') as ImageProvider,
                 backgroundColor: Colors.grey.shade300,
               ),
             ],

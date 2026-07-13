@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/localization/app_localization.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:translator/translator.dart';
-import 'package:geocoding/geocoding.dart';
 import '../model/rental_trip_model.dart';
 import '../controller/home_controller.dart';
+import '../helper/new_request_card_helper.dart';
+import 'translated_text.dart';
 
 class NewRequestCard extends StatefulWidget {
   final RentalTripModel trip;
@@ -16,13 +16,9 @@ class NewRequestCard extends StatefulWidget {
 }
 
 class _NewRequestCardState extends State<NewRequestCard> {
-  final GoogleTranslator _translator = GoogleTranslator();
-  final Map<String, String> _translatedAddresses = {};
-  bool _isBangla = false;
-  bool _translationsLoaded = false;
   bool _isSubmitting = false;
   bool _hasBidded = false;
-  
+
   late final TextEditingController _bidController;
   String? _bidError;
 
@@ -38,56 +34,8 @@ class _NewRequestCardState extends State<NewRequestCard> {
     super.dispose();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final newIsBangla = Localizations.localeOf(context).languageCode == 'bn';
-    if (newIsBangla != _isBangla || !_translationsLoaded) {
-      _isBangla = newIsBangla;
-      _loadTranslations();
-    }
-  }
-
-  Future<void> _loadTranslations() async {
-    if (!_isBangla) {
-      if (mounted) setState(() => _translationsLoaded = true);
-      return;
-    }
-
-    final allLocations = [
-      ...widget.trip.pickupLocations,
-      ...widget.trip.dropoffLocations,
-    ];
-
-    final Map<String, String> results = {};
-    for (final loc in allLocations) {
-      if (!results.containsKey(loc.uuid)) {
-        results[loc.uuid] = await _translateLocationToBangla(loc);
-      }
-    }
-
-    if (mounted) {
-      setState(() {
-        _translatedAddresses.addAll(results);
-        _translationsLoaded = true;
-      });
-    }
-  }
-
-  Future<String> _translateLocationToBangla(LocationModel locModel) async {
-    try {
-      final translation = await _translator
-          .translate(locModel.address, from: 'auto', to: 'bn')
-          .timeout(const Duration(seconds: 10));
-      return translation.text;
-    } catch (e) {
-      // print removed
-      return locModel.address;
-    }
-  }
-
-  String _translateNumbersAndCommonWords(String text) {
-    if (!_isBangla) return text;
+  String _translateNumbersAndCommonWords(String text, bool isBangla) {
+    if (!isBangla) return text;
     const englishToBangla = {
       '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪',
       '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯',
@@ -122,15 +70,8 @@ class _NewRequestCardState extends State<NewRequestCard> {
     return minutes == 0 ? "1 min" : "$minutes min";
   }
 
-  String _getAddress(LocationModel locModel) {
-    if (!_isBangla) return locModel.address;
-    return _translatedAddresses[locModel.uuid] ?? locModel.address;
-  }
-
   DateTime _parseCreatedAt(String createdAtStr) {
     DateTime parsed = DateTime.tryParse(createdAtStr) ?? DateTime.now();
-    // Fix for backend bug: The backend mistakenly adds 7 hours to local time
-    // (1 hour manual + 6 hours timezone conversion on an already local naive datetime).
     if (parsed.difference(DateTime.now()).inHours >= 5) {
       return parsed.subtract(const Duration(hours: 7));
     }
@@ -183,8 +124,13 @@ class _NewRequestCardState extends State<NewRequestCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isBangla = Localizations.localeOf(context).languageCode == 'bn';
     final createdAt = _parseCreatedAt(widget.trip.createdAt);
-    final isRideShare = widget.trip.carService.serviceName == 'RIDE_SHARE';
+    final rawService = widget.trip.serviceName.isNotEmpty
+        ? widget.trip.serviceName
+        : widget.trip.carService.serviceName;
+    final isRideShare = rawService.toUpperCase().contains('RIDE') ||
+        rawService.toUpperCase() == 'RIDE_SHARE';
     final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
     final expireTime = createdAt.add(totalDuration);
     final remaining = expireTime.difference(DateTime.now());
@@ -203,22 +149,27 @@ class _NewRequestCardState extends State<NewRequestCard> {
         context.read<HomeController>().removeTrip(widget.trip.uuid);
       },
       builder: (context, value, child) {
-        return _buildCardContent(context, value, totalDuration.inSeconds.toDouble(), isRideShare);
+        return _buildCardContent(context, value, totalDuration.inSeconds.toDouble(), isRideShare, isBangla);
       },
     );
   }
 
-  Widget _buildCardContent(BuildContext context, double remainingSeconds, double totalSeconds, bool isRideShare) {
+  Widget _buildCardContent(BuildContext context, double remainingSeconds, double totalSeconds, bool isRideShare, bool isBangla) {
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context);
-    final currency = _isBangla ? '৳' : 'BDT';
+    final currency = isBangla ? '৳' : 'BDT';
 
     final formattedCarType = _formatEnum(widget.trip.carCategory.carType, loc);
-    final formattedService = _formatEnum(widget.trip.carService.serviceName, loc);
-    final formattedAmount = _translateNumbersAndCommonWords("${widget.trip.customerOfferAmmount.round()}");
-    final formattedTotalDistance = _translateNumbersAndCommonWords("${widget.trip.totalDistance} km");
+    final formattedService = _formatEnum(
+      widget.trip.serviceName.isNotEmpty
+          ? widget.trip.serviceName
+          : widget.trip.carService.serviceName,
+      loc,
+    );
+    final formattedAmount = _translateNumbersAndCommonWords("${widget.trip.customerOfferAmmount.round()}", isBangla);
+    final formattedTotalDistance = _translateNumbersAndCommonWords("${widget.trip.totalDistance} km", isBangla);
     final formattedPickupDistance = _translateNumbersAndCommonWords(
-        "${widget.trip.pickupKm} away\n(~${_calculateMinutes(widget.trip.pickupKm)})");
+        "${widget.trip.pickupKm} away\n(~${_calculateMinutes(widget.trip.pickupKm)})", isBangla);
     final progress = remainingSeconds / totalSeconds;
     final isLow = progress < 0.2;
 
@@ -240,26 +191,55 @@ class _NewRequestCardState extends State<NewRequestCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row: title + countdown timer
+          // Header row: title + service badge + countdown timer
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.stars, color: theme.colorScheme.onSurface.withOpacity(0.7), size: 16),
-                  const SizedBox(width: 4),
-                  Text(
-                    _hasBidded 
-                        ? (loc.translate('wait_customer_acceptance') ?? 'Waiting for customer acceptance...')
-                        : (loc.translate('new_request') ?? 'New Request'),
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.stars, color: theme.colorScheme.onSurface.withOpacity(0.7), size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      _hasBidded
+                          ? (loc.translate('wait_customer_acceptance') ?? 'Waiting...')
+                          : (loc.translate('new_request') ?? 'New Request'),
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    // Service name badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: isRideShare
+                            ? Colors.blue.withOpacity(0.15)
+                            : Colors.orange.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isRideShare
+                              ? Colors.blue.withOpacity(0.5)
+                              : Colors.orange.withOpacity(0.5),
+                          width: 1,
+                        ),
+                      ),
+                      child: TranslatedText(
+                        formattedService,
+                        isBangla: isBangla,
+                        style: TextStyle(
+                          color: isRideShare ? Colors.blue : Colors.orange,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               Row(
                 children: [
@@ -294,13 +274,35 @@ class _NewRequestCardState extends State<NewRequestCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  "$formattedCarType • $formattedService",
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Row(
+                  children: [
+                    TranslatedText(
+                      formattedCarType,
+                      isBangla: isBangla,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      " • ",
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    TranslatedText(
+                      formattedService,
+                      isBangla: isBangla,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Column(
@@ -330,22 +332,42 @@ class _NewRequestCardState extends State<NewRequestCard> {
           // Pickup locations
           ...widget.trip.pickupLocations.map((locModel) => Padding(
             padding: const EdgeInsets.only(bottom: 8.0),
-            child: _buildInfoTile(
+            child: buildInfoTile(
               icon: Icons.my_location,
               title: loc.translate('pickup') ?? 'Pickup',
-              value: _translationsLoaded ? _getAddress(locModel) : locModel.address,
-              isLoading: !_translationsLoaded && _isBangla,
+              customValueWidget: TranslatedText(
+                locModel.address,
+                isBangla: isBangla,
+                location: locModel,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               theme: theme,
             ),
           )),
           // Dropoff locations
           ...widget.trip.dropoffLocations.map((locModel) => Padding(
             padding: const EdgeInsets.only(bottom: 8.0),
-            child: _buildInfoTile(
+            child: buildInfoTile(
               icon: Icons.location_on,
               title: loc.translate('dropoff') ?? 'Dropoff',
-              value: _translationsLoaded ? _getAddress(locModel) : locModel.address,
-              isLoading: !_translationsLoaded && _isBangla,
+              customValueWidget: TranslatedText(
+                locModel.address,
+                isBangla: isBangla,
+                location: locModel,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               theme: theme,
             ),
           )),
@@ -353,7 +375,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
           Row(
             children: [
               Expanded(
-                child: _buildInfoTile(
+                child: buildInfoTile(
                   icon: Icons.route,
                   title: loc.translate('total_distance') ?? 'Total Distance',
                   value: formattedTotalDistance,
@@ -362,7 +384,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildInfoTile(
+                child: buildInfoTile(
                   icon: Icons.social_distance,
                   title: loc.translate('pickup_distance') ?? 'Pickup Distance',
                   value: formattedPickupDistance,
@@ -374,10 +396,20 @@ class _NewRequestCardState extends State<NewRequestCard> {
           if (widget.trip.note.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
-              child: _buildInfoTile(
+              child: buildInfoTile(
                 icon: Icons.notes,
                 title: loc.translate('note') ?? 'Note',
-                value: widget.trip.note,
+                customValueWidget: TranslatedText(
+                  widget.trip.note,
+                  isBangla: isBangla,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
                 theme: theme,
               ),
             ),
@@ -490,62 +522,6 @@ class _NewRequestCardState extends State<NewRequestCard> {
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoTile({
-    required IconData icon,
-    required String title,
-    required String value,
-    required ThemeData theme,
-    bool isLoading = false,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.7), size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                if (isLoading)
-                  const SizedBox(
-                    height: 14,
-                    width: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                else
-                  Text(
-                    value,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-              ],
-            ),
-          ),
         ],
       ),
     );

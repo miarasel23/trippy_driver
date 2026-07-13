@@ -63,13 +63,13 @@ class BidTripOverlay extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
+                            color: theme.colorScheme.onSurface,
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             loc.translate('wait_customer_acceptance') ?? 'Waiting for customer acceptance...',
-                            style: const TextStyle(
-                              color: Colors.orange, 
+                            style: TextStyle(
+                              color: theme.colorScheme.surface, 
                               fontSize: 10, 
                               fontWeight: FontWeight.bold
                             ),
@@ -212,9 +212,11 @@ class _BidTripItemState extends State<_BidTripItem> {
       timeString = _toBanglaDigits(timeString);
     }
     
-    final displayAmount = isBangla ? _toBanglaDigits(amount.toString()) : amount.toString();
+    final displayAmount = isBangla ? _toBanglaDigits(amount.round().toString()) : amount.round().toString();
     final displayStatus = isBangla ? (loc.translate(status?.toLowerCase() ?? '') ?? status ?? '') : (status ?? '');
 
+    final currency = isBangla ? '৳' : 'BDT';
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -225,27 +227,43 @@ class _BidTripItemState extends State<_BidTripItem> {
               Row(
                 children: [
                   Text(
-                    "${loc.translate('my_bid') ?? 'My Bid'}: \৳$displayAmount",
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    "${loc.translate('my_bid') ?? 'My Bid'}:",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: theme.colorScheme.onSurface.withOpacity(0.8)),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: isExpired ? Colors.red.withOpacity(0.1) : theme.colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
+                      color: theme.colorScheme.onSurface,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      "$currency $displayAmount",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900, 
+                        fontSize: 14, 
+                        color: theme.colorScheme.surface,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: isExpired ? Colors.red : theme.colorScheme.onSurface,
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.timer_outlined, size: 14, color: isExpired ? Colors.red : theme.colorScheme.primary),
+                        Icon(Icons.timer_outlined, size: 14, color: isExpired ? Colors.white : theme.colorScheme.surface),
                         const SizedBox(width: 4),
                         Text(
                           timeString,
                           style: TextStyle(
-                            color: isExpired ? Colors.red : theme.colorScheme.primary, 
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
+                            color: isExpired ? Colors.white : theme.colorScheme.surface, 
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
                           ),
                         ),
                       ],
@@ -253,39 +271,53 @@ class _BidTripItemState extends State<_BidTripItem> {
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Icon(Icons.my_location, size: 12, color: Colors.blue.withOpacity(0.8)),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: TranslatedText(
-                      pickup,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface.withOpacity(0.9), fontWeight: FontWeight.w500),
-                      isBangla: isBangla,
-                      location: pickupLoc,
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.my_location, size: 14, color: Colors.blue.withOpacity(0.9)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: TranslatedText(
+                            pickup,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface, fontWeight: FontWeight.w600),
+                            isBangla: isBangla,
+                            location: pickupLoc,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  Icon(Icons.location_on, size: 12, color: Colors.red.withOpacity(0.8)),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: TranslatedText(
-                      dropoff,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface.withOpacity(0.9), fontWeight: FontWeight.w500),
-                      isBangla: isBangla,
-                      location: dropoffLoc,
+                    const SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.location_on, size: 14, color: Colors.red.withOpacity(0.9)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: TranslatedText(
+                            dropoff,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface, fontWeight: FontWeight.w600),
+                            isBangla: isBangla,
+                            location: dropoffLoc,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               if (widget.trip.note.isNotEmpty) ...[
                 const SizedBox(height: 6),
@@ -302,14 +334,15 @@ class _BidTripItemState extends State<_BidTripItem> {
                       Icon(Icons.notes, size: 12, color: Colors.amber[800]),
                       const SizedBox(width: 4),
                       Expanded(
-                        child: Text(
+                        child: TranslatedText(
                           widget.trip.note,
+                          isBangla: isBangla,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 12, 
-                            color: theme.colorScheme.onSurface.withOpacity(0.85), 
-                            fontStyle: FontStyle.italic
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurface.withOpacity(0.85),
+                            fontStyle: FontStyle.italic,
                           ),
                         ),
                       ),

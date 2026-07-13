@@ -3,9 +3,9 @@ import 'package:translator/translator.dart';
 void main() async {
   final translator = GoogleTranslator();
   try {
-    var translation = await translator.translate("Gulshan 1, Dhaka", from: 'en', to: 'bn');
-    print("SUCCESS: ${translation.text}");
+    final result = await translator.translate("412/1, 412 Senpara Parbata Ln, Dhaka 1216, Bangladesh", from: 'auto', to: 'bn');
+    print("Success: ${result.text}");
   } catch (e) {
-    print("ERROR: $e");
+    print("Error: $e");
   }
 }
