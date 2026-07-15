@@ -16,6 +16,7 @@ class RentalTripModel {
   final String createdAt;
   final MyBid? myBid;
   final String note;
+  final List<CustomerModel> customer;
 
   RentalTripModel({
     required this.id,
@@ -35,6 +36,7 @@ class RentalTripModel {
     required this.createdAt,
     this.myBid,
     this.note = '',
+    this.customer = const [],
   });
 
   factory RentalTripModel.fromJson(Map<String, dynamic> json) {
@@ -65,6 +67,10 @@ class RentalTripModel {
           [],
       myBid: json['my_bid'] != null ? MyBid.fromJson(json['my_bid']) : null,
       note: json['note'] ?? json['trip_details']?['note'] ?? '',
+      customer: (json['customer'] as List?)
+              ?.map((e) => CustomerModel.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 }
@@ -151,6 +157,53 @@ class LocationModel {
       address: json['address'] ?? '',
       latitude: double.tryParse(json['latitude']?.toString() ?? '0') ?? 0.0,
       longitude: double.tryParse(json['longitude']?.toString() ?? '0') ?? 0.0,
+    );
+  }
+}
+
+class CustomerModel {
+  final String rentBidUuid;
+  final String customerUuid;
+  final String name;
+  final String email;
+  final String profilePicture;
+  final String countryCode;
+  final bool isActive;
+  final String phone;
+  final String bidStatus;
+  final bool hasBid;
+  final bool reviewStatus;
+  final double averageRating;
+
+  CustomerModel({
+    required this.rentBidUuid,
+    required this.customerUuid,
+    required this.name,
+    required this.email,
+    required this.profilePicture,
+    required this.countryCode,
+    required this.isActive,
+    required this.phone,
+    required this.bidStatus,
+    required this.hasBid,
+    required this.reviewStatus,
+    required this.averageRating,
+  });
+
+  factory CustomerModel.fromJson(Map<String, dynamic> json) {
+    return CustomerModel(
+      rentBidUuid: json['rent_bid_uuid'] ?? '',
+      customerUuid: json['customer_uuid'] ?? '',
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      profilePicture: json['profile_picture'] ?? '',
+      countryCode: json['country_code'] ?? '',
+      isActive: json['is_active'] ?? false,
+      phone: json['phone'] ?? '',
+      bidStatus: json['bid_status'] ?? '',
+      hasBid: json['has_bid'] ?? false,
+      reviewStatus: json['review_status'] ?? false,
+      averageRating: double.tryParse(json['average_rating']?.toString() ?? '0') ?? 0.0,
     );
   }
 }

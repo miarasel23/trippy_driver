@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:equatable/equatable.dart';
@@ -9,6 +9,9 @@ import '../model/rental_trip_model.dart';
 import '../repository/home_repository.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import '../../../utils/app_urls.dart';
 
 class HomeState extends Equatable {
   final bool isOnline;
@@ -16,6 +19,8 @@ class HomeState extends Equatable {
   final List<RentalTripModel> rentalTrips;
   final List<RentalTripModel> bidTrips;
   final bool isLoadingTrips;
+  final Set<Marker> markers;
+  final Set<Polyline> polylines;
 
   const HomeState({
     required this.isOnline,
@@ -23,6 +28,8 @@ class HomeState extends Equatable {
     this.rentalTrips = const [],
     this.bidTrips = const [],
     this.isLoadingTrips = false,
+    this.markers = const <Marker>{},
+    this.polylines = const <Polyline>{},
   });
 
   HomeState copyWith({
@@ -31,6 +38,8 @@ class HomeState extends Equatable {
     List<RentalTripModel>? rentalTrips,
     List<RentalTripModel>? bidTrips,
     bool? isLoadingTrips,
+    Set<Marker>? markers,
+    Set<Polyline>? polylines,
   }) {
     return HomeState(
       isOnline: isOnline ?? this.isOnline,
@@ -38,11 +47,13 @@ class HomeState extends Equatable {
       rentalTrips: rentalTrips ?? this.rentalTrips,
       bidTrips: bidTrips ?? this.bidTrips,
       isLoadingTrips: isLoadingTrips ?? this.isLoadingTrips,
+      markers: markers ?? this.markers,
+      polylines: polylines ?? this.polylines,
     );
   }
 
   @override
-  List<Object?> get props => [isOnline, serviceMode, rentalTrips, bidTrips, isLoadingTrips];
+  List<Object?> get props => [isOnline, serviceMode, rentalTrips, bidTrips, isLoadingTrips, markers, polylines];
 }
 
 class HomeController extends Cubit<HomeState> {
@@ -253,9 +264,91 @@ class HomeController extends Cubit<HomeState> {
 
       if (stateChanged) {
         final updatedList = validBids.map((t) => currentMap[t.uuid]!).toList();
-        emit(state.copyWith(bidTrips: updatedList));
+        await _generateAndEmitMapData(updatedList);
       }
     }
+  }
+
+  Future<void> _generateAndEmitMapData(List<RentalTripModel> bids) async {
+    final acceptedTrips = bids.where((t) {
+      final status = t.myBid?.status ?? t.tripStatus;
+      return status == 'ACCEPTED';
+    }).toList();
+
+    if (acceptedTrips.isEmpty) {
+      emit(state.copyWith(bidTrips: bids, markers: const <Marker>{}, polylines: const <Polyline>{}));
+      return;
+    }
+
+    final trip = acceptedTrips.first;
+    final generatedMarkers = <Marker>{};
+    final points = <PointLatLng>[];
+
+    for (int i = 0; i < trip.pickupLocations.length; i++) {
+       final pickup = trip.pickupLocations[i];
+       generatedMarkers.add(
+         Marker(
+           markerId: MarkerId('pickup_$i'),
+           position: LatLng(pickup.latitude, pickup.longitude),
+           infoWindow: InfoWindow(title: 'Pickup ${i+1}', snippet: pickup.address),
+           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+         ),
+       );
+       points.add(PointLatLng(pickup.latitude, pickup.longitude));
+    }
+
+    for (int i = 0; i < trip.dropoffLocations.length; i++) {
+       final drop = trip.dropoffLocations[i];
+       generatedMarkers.add(
+         Marker(
+           markerId: MarkerId('dropoff_$i'),
+           position: LatLng(drop.latitude, drop.longitude),
+           infoWindow: InfoWindow(title: 'Dropoff ${i+1}', snippet: drop.address),
+           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+         ),
+       );
+       points.add(PointLatLng(drop.latitude, drop.longitude));
+    }
+
+    final generatedPolylines = <Polyline>{};
+
+    if (points.length >= 2) {
+       PolylinePoints polylinePoints = PolylinePoints();
+       List<LatLng> polylineCoordinates = [];
+
+       for (int i = 0; i < points.length - 1; i++) {
+          PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+            googleApiKey: AppUrls.googleApiKey,
+            request: PolylineRequest(
+               origin: points[i],
+               destination: points[i+1],
+               mode: TravelMode.driving,
+            ),
+          );
+          if (result.points.isNotEmpty) {
+             for (var point in result.points) {
+                polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+             }
+          }
+       }
+
+       if (polylineCoordinates.isNotEmpty) {
+         generatedPolylines.add(
+           Polyline(
+             polylineId: const PolylineId('route'),
+             color: const Color(0xFF0000FF), // Blue
+             width: 5,
+             points: polylineCoordinates,
+           ),
+         );
+       }
+    }
+
+    emit(state.copyWith(
+      bidTrips: bids, 
+      markers: generatedMarkers,
+      polylines: generatedPolylines,
+    ));
   }
 
   void removeTrip(String uuid) {

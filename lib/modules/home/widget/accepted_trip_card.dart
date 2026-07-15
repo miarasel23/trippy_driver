@@ -4,6 +4,7 @@ import '../controller/home_controller.dart';
 import '../../../../core/utils/localization/app_localization.dart';
 import '../model/rental_trip_model.dart';
 import 'translated_text.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AcceptedTripCard extends StatelessWidget {
   const AcceptedTripCard({Key? key}) : super(key: key);
@@ -127,7 +128,15 @@ class AcceptedTripCard extends StatelessWidget {
                     icon: Icons.phone,
                     label: loc.translate('call') ?? "Call",
                     color: Colors.green,
-                    onTap: () {},
+                    onTap: () async {
+                      if (trip.customer.isNotEmpty) {
+                        final phone = trip.customer.first.phone;
+                        final url = Uri.parse('tel:$phone');
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url);
+                        }
+                      }
+                    },
                   ),
                   _buildActionButton(
                     icon: Icons.message,
@@ -139,7 +148,14 @@ class AcceptedTripCard extends StatelessWidget {
                     icon: Icons.navigation,
                     label: loc.translate('navigate') ?? "Navigate",
                     color: theme.colorScheme.primary,
-                    onTap: () {},
+                    onTap: () async {
+                      if (pickupLoc != null) {
+                        final url = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=${pickupLoc.latitude},${pickupLoc.longitude}');
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        }
+                      }
+                    },
                   ),
                 ],
               ),

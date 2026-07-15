@@ -85,30 +85,40 @@ class _HomeViewState extends State<HomeView> {
         body: Stack(
           children: [
             // 1. Google Map Background
-            GoogleMap(
-              mapType: MapType.normal,
-              initialCameraPosition: _kGooglePlex,
-              onMapCreated: (GoogleMapController controller) {
-                _mapController.complete(controller);
-                _goToCurrentLocation();
+            BlocBuilder<HomeController, HomeState>(
+              builder: (context, state) {
+                return GoogleMap(
+                  mapType: MapType.normal,
+                  initialCameraPosition: _kGooglePlex,
+                  onMapCreated: (GoogleMapController controller) {
+                    _mapController.complete(controller);
+                    _goToCurrentLocation();
+                  },
+                  myLocationEnabled: true,
+                  myLocationButtonEnabled: true,
+                  zoomControlsEnabled: true,
+                  zoomGesturesEnabled: true,
+                  scrollGesturesEnabled: true,
+                  markers: state.markers,
+                  polylines: state.polylines,
+                );
               },
-              myLocationEnabled: true,
-              myLocationButtonEnabled: false,
-              zoomControlsEnabled: false,
             ),
           
           // Add a subtle gradient overlay
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  theme.scaffoldBackgroundColor.withOpacity(0.7),
-                  Colors.transparent,
-                  Colors.transparent,
-                  theme.scaffoldBackgroundColor.withOpacity(0.9),
-                ],
+          IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    theme.scaffoldBackgroundColor.withOpacity(0.7),
+                    Colors.transparent,
+                    Colors.transparent,
+                    theme.scaffoldBackgroundColor.withOpacity(0.9),
+                  ],
+                ),
               ),
             ),
           ),
