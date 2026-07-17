@@ -31,41 +31,45 @@ class HomeTopBar extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              GestureDetector(
-                onTap: () {
+              OutlinedButton(
+                onPressed: () {
                   context.read<HomeController>().toggleOnlineStatus();
                 },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0), // Adjusted vertical padding slightly as OutlinedButton has minimum sizes
+                  minimumSize: const Size(0, 36),
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isOnline ? Colors.green : Colors.red,
-                      width: 1,
+                  ),
+                  side: BorderSide(
+                    color: isOnline ? Colors.lightGreen : Colors.red,
+                    width: 1,
+                  ),
+                  backgroundColor: isOnline ? Colors.lightGreen : Colors.red,
+                  foregroundColor: Colors.white,
+                  overlayColor: Colors.white.withOpacity(0.3),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: isOnline ? Colors.green : Colors.red,
-                          shape: BoxShape.circle,
-                        ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isOnline ? "Online" : "Offline",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        loc.translate('online_status'),
-                        style: TextStyle(
-                          color: isOnline ? Colors.green : Colors.red,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 12),

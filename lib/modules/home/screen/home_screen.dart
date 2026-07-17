@@ -187,8 +187,8 @@ class _HomeViewState extends State<HomeView> {
           builder: (context, state) {
             return FloatingActionButton(
               onPressed: () => ServiceModeBottomSheet.show(context, theme),
-              backgroundColor: theme.colorScheme.onSurface,
-              child: Icon(Icons.local_taxi, color: theme.colorScheme.surface),
+              backgroundColor: state.isOnline ? Colors.lightGreen : Colors.red,
+              child: const Icon(Icons.local_taxi, color: Colors.white),
             );
           },
         ),

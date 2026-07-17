@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../store/user_data_store.dart';
+import '../repository/splash_repository.dart';
 import '../widget/trippy_brand_animation.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -35,13 +37,31 @@ class _SplashScreenState extends State<SplashScreen> {
 
       try {
         await UserDataStore.getUuid();
-        // print removed
-      } catch (e) {
-        // print removed
+      } catch (e) {}
+
+      // Start the 4-second animation timer
+      final animationFuture = Future.delayed(const Duration(seconds: 4));
+
+      // Fetch fresh user data from API in the background so ride status is up to date
+      if (UserDataStore.accessToken != null && UserDataStore.accessToken!.isNotEmpty) {
+        try {
+          String platform = "web";
+          if (Theme.of(context).platform == TargetPlatform.android) platform = "android";
+          else if (Theme.of(context).platform == TargetPlatform.iOS) platform = "ios";
+          
+          final prefs = await SharedPreferences.getInstance();
+          final lang = prefs.getString('active_language_code') ?? 'en';
+          
+          await SplashRepository().receivingUserData(
+            plaform: platform, 
+            languageCode: lang, 
+            actionWhen: "admin_login", 
+            token: UserDataStore.accessToken!
+          );
+        } catch (_) {}
       }
       
-      // Let the beautiful Trippy animation play for 4 seconds
-      await Future.delayed(const Duration(seconds: 4));
+      await animationFuture;
       
       if (mounted) {
         final token = UserDataStore.accessToken;
