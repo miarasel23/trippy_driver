@@ -153,6 +153,18 @@ class HomeController extends Cubit<HomeState> {
     await _updateStatusAndEmit(mode);
   }
 
+  Future<String?> cancelTrip(String tripUuid, String comment) async {
+    final driverUuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
+    if (driverUuid == null) return "User not authenticated";
+    final error = await repository.cancelTrip(driverUuid: driverUuid, tripUuid: tripUuid, comment: comment);
+    if (error == null) {
+      // Refresh trips after cancellation
+      fetchBidTrips();
+      fetchRentalTrips();
+    }
+    return error;
+  }
+
   Future<void> _updateStatusAndEmit(String mode) async {
     final error = await repository.updateRideStatus(status: mode);
     
@@ -236,34 +248,57 @@ class HomeController extends Cubit<HomeState> {
   }
 
   void fetchBidTrips() async {
-    final bids = await repository.getBidTripList();
-    if (bids != null) {
-      final validBids = bids.where((t) => !_ignoredBidTripIds.contains(t.uuid)).toList();
+    final bidsFuture = repository.getBidTripList();
+    final activeBidsFuture = repository.getActiveBidTrips();
+    
+    final results = await Future.wait([bidsFuture, activeBidsFuture]);
+    final List<RentalTripModel> allFetchedBids = [];
+    if (results[0] != null) allFetchedBids.addAll(results[0]!);
+    if (results[1] != null) allFetchedBids.addAll(results[1]!);
+    
+    // Deduplicate by UUID, taking the most recent/relevant if there are duplicates
+    final Map<String, RentalTripModel> uniqueBids = {};
+    for (var bid in allFetchedBids) {
+      // Prioritize bids that have a myBid object or are from the active bids list
+      if (!uniqueBids.containsKey(bid.uuid) || bid.myBid != null) {
+        uniqueBids[bid.uuid] = bid;
+      }
+    }
+    
+    final bids = uniqueBids.values.toList();
+    if (bids.isNotEmpty || results[0] != null || results[1] != null) {
+      final validBids = bids.where((t) {
+        if (_ignoredBidTripIds.contains(t.uuid)) return false;
+        final ts = t.tripStatus;
+        if (ts == 'CANCELLED' || t.myBid?.status == 'CANCELLED') return false;
+        if (ts == 'COMPLETED') return false;
+        
+        if (t.serviceName == 'RIDE_SHARE') {
+           if (ts == 'RIDE_STARTED' || ts == 'FIRST_COMPLETED' || ts == 'IN_PROGRESS') return false;
+        }
+        
+        return true;
+      }).toList();
       
-      final currentMap = { for (var t in state.bidTrips) t.uuid: t };
       bool stateChanged = false;
       
-      final currentIds = currentMap.keys.toSet();
+      final currentIds = state.bidTrips.map((t) => t.uuid).toSet();
       final newIds = validBids.map((t) => t.uuid).toSet();
-      if (currentIds.length != newIds.length || !currentIds.containsAll(newIds)) {
+      if (currentIds.length != newIds.length || !currentIds.containsAll(newIds) || !newIds.containsAll(currentIds)) {
         stateChanged = true;
       }
 
+      final newMap = <String, RentalTripModel>{};
       for (var apiBid in validBids) {
-        if (!currentMap.containsKey(apiBid.uuid)) {
-          currentMap[apiBid.uuid] = apiBid;
+        newMap[apiBid.uuid] = apiBid;
+        final old = state.bidTrips.firstWhere((t) => t.uuid == apiBid.uuid, orElse: () => apiBid);
+        if (old != apiBid && (old.tripStatus != apiBid.tripStatus || old.myBid?.status != apiBid.myBid?.status)) {
           stateChanged = true;
-        } else {
-          final old = currentMap[apiBid.uuid]!;
-          if (old.tripStatus != apiBid.tripStatus || old.myBid?.status != apiBid.myBid?.status) {
-            currentMap[apiBid.uuid] = apiBid;
-            stateChanged = true;
-          }
         }
       }
 
       if (stateChanged) {
-        final updatedList = validBids.map((t) => currentMap[t.uuid]!).toList();
+        final updatedList = newMap.values.toList();
         await _generateAndEmitMapData(updatedList);
       }
     }
@@ -271,8 +306,14 @@ class HomeController extends Cubit<HomeState> {
 
   Future<void> _generateAndEmitMapData(List<RentalTripModel> bids) async {
     final acceptedTrips = bids.where((t) {
-      final status = t.myBid?.status ?? t.tripStatus;
-      return status == 'ACCEPTED';
+      final status = t.tripStatus;
+      final bidStatus = t.myBid?.status;
+      
+      if (t.serviceName == 'RIDE_SHARE') {
+        return status == 'ACCEPTED' || bidStatus == 'ACCEPTED';
+      } else {
+        return status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || bidStatus == 'ACCEPTED';
+      }
     }).toList();
 
     if (acceptedTrips.isEmpty) {
@@ -370,6 +411,7 @@ class HomeController extends Cubit<HomeState> {
     );
     if (error == null) {
       removeTrip(tripUuid); // Hide the card on success
+      fetchBidTrips();      // Refresh bids to show overlay
     }
     return error;
   }

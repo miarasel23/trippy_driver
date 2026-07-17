@@ -259,5 +259,20 @@
   "navigate": "Navigate",
   "my_bid": "My Bid",
   "expired": "EXPIRED",
-  "wait_customer_acceptance": "Waiting for customer acceptance..."
+  "wait_customer_acceptance": "Waiting for customer acceptance...",
+  "passenger_no_show": "Passenger no-show",
+  "vehicle_issue": "Vehicle issue",
+  "heavy_traffic": "Heavy traffic",
+  "passenger_requested_cancel": "Passenger requested cancel",
+  "other": "Others",
+  "select_reason": "Select Reason",
+  "type_reason": "Type your reason here",
+  "please_enter_reason": "Please enter a reason",
+  "why_are_you_cancelling": "Why are you cancelling?",
+  "waiting_for_long_time": "Waiting for a long time",
+  "passenger_asked_to_cancel": "Passenger asked to cancel",
+  "changed_my_mind": "Changed my mind",
+  "please_write_your_reason": "Please write your reason...",
+  "dismiss": "Dismiss",
+  "submit": "Submit"
 }

@@ -18,6 +18,9 @@ class BidTripOverlay extends StatelessWidget {
           return const SizedBox.shrink();
         }
         final pendingTrips = state.bidTrips.where((t) {
+          final service = t.serviceName.isNotEmpty ? t.serviceName : t.carService.serviceName;
+          if (service != 'RIDE_SHARE') return false;
+          
           final status = t.myBid?.status ?? t.tripStatus;
           return status != 'ACCEPTED';
         }).toList();

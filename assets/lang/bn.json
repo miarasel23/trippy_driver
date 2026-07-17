@@ -263,5 +263,20 @@
   "navigate": "নেভিগেট",
   "my_bid": "আমার বিড",
   "expired": "মেয়াদোত্তীর্ণ",
-  "wait_customer_acceptance": "গ্রাহকের সম্মতির জন্য অপেক্ষা করুন"
+  "wait_customer_acceptance": "গ্রাহকের সম্মতির জন্য অপেক্ষা করুন",
+  "passenger_no_show": "যাত্রী আসেনি",
+  "vehicle_issue": "গাড়ির সমস্যা",
+  "heavy_traffic": "অতিরিক্ত যানজট",
+  "passenger_requested_cancel": "যাত্রী বাতিল করতে বলেছেন",
+  "other": "অন্যান্য",
+  "select_reason": "কারণ নির্বাচন করুন",
+  "type_reason": "আপনার কারণ এখানে লিখুন",
+  "please_enter_reason": "দয়া করে একটি কারণ লিখুন",
+  "why_are_you_cancelling": "আপনি কেন বাতিল করছেন?",
+  "waiting_for_long_time": "দীর্ঘ সময় ধরে অপেক্ষা করছি",
+  "passenger_asked_to_cancel": "যাত্রী বাতিল করতে বলেছেন",
+  "changed_my_mind": "আমি মত পরিবর্তন করেছি",
+  "please_write_your_reason": "দয়া করে আপনার কারণ লিখুন...",
+  "dismiss": "বাতিল",
+  "submit": "জমা দিন"
 }

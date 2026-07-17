@@ -177,55 +177,121 @@ class HomeRepository {
     final prefs = await SharedPreferences.getInstance();
     final languageCode = prefs.getString('active_language_code') ?? 'en';
 
-    final Map<String, String> requestedParams = {
+    final Map<String, String> params = {
       "platform": platform,
       "language_code": languageCode,
       "action_when": "rental_bid_trip_list_for_driver",
       "driver_uuid": uuid,
-      "trip_status": "REQUESTED",
+      "trip_status": "ALL",
     };
 
-    final Map<String, String> acceptedParams = {
-      "platform": platform,
-      "language_code": languageCode,
-      "action_when": "rental_bid_trip_list_for_driver",
-      "driver_uuid": uuid,
-      "trip_status": "ACCEPTED",
-    };
-
-    final uriReq = Uri.parse(AppUrls.rentalBidTripList).replace(queryParameters: requestedParams);
-    final uriAcc = Uri.parse(AppUrls.rentalBidTripList).replace(queryParameters: acceptedParams);
+    final uri = Uri.parse(AppUrls.rentalBidTripList).replace(queryParameters: params);
 
     try {
-      final resReq = await ApiService().get(
-        uriReq,
-        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
-      );
-      
-      final resAcc = await ApiService().get(
-        uriAcc,
+      final response = await ApiService().get(
+        uri,
         headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
       );
 
       List<RentalTripModel> allTrips = [];
 
-      if (resReq.statusCode == 200 || resReq.statusCode == 201) {
-        final body = jsonDecode(resReq.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final body = jsonDecode(response.body);
         if (body['status'] == true && body['data'] != null) {
           final List<dynamic> data = body['data'];
           allTrips.addAll(data.map((e) => RentalTripModel.fromJson(e)).toList());
         }
       }
-      
-      if (resAcc.statusCode == 200 || resAcc.statusCode == 201) {
-        final body = jsonDecode(resAcc.body);
-        if (body['status'] == true && body['data'] != null) {
-          final List<dynamic> data = body['data'];
-          allTrips.addAll(data.map((e) => RentalTripModel.fromJson(e)).toList());
-        }
-      }
-
       return allTrips;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<List<RentalTripModel>?> getActiveBidTrips() async {
+    final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
+    final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
+
+    if (uuid == null || token == null) return null;
+
+    String platform = Platform.isAndroid ? "android" : (Platform.isIOS ? "ios" : "web");
+    final prefs = await SharedPreferences.getInstance();
+    final languageCode = prefs.getString('active_language_code') ?? 'en';
+
+    final Map<String, String> params = {
+      "platform": platform,
+      "language_code": languageCode,
+      "action_when": "all_rental_trip_list",
+      "driver_uuid": uuid,
+      "trip_status": "REQUESTED",
+    };
+
+    final uri = Uri.parse(AppUrls.allRentalTripList).replace(queryParameters: params);
+
+    try {
+      final response = await ApiService().get(
+        uri,
+        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final body = jsonDecode(response.body);
+        if (body['status'] == true && body['data'] != null) {
+          final List<dynamic> data = body['data'];
+          final trips = <RentalTripModel>[];
+          for (var item in data) {
+            if (item is! Map) continue;
+            final td = item['trip_details'] ?? {};
+            final ld = item['location_details'] ?? {};
+            final customerList = item['customer'] as List? ?? [];
+            final bidDetails = item['bid_details'] as List? ?? [];
+            
+            // Reconstruct a flat json that RentalTripModel.fromJson can understand
+            final Map<String, dynamic> flatJson = {
+              'id': td['id'] ?? 0,
+              'uuid': td['uuid'] ?? '',
+              'service_name': td['service_name'] ?? '',
+              'payment_method': td['payment_method'] ?? '',
+              'start_datetime': td['start_datetime'] ?? '',
+              'offer_ammount': td['offer_ammount'] ?? 0.0,
+              'customer_offer_ammount': td['customer_offer_ammount'] ?? 0.0,
+              'trip_status': td['trip_status'] ?? '',
+              'created_at': td['created_at'] ?? '',
+              'pickup_km': td['pickup_km'] ?? '0 m',
+              'distance': {'total_km': td['total_distance']},
+              'car_category': td['car_category'] ?? {},
+              'car_service': td['car_service'] ?? {},
+              'pickup_locations': ld['pickup_locations'] ?? [],
+              'dropoff_locations': ld['dropoff_locations'] ?? [],
+              'note': td['note'] ?? '',
+              'customer': customerList,
+            };
+
+            // Find my bid (driver's bid)
+            Map<String, dynamic>? myBidJson;
+            for (var b in bidDetails) {
+              if (b is Map && b['driver_uuid']?.toString().toLowerCase() == uuid.toLowerCase()) {
+                myBidJson = Map<String, dynamic>.from(b);
+                break;
+              }
+            }
+            if (myBidJson != null) {
+              flatJson['my_bid'] = myBidJson;
+            }
+
+            try {
+              final trip = RentalTripModel.fromJson(flatJson);
+              if (trip.myBid != null) {
+                trips.add(trip);
+              }
+            } catch (e) {
+              // Ignore parsing errors for individual trips
+            }
+          }
+          return trips;
+        }
+      }
+      return null;
     } catch (e) {
       return null;
     }
@@ -301,4 +367,46 @@ class HomeRepository {
       // Background process, swallow error
     }
   }
+
+  Future<String?> cancelTrip({
+    required String driverUuid,
+    required String tripUuid,
+    required String comment,
+  }) async {
+    final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
+    if (token == null) return "User not authenticated";
+
+    String platform = Platform.isAndroid ? "android" : (Platform.isIOS ? "ios" : "web");
+    final prefs = await SharedPreferences.getInstance();
+    final languageCode = prefs.getString('active_language_code') ?? 'en';
+
+    final Map<String, String> data = {
+      "platform": platform,
+      "language_code": languageCode,
+      "action_when": "cancel_trip_driver_or_customer_admin",
+      "driver_uuid": driverUuid,
+      "trip_uuid": tripUuid,
+      "comment": comment,
+    };
+
+    try {
+      final response = await ApiService().post(
+        Uri.parse(AppUrls.cancelTrip),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+        },
+        body: data,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return null;
+      } else {
+        return "Failed to cancel trip: ${response.statusCode}";
+      }
+    } catch (e) {
+      return "An unexpected error occurred: $e";
+    }
+  }
+
 }

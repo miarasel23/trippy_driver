@@ -5,6 +5,7 @@ import '../../../../core/utils/localization/app_localization.dart';
 import '../model/rental_trip_model.dart';
 import 'translated_text.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'cancel_trip_dialog.dart';
 
 class AcceptedTripCard extends StatelessWidget {
   const AcceptedTripCard({Key? key}) : super(key: key);
@@ -16,8 +17,13 @@ class AcceptedTripCard extends StatelessWidget {
         if (!state.isOnline) return const SizedBox.shrink();
 
         final acceptedTrips = state.bidTrips.where((t) {
-          final status = t.myBid?.status ?? t.tripStatus;
-          return status == 'ACCEPTED';
+          final status = t.tripStatus;
+          final bidStatus = t.myBid?.status;
+          if (t.serviceName == 'RIDE_SHARE') {
+            return status == 'ACCEPTED' || bidStatus == 'ACCEPTED';
+          } else {
+            return status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || bidStatus == 'ACCEPTED';
+          }
         }).toList();
 
         if (acceptedTrips.isEmpty) return const SizedBox.shrink();
@@ -155,6 +161,21 @@ class AcceptedTripCard extends StatelessWidget {
                           await launchUrl(url, mode: LaunchMode.externalApplication);
                         }
                       }
+                    },
+                  ),
+                  _buildActionButton(
+                    icon: Icons.cancel,
+                    label: loc.translate('cancel') ?? "Cancel",
+                    color: Colors.red,
+                    onTap: () {
+                      final homeController = context.read<HomeController>();
+                      showDialog(
+                        context: context,
+                        builder: (_) => BlocProvider.value(
+                          value: homeController,
+                          child: CancelTripDialog(tripUuid: trip.uuid),
+                        ),
+                      );
                     },
                   ),
                 ],
