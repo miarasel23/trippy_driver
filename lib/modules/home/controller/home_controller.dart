@@ -273,9 +273,7 @@ class HomeController extends Cubit<HomeState> {
         if (ts == 'CANCELLED' || t.myBid?.status == 'CANCELLED') return false;
         if (ts == 'COMPLETED') return false;
         
-        if (t.serviceName == 'RIDE_SHARE') {
-           if (ts == 'RIDE_STARTED' || ts == 'FIRST_COMPLETED' || ts == 'IN_PROGRESS') return false;
-        }
+        
         
         return true;
       }).toList();
@@ -412,6 +410,17 @@ class HomeController extends Cubit<HomeState> {
     if (error == null) {
       removeTrip(tripUuid); // Hide the card on success
       fetchBidTrips();      // Refresh bids to show overlay
+    }
+    return error;
+  }
+
+  Future<String?> updateTripRideStatus(String tripUuid, String status) async {
+    final error = await repository.updateTripRideStatus(
+      tripUuid: tripUuid,
+      status: status,
+    );
+    if (error == null) {
+      fetchBidTrips();
     }
     return error;
   }

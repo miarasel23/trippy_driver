@@ -19,11 +19,7 @@ class AcceptedTripCard extends StatelessWidget {
         final acceptedTrips = state.bidTrips.where((t) {
           final status = t.tripStatus;
           final bidStatus = t.myBid?.status;
-          if (t.serviceName == 'RIDE_SHARE') {
-            return status == 'ACCEPTED' || bidStatus == 'ACCEPTED';
-          } else {
-            return status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || bidStatus == 'ACCEPTED';
-          }
+          return status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || bidStatus == 'ACCEPTED';
         }).toList();
 
         if (acceptedTrips.isEmpty) return const SizedBox.shrink();
@@ -36,9 +32,38 @@ class AcceptedTripCard extends StatelessWidget {
         final pickupLoc = trip.pickupLocations.isNotEmpty ? trip.pickupLocations.first : null;
         final dropoffLoc = trip.dropoffLocations.isNotEmpty ? trip.dropoffLocations.first : null;
         
-        final pickup = pickupLoc?.address ?? 'Unknown';
-        final dropoff = dropoffLoc?.address ?? 'Unknown';
+        var pickup = pickupLoc?.address ?? 'Unknown';
+        var dropoff = dropoffLoc?.address ?? 'Unknown';
         final amount = trip.myBid?.amount ?? trip.customerOfferAmmount;
+        
+        final currentStatus = trip.tripStatus == 'REQUESTED' ? (trip.myBid?.status ?? trip.tripStatus) : trip.tripStatus;
+
+        if (currentStatus == 'FIRST_COMPLETED') {
+          final temp = pickup;
+          pickup = dropoff;
+          dropoff = temp;
+        }
+
+        String? actionLabel;
+        String? nextStatus;
+        if (currentStatus == 'ACCEPTED') {
+          actionLabel = loc.translate('going_pickup_point') ?? 'Going Pick Up Point';
+          nextStatus = 'IN_PROGRESS';
+        } else if (currentStatus == 'IN_PROGRESS') {
+          actionLabel = loc.translate('start_ride') ?? 'Start Ride';
+          nextStatus = 'RIDE_STARTED';
+        } else if (currentStatus == 'RIDE_STARTED') {
+          if (trip.serviceName == 'RETURN' || trip.serviceName == 'ROUND_TRIP') {
+            actionLabel = loc.translate('first_completed') ?? 'First Completed';
+            nextStatus = 'FIRST_COMPLETED';
+          } else {
+            actionLabel = loc.translate('completed') ?? 'Completed';
+            nextStatus = 'COMPLETED';
+          }
+        } else if (currentStatus == 'FIRST_COMPLETED') {
+          actionLabel = loc.translate('completed') ?? 'Completed';
+          nextStatus = 'COMPLETED';
+        }
 
         return Container(
           margin: const EdgeInsets.all(16),
@@ -104,7 +129,7 @@ class AcceptedTripCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       isBangla: isBangla,
-                      location: pickupLoc,
+                      location: currentStatus == 'FIRST_COMPLETED' ? dropoffLoc : pickupLoc,
                     ),
                   ),
                 ],
@@ -121,7 +146,7 @@ class AcceptedTripCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontWeight: FontWeight.w600, fontSize: 14),
                       isBangla: isBangla,
-                      location: dropoffLoc,
+                      location: currentStatus == 'FIRST_COMPLETED' ? pickupLoc : dropoffLoc,
                     ),
                   ),
                 ],
@@ -130,6 +155,27 @@ class AcceptedTripCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
+                  if (actionLabel != null && nextStatus != null)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            context.read<HomeController>().updateTripRideStatus(trip.uuid, nextStatus!);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: Text(
+                            actionLabel,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ),
+                      ),
+                    ),
                   _buildActionButton(
                     icon: Icons.phone,
                     label: loc.translate('call') ?? "Call",

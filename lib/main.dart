@@ -18,6 +18,9 @@ import 'modules/otp/controller/otp_receive_bloc.dart';
 import 'modules/otp/repository/otp_receive_repository.dart';
 import 'modules/splash/controller/splash_bloc.dart';
 import 'modules/splash/repository/splash_repository.dart';
+import 'modules/home/controller/home_controller.dart';
+import 'modules/home/repository/home_repository.dart';
+import 'modules/home/widget/accepted_trip_card.dart';
 import 'routes/app_routes.dart';
 import 'routes/route_generator.dart';
 import 'store/user_data_store.dart';
@@ -155,6 +158,7 @@ class _MyAppState extends State<MyApp> {
           create: (_) => SendOtpBloc(repository: SendOtpRepository()),
         ),
         BlocProvider(create: (_) => SplashBloc(repository: SplashRepository())),
+        BlocProvider(create: (_) => HomeController(HomeRepository())),
         BlocProvider(
           create: (_) => EditProfilePictureBloc(
             repository: EditProfileRepository(repository: SplashRepository()),
@@ -193,7 +197,32 @@ class _MyAppState extends State<MyApp> {
             onGenerateRoute: RouteGenerator.generateRoute,
             navigatorObservers: [globalRouteObserver],
             builder: (context, child) {
-              return child!;
+              return Stack(
+                children: [
+                  child!,
+                  ValueListenableBuilder<String?>(
+                    valueListenable: globalRouteObserver.routeNotifier,
+                    builder: (context, route, _) {
+                      if (route == AppRoutes.splash || 
+                          route == AppRoutes.numberInput || 
+                          route == AppRoutes.otp) {
+                        return const SizedBox.shrink();
+                      }
+                      return const Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: SafeArea(
+                            child: AcceptedTripCard(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              );
             },
           );
         },

@@ -120,18 +120,13 @@ class HomeRepository {
     final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
     final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
 
-    if (uuid == null || token == null) {
-      return "User not authenticated";
-    }
+    if (uuid == null || token == null) return "Missing driver auth";
 
-    String platform = "web";
-    if (Platform.isAndroid) platform = "android";
-    else if (Platform.isIOS) platform = "ios";
-
+    String platform = Platform.isAndroid ? "android" : (Platform.isIOS ? "ios" : "web");
     final prefs = await SharedPreferences.getInstance();
     final languageCode = prefs.getString('active_language_code') ?? 'en';
 
-    final Map<String, String> data = {
+    final Map<String, String> body = {
       "platform": platform,
       "language_code": languageCode,
       "action_when": "create_trip_bid",
@@ -149,21 +144,63 @@ class HomeRepository {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Accept': 'application/json',
         },
-        body: data,
+        body: body,
       );
 
+      final respBody = jsonDecode(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final body = jsonDecode(response.body);
-        if (body['status'] == true) {
-          return null;
-        } else {
-          return body['message'] ?? "Failed to submit bid";
+        if (respBody['status'] == true) {
+          return null; 
         }
-      } else {
-        return "Failed to submit bid: ${response.statusCode}";
       }
+      return respBody['message'] ?? "Failed to submit bid";
     } catch (e) {
-      return "An unexpected error occurred: $e";
+      return "Network error: $e";
+    }
+  }
+
+  Future<String?> updateTripRideStatus({
+    required String tripUuid,
+    required String status,
+  }) async {
+    final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
+    final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
+
+    if (uuid == null || token == null) return "Missing driver auth";
+
+    String platform = Platform.isAndroid ? "android" : (Platform.isIOS ? "ios" : "web");
+    final prefs = await SharedPreferences.getInstance();
+    final languageCode = prefs.getString('active_language_code') ?? 'en';
+
+    final Map<String, String> body = {
+      "platform": platform,
+      "language_code": languageCode,
+      "action_when": "trip_or_ride_status_update",
+      "trip_uuid": tripUuid,
+      "driver_uuid": uuid,
+      "status": status,
+    };
+
+    try {
+      final response = await ApiService().post(
+        Uri.parse(AppUrls.tripRideStatusUpdate),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+        },
+        body: body,
+      );
+
+      final respBody = jsonDecode(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (respBody['status'] == true) {
+          return null; 
+        }
+      }
+      return respBody['message'] ?? "Failed to update trip status";
+    } catch (e) {
+      return "Network error: $e";
     }
   }
 
