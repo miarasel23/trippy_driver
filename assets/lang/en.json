@@ -274,5 +274,7 @@
   "changed_my_mind": "Changed my mind",
   "please_write_your_reason": "Please write your reason...",
   "dismiss": "Dismiss",
-  "submit": "Submit"
+  "submit": "Submit",
+  "rider_is_gooing_pickup_point": "Rider is gooing in pickup poin",
+  "start_ride": "Start Ride"
 }

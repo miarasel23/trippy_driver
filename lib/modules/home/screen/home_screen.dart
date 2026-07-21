@@ -12,6 +12,7 @@ import '../widget/home_top_bar.dart';
 import '../widget/current_session_card.dart';
 import '../widget/new_request_card.dart';
 import '../widget/bid_trip_overlay.dart';
+import '../widget/pending_bid_trip_card.dart';
 import '../widget/accepted_trip_card.dart';
 import '../widget/service_mode_bottom_sheet.dart';
 
@@ -169,11 +170,17 @@ class _HomeViewState extends State<HomeView> {
           
           // Persistent Accepted Trip Card (if any) at the bottom
           const Positioned(
-            bottom: 32,
+            bottom: 90,
             left: 0,
             right: 0,
             child: SafeArea(
-              child: AcceptedTripCard(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  PendingBidTripCard(),
+                  AcceptedTripCard(),
+                ],
+              ),
             ),
           ),
         ],

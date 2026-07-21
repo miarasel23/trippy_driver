@@ -19,7 +19,7 @@ class AcceptedTripCard extends StatelessWidget {
         final acceptedTrips = state.bidTrips.where((t) {
           final status = t.tripStatus;
           final bidStatus = t.myBid?.status;
-          return status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || bidStatus == 'ACCEPTED';
+          return status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || status == 'COMPLETED' || bidStatus == 'ACCEPTED';
         }).toList();
 
         if (acceptedTrips.isEmpty) return const SizedBox.shrink();
@@ -44,15 +44,18 @@ class AcceptedTripCard extends StatelessWidget {
           dropoff = temp;
         }
 
+        String headerTitle = loc.translate('trip_accepted') ?? 'Trip Accepted';
         String? actionLabel;
         String? nextStatus;
         if (currentStatus == 'ACCEPTED') {
           actionLabel = loc.translate('going_pickup_point') ?? 'Going Pick Up Point';
           nextStatus = 'IN_PROGRESS';
         } else if (currentStatus == 'IN_PROGRESS') {
+          headerTitle = loc.translate('rider_is_gooing_pickup_point') ?? 'Rider is going to pickup point';
           actionLabel = loc.translate('start_ride') ?? 'Start Ride';
           nextStatus = 'RIDE_STARTED';
         } else if (currentStatus == 'RIDE_STARTED') {
+          headerTitle = loc.translate('ride_started') ?? 'Ride started';
           if (trip.serviceName == 'RETURN' || trip.serviceName == 'ROUND_TRIP') {
             actionLabel = loc.translate('first_completed') ?? 'First Completed';
             nextStatus = 'FIRST_COMPLETED';
@@ -61,8 +64,13 @@ class AcceptedTripCard extends StatelessWidget {
             nextStatus = 'COMPLETED';
           }
         } else if (currentStatus == 'FIRST_COMPLETED') {
+          headerTitle = loc.translate('first_completed') ?? 'First Completed';
           actionLabel = loc.translate('completed') ?? 'Completed';
           nextStatus = 'COMPLETED';
+        } else if (currentStatus == 'COMPLETED') {
+          headerTitle = loc.translate('ride_completed_show_details') ?? 'Ride completed - Show details';
+          actionLabel = null;
+          nextStatus = null;
         }
 
         return Container(
@@ -99,7 +107,7 @@ class AcceptedTripCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        loc.translate('trip_accepted') ?? 'Trip Accepted',
+                        headerTitle,
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                     ],
@@ -155,27 +163,6 @@ class AcceptedTripCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  if (actionLabel != null && nextStatus != null)
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            context.read<HomeController>().updateTripRideStatus(trip.uuid, nextStatus!);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary,
-                            foregroundColor: theme.colorScheme.onPrimary,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: Text(
-                            actionLabel,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                          ),
-                        ),
-                      ),
-                    ),
                   _buildActionButton(
                     icon: Icons.phone,
                     label: loc.translate('call') ?? "Call",
@@ -226,6 +213,28 @@ class AcceptedTripCard extends StatelessWidget {
                   ),
                 ],
               ),
+              if (actionLabel != null && nextStatus != null) ...[
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      context.read<HomeController>().updateTripRideStatus(trip.uuid, nextStatus!);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 4,
+                    ),
+                    child: Text(
+                      actionLabel,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.1),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         );

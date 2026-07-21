@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/network/api_service.dart';
@@ -219,10 +220,11 @@ class HomeRepository {
       "language_code": languageCode,
       "action_when": "rental_bid_trip_list_for_driver",
       "driver_uuid": uuid,
-      "trip_status": "ALL",
+      "trip_status": "REQUESTED", // Changed from ALL - API only recognises specific statuses
     };
 
     final uri = Uri.parse(AppUrls.rentalBidTripList).replace(queryParameters: params);
+    debugPrint('[getBidTripList] Calling: $uri');
 
     try {
       final response = await ApiService().get(
@@ -232,18 +234,27 @@ class HomeRepository {
 
       List<RentalTripModel> allTrips = [];
 
+      debugPrint('[getBidTripList] Status: \${response.statusCode}');
       if (response.statusCode == 200 || response.statusCode == 201) {
         final body = jsonDecode(response.body);
+        debugPrint('[getBidTripList] Body status: \${body[\'status\']}, data count: \${(body[\'data\'] as List?)?.length ?? 0}');
         if (body['status'] == true && body['data'] != null) {
           final List<dynamic> data = body['data'];
           allTrips.addAll(data.map((e) => RentalTripModel.fromJson(e)).toList());
         }
       }
+      debugPrint('[getBidTripList] Returning \${allTrips.length} trips');
+      for (var t in allTrips) {
+        debugPrint('  -> trip uuid=\${t.uuid} service=\${t.serviceName} myBid=\${t.myBid?.status}');
+      }
       return allTrips;
     } catch (e) {
+      debugPrint('[getBidTripList] ERROR: $e');
       return null;
     }
   }
+
+
 
   Future<List<RentalTripModel>?> getActiveBidTrips() async {
     final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
@@ -258,17 +269,22 @@ class HomeRepository {
     final Map<String, String> params = {
       "platform": platform,
       "language_code": languageCode,
-      "action_when": "all_rental_trip_list",
+      "action_when": "accept_or_cancel_or_complete_trip_for_driver",
       "driver_uuid": uuid,
-      "trip_status": "REQUESTED",
+      "status": "ALL",
     };
 
-    final uri = Uri.parse(AppUrls.allRentalTripList).replace(queryParameters: params);
+    final uri = Uri.parse(AppUrls.getActiveBidTrips);
 
     try {
-      final response = await ApiService().get(
+      final response = await ApiService().post(
         uri,
-        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+        },
+        body: params,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -278,37 +294,20 @@ class HomeRepository {
           final trips = <RentalTripModel>[];
           for (var item in data) {
             if (item is! Map) continue;
-            final td = item['trip_details'] ?? {};
-            final ld = item['location_details'] ?? {};
-            final customerList = item['customer'] as List? ?? [];
-            final bidDetails = item['bid_details'] as List? ?? [];
             
-            // Reconstruct a flat json that RentalTripModel.fromJson can understand
-            final Map<String, dynamic> flatJson = {
-              'id': td['id'] ?? 0,
-              'uuid': td['uuid'] ?? '',
-              'service_name': td['service_name'] ?? '',
-              'payment_method': td['payment_method'] ?? '',
-              'start_datetime': td['start_datetime'] ?? '',
-              'offer_ammount': td['offer_ammount'] ?? 0.0,
-              'customer_offer_ammount': td['customer_offer_ammount'] ?? 0.0,
-              'trip_status': td['trip_status'] ?? '',
-              'created_at': td['created_at'] ?? '',
-              'pickup_km': td['pickup_km'] ?? '0 m',
-              'distance': {'total_km': td['total_distance']},
-              'car_category': td['car_category'] ?? {},
-              'car_service': td['car_service'] ?? {},
-              'pickup_locations': ld['pickup_locations'] ?? [],
-              'dropoff_locations': ld['dropoff_locations'] ?? [],
-              'note': td['note'] ?? '',
-              'customer': customerList,
-            };
+            final Map<String, dynamic> flatJson = Map<String, dynamic>.from(item);
 
             // Find my bid (driver's bid)
+            final drivers = flatJson['drivers'] as List? ?? [];
             Map<String, dynamic>? myBidJson;
-            for (var b in bidDetails) {
-              if (b is Map && b['driver_uuid']?.toString().toLowerCase() == uuid.toLowerCase()) {
-                myBidJson = Map<String, dynamic>.from(b);
+            for (var d in drivers) {
+              if (d is Map && d['driver_uuid']?.toString().toLowerCase() == uuid.toLowerCase()) {
+                myBidJson = {
+                  'uuid': d['rent_bid_uuid'],
+                  'amount': d['bid_amount'],
+                  'status': d['bid_status'],
+                  'created_at': flatJson['created_at'],
+                };
                 break;
               }
             }

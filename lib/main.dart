@@ -53,25 +53,27 @@ class MyRouteObserver extends NavigatorObserver {
     }
   }
 
+  void _updateRoute(String? routeName) {
+    if (routeName != null) {
+      currentRoute = routeName;
+      routeNotifier.value = currentRoute;
+      _persistRoute(currentRoute);
+    }
+  }
+
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    currentRoute = route.settings.name;
-    routeNotifier.value = currentRoute;
-    _persistRoute(currentRoute);
+    _updateRoute(route.settings.name);
   }
 
   @override
   void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    currentRoute = previousRoute?.settings.name;
-    routeNotifier.value = currentRoute;
-    _persistRoute(currentRoute);
+    _updateRoute(previousRoute?.settings.name);
   }
 
   @override
   void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
-    currentRoute = newRoute?.settings.name;
-    routeNotifier.value = currentRoute;
-    _persistRoute(currentRoute);
+    _updateRoute(newRoute?.settings.name);
   }
 }
 
@@ -205,7 +207,9 @@ class _MyAppState extends State<MyApp> {
                     builder: (context, route, _) {
                       if (route == AppRoutes.splash || 
                           route == AppRoutes.numberInput || 
-                          route == AppRoutes.otp) {
+                          route == AppRoutes.otp ||
+                          route == AppRoutes.navbar ||
+                          route == AppRoutes.home) {
                         return const SizedBox.shrink();
                       }
                       return const Positioned(

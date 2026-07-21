@@ -278,5 +278,7 @@
   "changed_my_mind": "আমি মত পরিবর্তন করেছি",
   "please_write_your_reason": "দয়া করে আপনার কারণ লিখুন...",
   "dismiss": "বাতিল",
-  "submit": "জমা দিন"
+  "submit": "জমা দিন",
+  "rider_is_gooing_pickup_point": "আরোহী পিকআপ পয়েন্টে যাচ্ছে",
+  "start_ride": "যাত্রা শুরু করুন"
 }

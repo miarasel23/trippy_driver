@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:equatable/equatable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../store/user_data_store.dart';
 import '../model/rental_trip_model.dart';
@@ -62,8 +63,21 @@ class HomeController extends Cubit<HomeState> {
   Timer? _trackingTimer;
 
   HomeController(this.repository) : super(_getInitialState()) {
+    _initIgnoredList();
     _startPolling();
     _startTracking();
+  }
+
+  Future<void> _initIgnoredList() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ignoredBids = prefs.getStringList('ignoredBidTripIds');
+    if (ignoredBids != null) {
+      _ignoredBidTripIds.addAll(ignoredBids);
+    }
+    final ignoredRentals = prefs.getStringList('ignoredRentalTripIds');
+    if (ignoredRentals != null) {
+      _ignoredRentalTripIds.addAll(ignoredRentals);
+    }
   }
 
   void _startPolling() {
@@ -71,9 +85,7 @@ class HomeController extends Cubit<HomeState> {
     _pollingTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (state.isOnline) {
         fetchRentalTrips(showLoading: false);
-        if (state.serviceMode == 'RIDE SHARE' || state.serviceMode == 'BOTH') {
-          fetchBidTrips();
-        }
+        fetchBidTrips();
       } else {
         if (state.bidTrips.isNotEmpty) {
            emit(state.copyWith(bidTrips: []));
@@ -256,6 +268,8 @@ class HomeController extends Cubit<HomeState> {
     if (results[0] != null) allFetchedBids.addAll(results[0]!);
     if (results[1] != null) allFetchedBids.addAll(results[1]!);
     
+    debugPrint('[fetchBidTrips] Total fetched: ${allFetchedBids.length}');
+    
     // Deduplicate by UUID, taking the most recent/relevant if there are duplicates
     final Map<String, RentalTripModel> uniqueBids = {};
     for (var bid in allFetchedBids) {
@@ -266,17 +280,22 @@ class HomeController extends Cubit<HomeState> {
     }
     
     final bids = uniqueBids.values.toList();
+    debugPrint('[fetchBidTrips] After dedup: ${bids.length} bids');
     if (bids.isNotEmpty || results[0] != null || results[1] != null) {
       final validBids = bids.where((t) {
         if (_ignoredBidTripIds.contains(t.uuid)) return false;
         final ts = t.tripStatus;
         if (ts == 'CANCELLED' || t.myBid?.status == 'CANCELLED') return false;
-        if (ts == 'COMPLETED') return false;
         
         
         
         return true;
       }).toList();
+      
+      debugPrint('[fetchBidTrips] Valid bids: ${validBids.length}');
+      for (var b in validBids) {
+        debugPrint('  -> uuid=${b.uuid} service=${b.serviceName} myBid=${b.myBid?.status}');
+      }
       
       bool stateChanged = false;
       
@@ -295,6 +314,7 @@ class HomeController extends Cubit<HomeState> {
         }
       }
 
+      debugPrint('[fetchBidTrips] stateChanged=$stateChanged');
       if (stateChanged) {
         final updatedList = newMap.values.toList();
         await _generateAndEmitMapData(updatedList);
@@ -314,12 +334,26 @@ class HomeController extends Cubit<HomeState> {
       }
     }).toList();
 
-    if (acceptedTrips.isEmpty) {
+    RentalTripModel? tripToDisplay;
+    if (acceptedTrips.isNotEmpty) {
+      tripToDisplay = acceptedTrips.first;
+    } else {
+      final pendingTrips = bids.where((t) {
+        if (t.myBid == null) return false;
+        final status = t.myBid!.status.toUpperCase();
+        return status != 'ACCEPTED' && status != 'CANCELLED';
+      }).toList();
+      if (pendingTrips.isNotEmpty) {
+        tripToDisplay = pendingTrips.first;
+      }
+    }
+
+    if (tripToDisplay == null) {
       emit(state.copyWith(bidTrips: bids, markers: const <Marker>{}, polylines: const <Polyline>{}));
       return;
     }
 
-    final trip = acceptedTrips.first;
+    final trip = tripToDisplay;
     final generatedMarkers = <Marker>{};
     final points = <PointLatLng>[];
 
@@ -390,16 +424,22 @@ class HomeController extends Cubit<HomeState> {
     ));
   }
 
-  void removeTrip(String uuid) {
+  void removeTrip(String uuid) async {
     _ignoredRentalTripIds.add(uuid);
     final updatedTrips = state.rentalTrips.where((t) => t.uuid != uuid).toList();
     emit(state.copyWith(rentalTrips: updatedTrips));
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('ignoredRentalTripIds', _ignoredRentalTripIds.toList());
   }
 
-  void removeBidTrip(String uuid) {
+  void removeBidTrip(String uuid) async {
     _ignoredBidTripIds.add(uuid);
     final updatedTrips = state.bidTrips.where((t) => t.uuid != uuid).toList();
     emit(state.copyWith(bidTrips: updatedTrips));
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('ignoredBidTripIds', _ignoredBidTripIds.toList());
   }
 
   Future<String?> submitBid(String tripUuid, double bidAmount) async {
