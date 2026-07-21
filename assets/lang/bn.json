@@ -285,5 +285,13 @@
   "accept_for": "গ্রহণ করুন",
   "offer_amount": "অফার পরিমাণ",
   "offer_your_fare": "আপনার ভাড়া অফার করুন",
+  "offering_your_fare": "আপনার ভাড়া অফার করা হচ্ছে",
+  "wait_for_reply": "উত্তরের জন্য অপেক্ষা করুন",
+  "going_pickup_point": "পিকআপ পয়েন্টে যাচ্ছি",
+  "ride_started": "যাত্রা শুরু হয়েছে",
+  "first_completed": "প্রথম অংশ সম্পন্ন",
+  "completed": "সম্পন্ন",
+  "ride_completed_show_details": "যাত্রা সম্পন্ন - বিস্তারিত দেখুন",
+  "platform_fee": "প্ল্যাটফর্ম ফি",
   "close": "বন্ধ করুন"
 }

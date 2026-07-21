@@ -131,7 +131,8 @@ class _HomeViewState extends State<HomeView> {
                           }
                           final rideShareBids = state.bidTrips.where((t) {
                             final service = t.serviceName.isNotEmpty ? t.serviceName : t.carService.serviceName;
-                            return service == 'RIDE_SHARE' && (t.myBid?.status ?? t.tripStatus) != 'ACCEPTED';
+                            final status = t.myBid?.status ?? t.tripStatus;
+                            return service == 'RIDE_SHARE' && status != 'ACCEPTED' && status != 'CANCELLED';
                           }).toList();
                           
                           final combinedTrips = List<RentalTripModel>.from(state.rentalTrips)..addAll(rideShareBids);
@@ -167,7 +168,7 @@ class _HomeViewState extends State<HomeView> {
           
           // Persistent Accepted Trip Card (if any) at the bottom
           const Positioned(
-            bottom: 90,
+            bottom: 0,
             left: 0,
             right: 0,
             child: SafeArea(

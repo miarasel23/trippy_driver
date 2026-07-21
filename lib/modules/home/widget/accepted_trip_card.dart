@@ -6,6 +6,8 @@ import '../model/rental_trip_model.dart';
 import 'translated_text.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'cancel_trip_dialog.dart';
+import '../helper/accepted_trip_card_helper.dart';
+import '../../../../utils/app_urls.dart';
 
 class AcceptedTripCard extends StatelessWidget {
   const AcceptedTripCard({Key? key}) : super(key: key);
@@ -34,7 +36,21 @@ class AcceptedTripCard extends StatelessWidget {
         
         var pickup = pickupLoc?.address ?? 'Unknown';
         var dropoff = dropoffLoc?.address ?? 'Unknown';
-        final amount = trip.myBid?.amount ?? trip.customerOfferAmmount;
+        final bidAmount = trip.myBid?.amount ?? trip.customerOfferAmmount;
+        final totalAmount = trip.myBid?.totalAmount ?? bidAmount;
+        final platformFee = totalAmount - bidAmount;
+        final currency = isBangla ? '৳' : 'BDT';
+        final displayTotalAmount = AcceptedTripCardHelper.translateNumbersAndCommonWords(totalAmount.round().toString(), isBangla);
+        final displayPlatformFee = AcceptedTripCardHelper.translateNumbersAndCommonWords(platformFee.round().toString(), isBangla);
+
+        final customerName = trip.customer.isNotEmpty && trip.customer.first.name.isNotEmpty 
+            ? trip.customer.first.name 
+            : loc.translate('customer') ?? "Customer";
+        final customerAvatar = trip.customer.isNotEmpty ? trip.customer.first.profilePicture : '';
+        final customerRating = trip.customer.isNotEmpty ? AcceptedTripCardHelper.translateNumbersAndCommonWords(trip.customer.first.averageRating.toStringAsFixed(1), isBangla) : AcceptedTripCardHelper.translateNumbersAndCommonWords("4.5", isBangla);
+        final formattedTotalDistance = AcceptedTripCardHelper.translateNumbersAndCommonWords("${trip.totalDistance} km", isBangla);
+        final distanceText = "~$formattedTotalDistance";
+        final timeText = AcceptedTripCardHelper.translateNumbersAndCommonWords("${AcceptedTripCardHelper.calculateMinutes(trip.pickupKm)} min", isBangla);
         
         final currentStatus = trip.tripStatus == 'REQUESTED' ? (trip.myBid?.status ?? trip.tripStatus) : trip.tripStatus;
 
@@ -86,75 +102,115 @@ class AcceptedTripCard extends StatelessWidget {
                 offset: const Offset(0, 5),
               ),
             ],
-            border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2), width: 2),
+            border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.2), width: 2),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          shape: BoxShape.circle,
+                  // Left Column: Avatar, Name, Rating, Time
+                  SizedBox(
+                    width: 70,
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundImage: customerAvatar.isNotEmpty ? NetworkImage(customerAvatar.startsWith('http') ? customerAvatar : '${AppUrls.imageBaseUrl}$customerAvatar') : null,
+                          backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                          child: customerAvatar.isEmpty ? Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant, size: 28) : null,
                         ),
-                        child: const Icon(Icons.check_circle, color: Colors.green, size: 16),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        headerTitle,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    "\৳$amount",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900, 
-                      fontSize: 18,
-                      color: theme.colorScheme.primary,
+                        const SizedBox(height: 4),
+                        Text(
+                          customerName,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 11, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.star, color: Colors.amber, size: 12),
+                            const SizedBox(width: 2),
+                            Text(
+                              customerRating,
+                              style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          timeText,
+                          style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 10),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Divider(height: 1),
-              ),
-              Row(
-                children: [
-                  Icon(Icons.my_location, size: 16, color: Colors.blue.withOpacity(0.8)),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
+                  // Middle Column: Distance, Price, Locations
                   Expanded(
-                    child: TranslatedText(
-                      pickup,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      isBangla: isBangla,
-                      location: currentStatus == 'FIRST_COMPLETED' ? dropoffLoc : pickupLoc,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.location_on, size: 16, color: Colors.red.withOpacity(0.8)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TranslatedText(
-                      dropoff,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontWeight: FontWeight.w600, fontSize: 14),
-                      isBangla: isBangla,
-                      location: currentStatus == 'FIRST_COMPLETED' ? pickupLoc : dropoffLoc,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          distanceText,
+                          style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 14),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "$currency$displayTotalAmount",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 24,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        if (platformFee > 0)
+                          Text(
+                            "${loc.translate('platform_fee') ?? 'Platform fee'}: $currency$displayPlatformFee",
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.my_location, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.8)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TranslatedText(
+                                pickup,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                isBangla: isBangla,
+                                location: currentStatus == 'FIRST_COMPLETED' ? dropoffLoc : pickupLoc,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.location_on, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.8)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TranslatedText(
+                                dropoff,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontWeight: FontWeight.w600, fontSize: 14),
+                                isBangla: isBangla,
+                                location: currentStatus == 'FIRST_COMPLETED' ? pickupLoc : dropoffLoc,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -163,43 +219,35 @@ class AcceptedTripCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildActionButton(
+                  AcceptedTripCardHelper.buildActionButton(
                     icon: Icons.phone,
                     label: loc.translate('call') ?? "Call",
-                    color: Colors.green,
+                    color: theme.colorScheme.onSurface,
                     onTap: () async {
                       if (trip.customer.isNotEmpty) {
                         final phone = trip.customer.first.phone;
-                        final url = Uri.parse('tel:$phone');
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(url);
-                        }
+                        await AcceptedTripCardHelper.launchPhoneCall(phone);
                       }
                     },
                   ),
-                  _buildActionButton(
+                  AcceptedTripCardHelper.buildActionButton(
                     icon: Icons.message,
                     label: loc.translate('message') ?? "Message",
-                    color: Colors.blue,
+                    color: theme.colorScheme.onSurface,
                     onTap: () {},
                   ),
-                  _buildActionButton(
+                  AcceptedTripCardHelper.buildActionButton(
                     icon: Icons.navigation,
                     label: loc.translate('navigate') ?? "Navigate",
-                    color: theme.colorScheme.primary,
+                    color: theme.colorScheme.onSurface,
                     onTap: () async {
-                      if (pickupLoc != null) {
-                        final url = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=${pickupLoc.latitude},${pickupLoc.longitude}');
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(url, mode: LaunchMode.externalApplication);
-                        }
-                      }
+                      await AcceptedTripCardHelper.launchNavigation(pickupLoc);
                     },
                   ),
-                  _buildActionButton(
+                  AcceptedTripCardHelper.buildActionButton(
                     icon: Icons.cancel,
                     label: loc.translate('cancel') ?? "Cancel",
-                    color: Colors.red,
+                    color: theme.colorScheme.onSurface,
                     onTap: () {
                       final homeController = context.read<HomeController>();
                       showDialog(
@@ -222,8 +270,8 @@ class AcceptedTripCard extends StatelessWidget {
                       context.read<HomeController>().updateTripRideStatus(trip.uuid, nextStatus!);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
+                      backgroundColor: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                      foregroundColor: theme.brightness == Brightness.dark ? Colors.black : Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 4,
@@ -239,35 +287,6 @@ class AcceptedTripCard extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildActionButton({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

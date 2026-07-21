@@ -268,6 +268,7 @@ class HomeRepository {
     };
 
     final uri = Uri.parse(AppUrls.getActiveBidTrips);
+   
 
     try {
       final response = await ApiService().post(
@@ -282,6 +283,8 @@ class HomeRepository {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final body = jsonDecode(response.body);
+        print('active_bid_trips=====${body}');
+        print(uri);
         if (body['status'] == true && body['data'] != null) {
           final List<dynamic> data = body['data'];
           final trips = <RentalTripModel>[];
@@ -298,6 +301,7 @@ class HomeRepository {
                 myBidJson = {
                   'uuid': d['rent_bid_uuid'],
                   'amount': d['bid_amount'],
+                  'total_amount': d['total_amount'],
                   'status': d['bid_status'],
                   'created_at': flatJson['created_at'],
                 };

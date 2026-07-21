@@ -67,10 +67,11 @@ class RentalTripModel {
           [],
       myBid: json['my_bid'] != null ? MyBid.fromJson(json['my_bid']) : null,
       note: json['note'] ?? json['trip_details']?['note'] ?? '',
-      customer: (json['customer'] as List?)
-              ?.map((e) => CustomerModel.fromJson(e))
-              .toList() ??
-          [],
+      customer: (json['customer'] != null && json['customer'] is List && (json['customer'] as List).isNotEmpty)
+          ? (json['customer'] as List).map((e) => CustomerModel.fromJson(e)).toList()
+          : (json['customer_details'] != null && json['customer_details'] is Map)
+              ? [CustomerModel.fromJson(json['customer_details'] as Map<String, dynamic>)]
+              : [],
     );
   }
 }
@@ -78,12 +79,14 @@ class RentalTripModel {
 class MyBid {
   final String uuid;
   final double amount;
+  final double totalAmount;
   final String status;
   final String createdAt;
 
   MyBid({
     required this.uuid,
     required this.amount,
+    required this.totalAmount,
     required this.status,
     required this.createdAt,
   });
@@ -92,6 +95,7 @@ class MyBid {
     return MyBid(
       uuid: json['uuid'] ?? '',
       amount: (json['amount'] ?? 0).toDouble(),
+      totalAmount: (json['total_amount'] ?? 0).toDouble(),
       status: json['status'] ?? '',
       createdAt: json['created_at'] ?? '',
     );

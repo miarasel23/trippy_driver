@@ -281,5 +281,13 @@
   "accept_for": "Accept for",
   "offer_amount": "Offer Amount",
   "offer_your_fare": "Offer your fare",
+  "offering_your_fare": "Offering your fare",
+  "wait_for_reply": "Wait for the reply",
+  "going_pickup_point": "Going Pick Up Point",
+  "ride_started": "Ride started",
+  "first_completed": "First Completed",
+  "completed": "Completed",
+  "ride_completed_show_details": "Ride completed - Show details",
+  "platform_fee": "Platform fee",
   "close": "Close"
 }

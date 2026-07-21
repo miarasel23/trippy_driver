@@ -6,6 +6,7 @@ import '../controller/home_controller.dart';
 import '../helper/new_request_card_helper.dart';
 import 'translated_text.dart';
 import 'offer_bottom_sheet.dart';
+import '../../../../utils/app_urls.dart';
 class NewRequestCard extends StatefulWidget {
   final RentalTripModel trip;
 
@@ -125,7 +126,8 @@ class _NewRequestCardState extends State<NewRequestCard> {
     final customerAvatar = widget.trip.customer.isNotEmpty ? widget.trip.customer.first.profilePicture : '';
     final customerRating = widget.trip.customer.isNotEmpty ? _translateNumbersAndCommonWords(widget.trip.customer.first.averageRating.toStringAsFixed(1), isBangla) : _translateNumbersAndCommonWords("4.5", isBangla);
     
-    final bool hasActiveBid = widget.trip.myBid != null && (widget.trip.myBid?.status ?? widget.trip.tripStatus) != 'ACCEPTED';
+    final String status = widget.trip.myBid?.status ?? widget.trip.tripStatus;
+    final bool hasActiveBid = widget.trip.myBid != null && status != 'ACCEPTED' && status != 'CANCELLED';
     final String displayMyBid = isBangla 
         ? _translateNumbersAndCommonWords("${widget.trip.myBid?.amount.round() ?? widget.trip.customerOfferAmmount.round()}", isBangla) 
         : "${widget.trip.myBid?.amount.round() ?? widget.trip.customerOfferAmmount.round()}";
@@ -154,7 +156,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
                   CircleAvatar(
                     radius: 24,
                     backgroundImage: customerAvatar.isNotEmpty
-                        ? NetworkImage(customerAvatar)
+                        ? NetworkImage(customerAvatar.startsWith('http') ? customerAvatar : '${AppUrls.imageBaseUrl}$customerAvatar')
                         : null,
                     backgroundColor: theme.colorScheme.surfaceContainerHighest,
                     child: customerAvatar.isEmpty
@@ -164,8 +166,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
                   const SizedBox(height: 4),
                   Text(
                     customerName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                     style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
