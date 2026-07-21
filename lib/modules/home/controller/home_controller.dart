@@ -80,13 +80,20 @@ class HomeController extends Cubit<HomeState> {
     }
   }
 
+  bool _isFetchingTrips = false;
+
   void _startPolling() {
     _pollingTimer?.cancel();
-    _pollingTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-      if (state.isOnline) {
-        fetchRentalTrips(showLoading: false);
-        fetchBidTrips();
-      } else {
+    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      if (state.isOnline && !_isFetchingTrips) {
+        _isFetchingTrips = true;
+        try {
+          await fetchRentalTrips(showLoading: false);
+          await fetchBidTrips();
+        } finally {
+          _isFetchingTrips = false;
+        }
+      } else if (!state.isOnline) {
         if (state.bidTrips.isNotEmpty) {
            emit(state.copyWith(bidTrips: []));
         }
@@ -204,7 +211,7 @@ class HomeController extends Cubit<HomeState> {
   final Set<String> _ignoredRentalTripIds = {};
   final Set<String> _ignoredBidTripIds = {};
 
-  void fetchRentalTrips({bool showLoading = true}) async {
+  Future<void> fetchRentalTrips({bool showLoading = true}) async {
     if (showLoading) {
       emit(state.copyWith(isLoadingTrips: true));
     }
@@ -259,7 +266,7 @@ class HomeController extends Cubit<HomeState> {
     }
   }
 
-  void fetchBidTrips() async {
+  Future<void> fetchBidTrips() async {
     final bidsFuture = repository.getBidTripList();
     final activeBidsFuture = repository.getActiveBidTrips();
     
@@ -268,8 +275,8 @@ class HomeController extends Cubit<HomeState> {
     if (results[0] != null) allFetchedBids.addAll(results[0]!);
     if (results[1] != null) allFetchedBids.addAll(results[1]!);
     
-    debugPrint('[fetchBidTrips] Total fetched: ${allFetchedBids.length}');
     
+
     // Deduplicate by UUID, taking the most recent/relevant if there are duplicates
     final Map<String, RentalTripModel> uniqueBids = {};
     for (var bid in allFetchedBids) {
@@ -280,7 +287,7 @@ class HomeController extends Cubit<HomeState> {
     }
     
     final bids = uniqueBids.values.toList();
-    debugPrint('[fetchBidTrips] After dedup: ${bids.length} bids');
+
     if (bids.isNotEmpty || results[0] != null || results[1] != null) {
       final validBids = bids.where((t) {
         if (_ignoredBidTripIds.contains(t.uuid)) return false;
@@ -292,11 +299,7 @@ class HomeController extends Cubit<HomeState> {
         return true;
       }).toList();
       
-      debugPrint('[fetchBidTrips] Valid bids: ${validBids.length}');
-      for (var b in validBids) {
-        debugPrint('  -> uuid=${b.uuid} service=${b.serviceName} myBid=${b.myBid?.status}');
-      }
-      
+
       bool stateChanged = false;
       
       final currentIds = state.bidTrips.map((t) => t.uuid).toSet();
@@ -314,7 +317,7 @@ class HomeController extends Cubit<HomeState> {
         }
       }
 
-      debugPrint('[fetchBidTrips] stateChanged=$stateChanged');
+
       if (stateChanged) {
         final updatedList = newMap.values.toList();
         await _generateAndEmitMapData(updatedList);
@@ -337,15 +340,6 @@ class HomeController extends Cubit<HomeState> {
     RentalTripModel? tripToDisplay;
     if (acceptedTrips.isNotEmpty) {
       tripToDisplay = acceptedTrips.first;
-    } else {
-      final pendingTrips = bids.where((t) {
-        if (t.myBid == null) return false;
-        final status = t.myBid!.status.toUpperCase();
-        return status != 'ACCEPTED' && status != 'CANCELLED';
-      }).toList();
-      if (pendingTrips.isNotEmpty) {
-        tripToDisplay = pendingTrips.first;
-      }
     }
 
     if (tripToDisplay == null) {
@@ -357,13 +351,22 @@ class HomeController extends Cubit<HomeState> {
     final generatedMarkers = <Marker>{};
     final points = <PointLatLng>[];
 
+    final prefs = await SharedPreferences.getInstance();
+    final isBangla = (prefs.getString('active_language_code') ?? 'en') == 'bn';
+    
+    String toBanglaDigits(String input) {
+      const e2b = {'0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪', '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯'};
+      return input.split('').map((c) => e2b[c] ?? c).join();
+    }
+
     for (int i = 0; i < trip.pickupLocations.length; i++) {
        final pickup = trip.pickupLocations[i];
+       final title = isBangla ? 'পিকআপ ${toBanglaDigits('${i+1}')}' : 'Pickup ${i+1}';
        generatedMarkers.add(
          Marker(
            markerId: MarkerId('pickup_$i'),
            position: LatLng(pickup.latitude, pickup.longitude),
-           infoWindow: InfoWindow(title: 'Pickup ${i+1}', snippet: pickup.address),
+           infoWindow: InfoWindow(title: title, snippet: pickup.address),
            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
          ),
        );
@@ -372,11 +375,12 @@ class HomeController extends Cubit<HomeState> {
 
     for (int i = 0; i < trip.dropoffLocations.length; i++) {
        final drop = trip.dropoffLocations[i];
+       final title = isBangla ? 'ড্রপ অফ ${toBanglaDigits('${i+1}')}' : 'Dropoff ${i+1}';
        generatedMarkers.add(
          Marker(
            markerId: MarkerId('dropoff_$i'),
            position: LatLng(drop.latitude, drop.longitude),
-           infoWindow: InfoWindow(title: 'Dropoff ${i+1}', snippet: drop.address),
+           infoWindow: InfoWindow(title: title, snippet: drop.address),
            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
          ),
        );

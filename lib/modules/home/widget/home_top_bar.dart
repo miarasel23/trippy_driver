@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/utils/localization/app_localization.dart';
 import '../../../../utils/app_urls.dart';
 import '../controller/home_controller.dart';
+import 'service_mode_bottom_sheet.dart';
 
 class HomeTopBar extends StatelessWidget {
   const HomeTopBar({super.key});
@@ -33,11 +34,11 @@ class HomeTopBar extends StatelessWidget {
               const Spacer(),
               OutlinedButton(
                 onPressed: () {
-                  context.read<HomeController>().toggleOnlineStatus();
+                  ServiceModeBottomSheet.show(context, theme);
                 },
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0), // Adjusted vertical padding slightly as OutlinedButton has minimum sizes
-                  minimumSize: const Size(0, 36),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+                  minimumSize: const Size(110, 36),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),

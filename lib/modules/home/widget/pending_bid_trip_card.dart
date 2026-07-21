@@ -43,10 +43,7 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
   Widget build(BuildContext context) {
     return BlocBuilder<HomeController, HomeState>(
       builder: (context, state) {
-        debugPrint('[PendingBidTripCard] rebuild — bidTrips count: ${state.bidTrips.length}, isOnline: ${state.isOnline}');
-        for (var t in state.bidTrips) {
-          debugPrint('  -> uuid=${t.uuid} service=${t.serviceName} myBid=${t.myBid?.status}');
-        }
+
         if (!state.isOnline) return const SizedBox.shrink();
 
         final now = DateTime.now();
@@ -72,7 +69,7 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
           }
           return true;
         }).toList();
-        debugPrint('[PendingBidTripCard] valid pendingTrips count: ${pendingTrips.length}');
+
 
         if (pendingTrips.isEmpty) return const SizedBox.shrink();
 

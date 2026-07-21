@@ -276,5 +276,10 @@
   "dismiss": "Dismiss",
   "submit": "Submit",
   "rider_is_gooing_pickup_point": "Rider is gooing in pickup poin",
-  "start_ride": "Start Ride"
+  "start_ride": "Start Ride",
+  "customer": "Customer",
+  "accept_for": "Accept for",
+  "offer_amount": "Offer Amount",
+  "offer_your_fare": "Offer your fare",
+  "close": "Close"
 }

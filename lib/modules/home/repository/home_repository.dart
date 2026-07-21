@@ -224,7 +224,6 @@ class HomeRepository {
     };
 
     final uri = Uri.parse(AppUrls.rentalBidTripList).replace(queryParameters: params);
-    debugPrint('[getBidTripList] Calling: $uri');
 
     try {
       final response = await ApiService().get(
@@ -234,22 +233,16 @@ class HomeRepository {
 
       List<RentalTripModel> allTrips = [];
 
-      debugPrint('[getBidTripList] Status: \${response.statusCode}');
       if (response.statusCode == 200 || response.statusCode == 201) {
         final body = jsonDecode(response.body);
-        debugPrint('[getBidTripList] Body status: \${body[\'status\']}, data count: \${(body[\'data\'] as List?)?.length ?? 0}');
         if (body['status'] == true && body['data'] != null) {
           final List<dynamic> data = body['data'];
           allTrips.addAll(data.map((e) => RentalTripModel.fromJson(e)).toList());
+          print('alllltrips=====${allTrips}');
         }
-      }
-      debugPrint('[getBidTripList] Returning \${allTrips.length} trips');
-      for (var t in allTrips) {
-        debugPrint('  -> trip uuid=\${t.uuid} service=\${t.serviceName} myBid=\${t.myBid?.status}');
       }
       return allTrips;
     } catch (e) {
-      debugPrint('[getBidTripList] ERROR: $e');
       return null;
     }
   }

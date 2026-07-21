@@ -280,5 +280,10 @@
   "dismiss": "বাতিল",
   "submit": "জমা দিন",
   "rider_is_gooing_pickup_point": "আরোহী পিকআপ পয়েন্টে যাচ্ছে",
-  "start_ride": "যাত্রা শুরু করুন"
+  "start_ride": "যাত্রা শুরু করুন",
+  "customer": "গ্রাহক",
+  "accept_for": "গ্রহণ করুন",
+  "offer_amount": "অফার পরিমাণ",
+  "offer_your_fare": "আপনার ভাড়া অফার করুন",
+  "close": "বন্ধ করুন"
 }

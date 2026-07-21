@@ -97,29 +97,13 @@ class _HomeViewState extends State<HomeView> {
                   zoomControlsEnabled: true,
                   zoomGesturesEnabled: true,
                   scrollGesturesEnabled: true,
+                  padding: const EdgeInsets.only(top: 140, bottom: 200), // Push controls down
                   markers: state.markers,
                   polylines: state.polylines,
                 );
               },
             ),
           
-          // Add a subtle gradient overlay
-          IgnorePointer(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    theme.scaffoldBackgroundColor.withOpacity(0.7),
-                    Colors.transparent,
-                    Colors.transparent,
-                    theme.scaffoldBackgroundColor.withOpacity(0.9),
-                  ],
-                ),
-              ),
-            ),
-          ),
 
           SafeArea(
             child: Column(
@@ -127,10 +111,7 @@ class _HomeViewState extends State<HomeView> {
                 // 2. Custom Top App Bar
                 const HomeTopBar(),
                 
-                // 3. Current Session Card
-                const CurrentSessionCard(),
-                
-                // 4. Content Area (Stack for overlapping)
+                // 3. Content Area (Stack for overlapping)
                 Expanded(
                   child: Stack(
                     children: [
@@ -148,14 +129,30 @@ class _HomeViewState extends State<HomeView> {
                               child: CircularProgressIndicator(),
                             );
                           }
-                          if (state.rentalTrips.isEmpty) {
+                          final rideShareBids = state.bidTrips.where((t) {
+                            final service = t.serviceName.isNotEmpty ? t.serviceName : t.carService.serviceName;
+                            return service == 'RIDE_SHARE' && (t.myBid?.status ?? t.tripStatus) != 'ACCEPTED';
+                          }).toList();
+                          
+                          final combinedTrips = List<RentalTripModel>.from(state.rentalTrips)..addAll(rideShareBids);
+                          
+                          // Deduplicate by UUID
+                          final uniqueTrips = <String, RentalTripModel>{};
+                          for (var trip in combinedTrips) {
+                            uniqueTrips[trip.uuid] = trip; // Bid trips added last will overwrite rental ones
+                          }
+                          
+                          final sortedTrips = uniqueTrips.values.toList();
+                          sortedTrips.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+                          if (sortedTrips.isEmpty) {
                             return const SizedBox.shrink();
                           }
                           return ListView.builder(
                             padding: const EdgeInsets.only(top: 8, bottom: 100),
-                            itemCount: state.rentalTrips.length,
+                            itemCount: sortedTrips.length,
                             itemBuilder: (context, index) {
-                              final trip = state.rentalTrips[index];
+                              final trip = sortedTrips[index];
                               return NewRequestCard(key: ValueKey(trip.uuid), trip: trip);
                             },
                           );
@@ -184,18 +181,6 @@ class _HomeViewState extends State<HomeView> {
             ),
           ),
         ],
-      ),
-      floatingActionButton: Transform.translate(
-        offset: const Offset(0, 12), // Pushes the FAB down 12 pixels closer to the navbar
-        child: BlocBuilder<HomeController, HomeState>(
-          builder: (context, state) {
-            return FloatingActionButton(
-              onPressed: () => ServiceModeBottomSheet.show(context, theme),
-              backgroundColor: state.isOnline ? Colors.lightGreen : Colors.red,
-              child: const Icon(Icons.local_taxi, color: Colors.white),
-            );
-          },
-        ),
       ),
     );
   }
