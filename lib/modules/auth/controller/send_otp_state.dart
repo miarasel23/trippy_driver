@@ -1,4 +1,4 @@
-import 'package:trippy_customer/utils/enums.dart';
+import 'package:trippy_rider/utils/enums.dart';
 
 class SendOtpState {
   final OtpStatus status;

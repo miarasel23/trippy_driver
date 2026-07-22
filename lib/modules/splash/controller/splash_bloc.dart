@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trippy_customer/store/user_data_store.dart';
+import 'package:trippy_rider/store/user_data_store.dart';
 
 import '../../../utils/enums.dart';
 import '../repository/splash_repository.dart';

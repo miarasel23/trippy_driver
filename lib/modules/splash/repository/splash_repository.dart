@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../../../core/network/api_service.dart';
-import 'package:trippy_customer/store/user_data_store.dart';
-import 'package:trippy_customer/utils/app_urls.dart';
+import 'package:trippy_rider/store/user_data_store.dart';
+import 'package:trippy_rider/utils/app_urls.dart';
 
 import '../model/current_user_model.dart';
 

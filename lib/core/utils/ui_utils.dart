@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'localization/app_localization.dart';
-import 'package:trippy_customer/widgets/custom_message_widget.dart';
+import 'package:trippy_rider/widgets/custom_message_widget.dart';
 
 class UiUtils {
   static OverlayEntry? _currentToastEntry;
