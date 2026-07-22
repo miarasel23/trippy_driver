@@ -21,6 +21,13 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
   int _rating = 0;
   final Set<String> _selectedCompliments = {};
   bool _isSubmitting = false;
+  final TextEditingController _customComplimentController = TextEditingController();
+
+  @override
+  void dispose() {
+    _customComplimentController.dispose();
+    super.dispose();
+  }
 
   final List<String> _compliments = [
     'Clean car',
@@ -42,7 +49,10 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
     });
 
     final customerUuid = widget.trip.customer.isNotEmpty ? widget.trip.customer.first.customerUuid : '';
-    final comments = _selectedCompliments.join(', ');
+    String comments = _selectedCompliments.join(', ');
+    if (_selectedCompliments.contains('Others') && _customComplimentController.text.trim().isNotEmpty) {
+      comments += ' - ${_customComplimentController.text.trim()}';
+    }
 
     final error = await context.read<HomeController>().submitReview(
       tripUuid: widget.trip.uuid,
@@ -101,10 +111,12 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
     final displayDate = AcceptedTripCardHelper.translateNumbersAndCommonWords(dateStr, isBangla);
     final displayTime = AcceptedTripCardHelper.translateNumbersAndCommonWords(timeStr, isBangla);
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
-      ),
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -413,6 +425,26 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
                             );
                           }).toList(),
                         ),
+                        if (_selectedCompliments.contains('Others')) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                            ),
+                            child: TextField(
+                              controller: _customComplimentController,
+                              maxLines: 3,
+                              decoration: InputDecoration(
+                                hintText: loc.translate('write_your_compliment') ?? 'Write your compliment...',
+                                hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.all(12),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -467,6 +499,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
           ),
         ],
       ),
+    ),
     );
   }
 }

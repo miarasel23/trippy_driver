@@ -9,6 +9,7 @@ class RentalTripModel {
   final String tripStatus;
   final String pickupKm;
   final double totalDistance;
+  final bool givenReview;
   final CarCategory carCategory;
   final CarService carService;
   final List<LocationModel> pickupLocations;
@@ -29,6 +30,7 @@ class RentalTripModel {
     required this.tripStatus,
     required this.pickupKm,
     required this.totalDistance,
+    required this.givenReview,
     required this.carCategory,
     required this.carService,
     required this.pickupLocations,
@@ -52,12 +54,13 @@ class RentalTripModel {
       serviceName: tripDetails['service_name'] ?? '',
       paymentMethod: tripDetails['payment_method'] ?? '',
       startDatetime: tripDetails['start_datetime'] ?? '',
-      offerAmmount: (tripDetails['offer_ammount'] ?? 0).toDouble(),
-      customerOfferAmmount: (tripDetails['customer_offer_ammount'] ?? 0).toDouble(),
+      offerAmmount: (tripDetails['offer_amount'] ?? tripDetails['offer_ammount'] ?? 0).toDouble(),
+      customerOfferAmmount: (tripDetails['customer_offer_amount'] ?? tripDetails['customer_offer_ammount'] ?? 0).toDouble(),
       tripStatus: tripDetails['trip_status'] ?? '',
       createdAt: tripDetails['created_at'] ?? '',
       pickupKm: tripDetails['pickup_km'] ?? '0 m',
       totalDistance: totalDist,
+      givenReview: tripDetails['given_review'] ?? false,
       carCategory: CarCategory.fromJson(tripDetails['car_category'] ?? {}),
       carService: CarService.fromJson(tripDetails['car_service'] ?? {}),
       pickupLocations: ((locationDetails?['pickup_locations'] ?? json['pickup_locations']) as List?)
@@ -209,7 +212,7 @@ class CustomerModel {
       phone: json['phone'] ?? '',
       bidStatus: json['bid_status'] ?? '',
       hasBid: json['has_bid'] ?? false,
-      reviewStatus: json['review_status'] ?? false,
+      reviewStatus: json['given_review'] ?? json['review_status'] ?? false,
       averageRating: double.tryParse(json['average_rating']?.toString() ?? '0') ?? 0.0,
     );
   }

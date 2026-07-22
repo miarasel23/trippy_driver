@@ -6,6 +6,7 @@ import '../../../../core/utils/localization/app_localization.dart';
 import '../model/rental_trip_model.dart';
 import 'translated_text.dart';
 import 'cancel_trip_dialog.dart';
+import '../helper/accepted_trip_card_helper.dart';
 
 class PendingBidTripCard extends StatefulWidget {
   const PendingBidTripCard({Key? key}) : super(key: key);
@@ -50,15 +51,24 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
         final pendingTrips = state.bidTrips.where((t) {
           // Must have placed a bid and status is still pending (not ACCEPTED or CANCELLED)
           if (t.myBid == null) return false;
-          final status = t.myBid!.status.toUpperCase();
-          if (status == 'ACCEPTED' || status == 'CANCELLED') return false;
+          
+          final tripStatus = t.tripStatus.toUpperCase();
+          if (tripStatus == 'ACCEPTED' || tripStatus == 'RIDE_STARTED' || tripStatus == 'FIRST_COMPLETED' || tripStatus == 'IN_PROGRESS' || tripStatus == 'COMPLETED') {
+            return false;
+          }
+          
+          final bidStatus = t.myBid!.status.toUpperCase();
+          if (bidStatus == 'ACCEPTED' || bidStatus == 'CANCELLED') return false;
           
           final createdAtStr = t.myBid?.createdAt ?? t.createdAt;
           DateTime createdAt = DateTime.tryParse(createdAtStr) ?? now;
           if (createdAt.isAfter(now.add(const Duration(hours: 1)))) {
             createdAt = createdAt.subtract(const Duration(hours: 7));
           }
-          // Never expire locally; wait for server status change.
+          
+          final elapsed = now.difference(createdAt);
+          if (elapsed.inSeconds >= 100) return false;
+          
           return true;
         }).toList();
 
@@ -78,8 +88,8 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
         }
         final elapsed = DateTime.now().difference(createdAt);
         final totalSeconds = 100; // 1 minute 40 seconds countdown
-        int remainingSeconds = totalSeconds - (elapsed.inSeconds % totalSeconds);
-        if (remainingSeconds == totalSeconds) remainingSeconds = 0;
+        int remainingSeconds = totalSeconds - elapsed.inSeconds;
+        if (remainingSeconds < 0) remainingSeconds = 0;
         final remaining = Duration(seconds: remainingSeconds);
 
         String timeString = "${remaining.inMinutes}:${(remaining.inSeconds % 60).toString().padLeft(2, '0')}";
@@ -104,8 +114,12 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
 
         String headerTitle = loc.translate('wait_customer_acceptance') ?? 'Waiting for customer response';
 
-        return Container(
-          margin: const EdgeInsets.all(16),
+        return GestureDetector(
+          onTap: () {
+            context.read<HomeController>().selectTripForPreview(trip);
+          },
+          child: Container(
+            margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
@@ -184,6 +198,21 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
                 ),
               ),
               const SizedBox(height: 12),
+              if (trip.startDatetime.isNotEmpty) ...[
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.7)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        AcceptedTripCardHelper.formatStartDatetime(trip.startDatetime, isBangla),
+                        style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
               Row(
                 children: [
                   Icon(Icons.my_location, size: 16, color: Colors.blue.withOpacity(0.8)),
@@ -249,6 +278,7 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
               ),
             ],
           ),
+        ),
         );
       },
     );

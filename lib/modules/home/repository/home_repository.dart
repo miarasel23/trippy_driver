@@ -284,7 +284,7 @@ class HomeRepository {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final body = jsonDecode(response.body);
-        print("data_after_complated====="+body);
+        print("data_after_complated=====${body.toString()}");
         if (body['status'] == true && body['data'] != null) {
           final List<dynamic> data = body['data'];
           final trips = <RentalTripModel>[];
@@ -314,7 +314,8 @@ class HomeRepository {
 
             try {
               final trip = RentalTripModel.fromJson(flatJson);
-              if (trip.myBid != null) {
+              final service = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
+              if (trip.myBid != null || service == 'RIDE_SHARE') {
                 trips.add(trip);
               }
             } catch (e) {
@@ -327,6 +328,50 @@ class HomeRepository {
       return null;
     } catch (e) {
       return null;
+    }
+  }
+
+  Future<String?> acceptRideShareTrip({
+    required String tripUuid,
+  }) async {
+    final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
+    final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
+
+    if (uuid == null || token == null) return "Missing driver auth";
+
+    String platform = Platform.isAndroid ? "android" : (Platform.isIOS ? "ios" : "web");
+    final prefs = await SharedPreferences.getInstance();
+    final languageCode = prefs.getString('active_language_code') ?? 'en';
+
+    final Map<String, String> body = {
+      "platform": platform,
+      "language_code": languageCode,
+      "action_when": "accept_or_cancel_or_complete_trip_for_driver",
+      "trip_uuid": tripUuid,
+      "driver_uuid": uuid,
+      "status": "ACCEPTED",
+    };
+
+    try {
+      final response = await ApiService().post(
+        Uri.parse(AppUrls.getActiveBidTrips),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+        },
+        body: body,
+      );
+
+      final respBody = jsonDecode(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (respBody['status'] == true) {
+          return null; 
+        }
+      }
+      return respBody['message'] ?? "Failed to accept trip";
+    } catch (e) {
+      return "Network error: $e";
     }
   }
 

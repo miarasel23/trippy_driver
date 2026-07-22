@@ -38,8 +38,8 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
         final loc = AppLocalizations.of(context);
         final isBangla = Localizations.localeOf(context).languageCode == 'bn';
 
-        final pickupLoc = trip.pickupLocations.isNotEmpty ? trip.pickupLocations.first : null;
-        final dropoffLoc = trip.dropoffLocations.isNotEmpty ? trip.dropoffLocations.first : null;
+        var pickupLoc = trip.pickupLocations.isNotEmpty ? trip.pickupLocations.first : null;
+        var dropoffLoc = trip.dropoffLocations.isNotEmpty ? trip.dropoffLocations.first : null;
         
         var pickup = pickupLoc?.address ?? 'Unknown';
         var dropoff = dropoffLoc?.address ?? 'Unknown';
@@ -61,10 +61,15 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
         
         final currentStatus = trip.tripStatus == 'REQUESTED' ? (trip.myBid?.status ?? trip.tripStatus) : trip.tripStatus;
 
-        if (currentStatus == 'FIRST_COMPLETED') {
+        final isReturnTrip = trip.serviceName.toUpperCase() == 'RETURN' || trip.serviceName.toUpperCase() == 'ROUND_TRIP';
+        if (currentStatus == 'FIRST_COMPLETED' && isReturnTrip) {
           final temp = pickup;
           pickup = dropoff;
           dropoff = temp;
+
+          final tempLoc = pickupLoc;
+          pickupLoc = dropoffLoc;
+          dropoffLoc = tempLoc;
         }
 
         String headerTitle = loc.translate('trip_accepted') ?? 'Trip Accepted';
@@ -184,6 +189,21 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
                             ),
                           ),
                         const SizedBox(height: 8),
+                        if (trip.startDatetime.isNotEmpty && trip.serviceName.toUpperCase() != 'RIDE_SHARE') ...[
+                          Row(
+                            children: [
+                              Icon(Icons.calendar_today, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.7)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  AcceptedTripCardHelper.formatStartDatetime(trip.startDatetime, isBangla),
+                                  style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                        ],
                         Row(
                           children: [
                             Icon(Icons.my_location, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.8)),
@@ -248,7 +268,10 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
                     label: loc.translate('navigate') ?? "Navigate",
                     color: theme.colorScheme.onSurface,
                     onTap: () async {
-                      await AcceptedTripCardHelper.launchNavigation(pickupLoc);
+                      final navTarget = ['IN_PROGRESS', 'RIDE_STARTED', 'FIRST_COMPLETED', 'COMPLETED'].contains(currentStatus) 
+                          ? dropoffLoc 
+                          : pickupLoc;
+                      await AcceptedTripCardHelper.launchNavigation(navTarget);
                     },
                   ),
                   AcceptedTripCardHelper.buildActionButton(

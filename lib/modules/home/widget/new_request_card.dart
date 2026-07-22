@@ -76,7 +76,14 @@ class _NewRequestCardState extends State<NewRequestCard> {
     final isRideShare = rawService.toUpperCase().contains('RIDE') ||
         rawService.toUpperCase() == 'RIDE_SHARE';
     final String status = widget.trip.myBid?.status ?? widget.trip.tripStatus;
-    final bool hasActiveBid = widget.trip.myBid != null && status != 'ACCEPTED' && status != 'CANCELLED';
+    final String tripStatus = widget.trip.tripStatus.toUpperCase();
+    final bool hasActiveBid = widget.trip.myBid != null && 
+        status != 'ACCEPTED' && 
+        status != 'CANCELLED' && 
+        tripStatus != 'IN_PROGRESS' && 
+        tripStatus != 'RIDE_STARTED' && 
+        tripStatus != 'FIRST_COMPLETED' && 
+        tripStatus != 'COMPLETED';
 
     final totalDuration = hasActiveBid ? const Duration(seconds: 100) : const Duration(minutes: 1);
     Duration remaining;
@@ -84,9 +91,12 @@ class _NewRequestCardState extends State<NewRequestCard> {
 
     if (hasActiveBid) {
       final elapsed = DateTime.now().difference(createdAt);
+      if (elapsed.inSeconds >= 100) {
+        return const SizedBox.shrink();
+      }
       currentRound = elapsed.inMinutes;
-      int remainingSeconds = totalDuration.inSeconds - (elapsed.inSeconds % totalDuration.inSeconds);
-      if (remainingSeconds == totalDuration.inSeconds) remainingSeconds = 0;
+      int remainingSeconds = totalDuration.inSeconds - elapsed.inSeconds;
+      if (remainingSeconds < 0) remainingSeconds = 0;
       remaining = Duration(seconds: remainingSeconds);
     } else {
       final expireTime = createdAt.add(totalDuration);
@@ -155,7 +165,10 @@ class _NewRequestCardState extends State<NewRequestCard> {
 
     // Theme responsive card
     Widget card = InkWell(
-      onTap: hasActiveBid ? null : () => OfferBottomSheet.show(context, widget.trip, isRideShare),
+      onTap: hasActiveBid ? null : () {
+        OfferBottomSheet.show(context, widget.trip, isRideShare);
+        context.read<HomeController>().selectTripForPreview(widget.trip);
+      },
       child: Container(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
@@ -244,32 +257,44 @@ class _NewRequestCardState extends State<NewRequestCard> {
                 ],
               ),
             ),
-                // Right Column: Options icon
-                SizedBox(
-                  width: 24,
-                  child: Icon(Icons.more_vert, color: theme.colorScheme.onSurface, size: 20),
+                // Right Column: Service Name
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: theme.colorScheme.primary.withOpacity(0.5), width: 1.5),
+                  ),
+                  child: Text(
+                    formattedService.toUpperCase(),
+                    style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w900),
+                  ),
                 ),
               ],
             ),
           ),
-          LinearProgressIndicator(
+          Visibility(
+            visible: remainingSeconds > 0,
+            maintainSize: false,
+            child: LinearProgressIndicator(
               value: progress,
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
               valueColor: AlwaysStoppedAnimation<Color>(
                 remainingSeconds <= 20 ? Colors.redAccent : const Color(0xFFC4F934),
               ),
-              minHeight: 6,
+              minHeight: 3,
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(12),
                 bottomRight: Radius.circular(12),
               ),
             ),
+          ),
           ],
         ),
       ),
     );
 
-    if (isRideShare && hasActiveBid) {
+    if (hasActiveBid) {
       return Stack(
         children: [
           card,

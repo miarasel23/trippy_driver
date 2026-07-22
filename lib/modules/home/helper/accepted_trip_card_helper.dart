@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 import '../model/rental_trip_model.dart';
 
 class AcceptedTripCardHelper {
+  static String formatStartDatetime(String datetimeStr, bool isBangla) {
+    if (datetimeStr.isEmpty) return datetimeStr;
+    try {
+      final date = DateTime.parse(datetimeStr);
+      final formatter = DateFormat("d MMM yyyy 'and' h:mm a");
+      final formatted = formatter.format(date);
+      return isBangla ? translateNumbersAndCommonWords(formatted, isBangla) : formatted;
+    } catch (e) {
+      return isBangla ? translateNumbersAndCommonWords(datetimeStr, isBangla) : datetimeStr;
+    }
+  }
   static Widget buildActionButton({
     required IconData icon,
     required String label,

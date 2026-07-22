@@ -308,5 +308,7 @@
   "smooth_ride": "আরামদায়ক রাইড",
   "others": "অন্যান্য",
   "please_select_rating": "অনুগ্রহ করে একটি রেটিং নির্বাচন করুন",
-  "review_submitted_successfully": "রিভিউ সফলভাবে জমা দেওয়া হয়েছে!"
+  "review_submitted_successfully": "রিভিউ সফলভাবে জমা দেওয়া হয়েছে!",
+  "min_bid_is": "সর্বনিম্ন বিড",
+  "max_bid_is": "সর্বোচ্চ বিড"
 }

@@ -100,6 +100,33 @@ class _HomeViewState extends State<HomeView> {
               child: const SizedBox.shrink(),
             ),
             BlocListener<HomeController, HomeState>(
+              listenWhen: (previous, current) => previous.markers != current.markers && current.markers.isNotEmpty,
+              listener: (context, state) async {
+                if (state.markers.isEmpty) return;
+                double minLat = state.markers.first.position.latitude;
+                double minLong = state.markers.first.position.longitude;
+                double maxLat = state.markers.first.position.latitude;
+                double maxLong = state.markers.first.position.longitude;
+                for (final marker in state.markers) {
+                  if (marker.position.latitude < minLat) minLat = marker.position.latitude;
+                  if (marker.position.latitude > maxLat) maxLat = marker.position.latitude;
+                  if (marker.position.longitude < minLong) minLong = marker.position.longitude;
+                  if (marker.position.longitude > maxLong) maxLong = marker.position.longitude;
+                }
+                final controller = await _mapController.future;
+                controller.animateCamera(
+                  CameraUpdate.newLatLngBounds(
+                    LatLngBounds(
+                      southwest: LatLng(minLat, minLong),
+                      northeast: LatLng(maxLat, maxLong),
+                    ),
+                    100.0,
+                  ),
+                );
+              },
+              child: const SizedBox.shrink(),
+            ),
+            BlocListener<HomeController, HomeState>(
               listenWhen: (previous, current) => previous.tripToReview?.uuid != current.tripToReview?.uuid && current.tripToReview != null,
               listener: (context, state) {
                 if (state.tripToReview != null) {
@@ -152,9 +179,14 @@ class _HomeViewState extends State<HomeView> {
                   child: Stack(
                     children: [
                       // Lower z-index: Active Bids Overlay
-                      const Align(
-                        alignment: Alignment.topCenter,
-                        child: BidTripOverlay(),
+                      BlocBuilder<HomeController, HomeState>(
+                        builder: (context, state) {
+                          if (state.previewTrip != null) return const SizedBox.shrink();
+                          return const Align(
+                            alignment: Alignment.topCenter,
+                            child: BidTripOverlay(),
+                          );
+                        }
                       ),
                       
                       // Higher z-index: New Rental Request Cards
@@ -165,8 +197,14 @@ class _HomeViewState extends State<HomeView> {
                               child: CircularProgressIndicator(),
                             );
                           }
+                          if (state.previewTrip != null) return const SizedBox.shrink();
+                          
                           final rideShareBids = state.bidTrips.where((t) {
                             final service = t.serviceName.isNotEmpty ? t.serviceName : t.carService.serviceName;
+                            final tripStatus = t.tripStatus.toUpperCase();
+                            if (tripStatus == 'ACCEPTED' || tripStatus == 'IN_PROGRESS' || tripStatus == 'RIDE_STARTED' || tripStatus == 'FIRST_COMPLETED' || tripStatus == 'COMPLETED') {
+                              return false;
+                            }
                             final status = t.myBid?.status ?? t.tripStatus;
                             return service == 'RIDE_SHARE' && status != 'ACCEPTED' && status != 'CANCELLED';
                           }).toList();

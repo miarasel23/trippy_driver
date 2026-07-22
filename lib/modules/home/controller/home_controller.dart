@@ -12,6 +12,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import '../helper/map_marker_helper.dart';
 import '../../../utils/app_urls.dart';
 
 class HomeState extends Equatable {
@@ -23,7 +24,9 @@ class HomeState extends Equatable {
   final Set<Marker> markers;
   final Set<Polyline> polylines;
   final String? toastMessageKey;
+  final bool clearToast;
   final RentalTripModel? tripToReview;
+  final RentalTripModel? previewTrip;
 
   const HomeState({
     required this.isOnline,
@@ -34,7 +37,9 @@ class HomeState extends Equatable {
     this.markers = const <Marker>{},
     this.polylines = const <Polyline>{},
     this.toastMessageKey,
+    this.clearToast = false,
     this.tripToReview,
+    this.previewTrip,
   });
 
   HomeState copyWith({
@@ -49,6 +54,8 @@ class HomeState extends Equatable {
     bool clearToast = false,
     RentalTripModel? tripToReview,
     bool clearReview = false,
+    RentalTripModel? previewTrip,
+    bool clearPreview = false,
   }) {
     return HomeState(
       isOnline: isOnline ?? this.isOnline,
@@ -60,11 +67,12 @@ class HomeState extends Equatable {
       polylines: polylines ?? this.polylines,
       toastMessageKey: clearToast ? null : (toastMessageKey ?? this.toastMessageKey),
       tripToReview: clearReview ? null : (tripToReview ?? this.tripToReview),
+      previewTrip: clearPreview ? null : (previewTrip ?? this.previewTrip),
     );
   }
 
   @override
-  List<Object?> get props => [isOnline, serviceMode, rentalTrips, bidTrips, isLoadingTrips, markers, polylines, toastMessageKey, tripToReview];
+  List<Object?> get props => [isOnline, serviceMode, rentalTrips, bidTrips, isLoadingTrips, markers, polylines, toastMessageKey, tripToReview, previewTrip];
 }
 
 class HomeController extends Cubit<HomeState> {
@@ -291,7 +299,8 @@ class HomeController extends Cubit<HomeState> {
     final Map<String, RentalTripModel> uniqueBids = {};
     for (var bid in allFetchedBids) {
       // Prioritize bids that have a myBid object or are from the active bids list
-      if (!uniqueBids.containsKey(bid.uuid) || bid.myBid != null) {
+      final service = bid.serviceName.isNotEmpty ? bid.serviceName : bid.carService.serviceName;
+      if (!uniqueBids.containsKey(bid.uuid) || bid.myBid != null || service == 'RIDE_SHARE') {
         uniqueBids[bid.uuid] = bid;
       }
     }
@@ -314,8 +323,7 @@ class HomeController extends Cubit<HomeState> {
         }
         
         if (ts == 'COMPLETED') {
-           final customer = t.customer.isNotEmpty ? t.customer.first : null;
-           if (customer != null && customer.reviewStatus == false && state.tripToReview?.uuid != t.uuid) {
+           if (t.givenReview == false && state.tripToReview?.uuid != t.uuid) {
                newTripToReview = t;
            }
            return false;
@@ -355,15 +363,11 @@ class HomeController extends Cubit<HomeState> {
       final status = t.tripStatus;
       final bidStatus = t.myBid?.status;
       
-      if (t.serviceName == 'RIDE_SHARE') {
-        return status == 'ACCEPTED' || bidStatus == 'ACCEPTED';
-      } else {
-        return status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || bidStatus == 'ACCEPTED';
-      }
+      return status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || bidStatus == 'ACCEPTED';
     }).toList();
 
-    RentalTripModel? tripToDisplay;
-    if (acceptedTrips.isNotEmpty) {
+    RentalTripModel? tripToDisplay = state.previewTrip;
+    if (tripToDisplay == null && acceptedTrips.isNotEmpty) {
       tripToDisplay = acceptedTrips.first;
     }
 
@@ -381,7 +385,7 @@ class HomeController extends Cubit<HomeState> {
 
     final trip = tripToDisplay;
     final generatedMarkers = <Marker>{};
-    final points = <PointLatLng>[];
+    final generatedPolylines = <Polyline>{};
 
     final prefs = await SharedPreferences.getInstance();
     final isBangla = (prefs.getString('active_language_code') ?? 'en') == 'bn';
@@ -391,66 +395,125 @@ class HomeController extends Cubit<HomeState> {
       return input.split('').map((c) => e2b[c] ?? c).join();
     }
 
+    // Get driver position
+    Position? driverPosition;
+    try {
+      driverPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      final carIcon = await MapMarkerHelper.createCarMarkerBitmap();
+      generatedMarkers.add(
+         Marker(
+           markerId: const MarkerId('driver'),
+           position: LatLng(driverPosition.latitude, driverPosition.longitude),
+           icon: carIcon,
+         ),
+      );
+    } catch (e) {
+      print("Could not get driver location: $e");
+    }
+
+    final polylinePoints = PolylinePoints();
+
+    // 1. Blue route (Driver -> First Pickup)
+    if (driverPosition != null && trip.pickupLocations.isNotEmpty) {
+       final pickup = trip.pickupLocations.first;
+       PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+         googleApiKey: AppUrls.googleApiKey,
+         request: PolylineRequest(
+            origin: PointLatLng(driverPosition.latitude, driverPosition.longitude),
+            destination: PointLatLng(pickup.latitude, pickup.longitude),
+            mode: TravelMode.driving,
+         ),
+       );
+       if (result.points.isNotEmpty) {
+          generatedPolylines.add(
+            Polyline(
+              polylineId: const PolylineId('driver_to_pickup'),
+              color: const Color(0xFF4285F4), // Blue
+              width: 5,
+              points: result.points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
+            ),
+          );
+       }
+    }
+
+    // 2. Green route (Pickups -> Dropoffs)
+    final tripPoints = <PointLatLng>[];
+    for (var p in trip.pickupLocations) tripPoints.add(PointLatLng(p.latitude, p.longitude));
+    for (var p in trip.dropoffLocations) tripPoints.add(PointLatLng(p.latitude, p.longitude));
+
+    if (tripPoints.length >= 2) {
+       List<LatLng> polylineCoords = [];
+       for (int i = 0; i < tripPoints.length - 1; i++) {
+          PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+            googleApiKey: AppUrls.googleApiKey,
+            request: PolylineRequest(
+               origin: tripPoints[i],
+               destination: tripPoints[i+1],
+               mode: TravelMode.driving,
+            ),
+          );
+          if (result.points.isNotEmpty) {
+             polylineCoords.addAll(result.points.map((p) => LatLng(p.latitude, p.longitude)));
+          }
+       }
+       if (polylineCoords.isNotEmpty) {
+          generatedPolylines.add(
+            Polyline(
+              polylineId: const PolylineId('trip_route'),
+              color: const Color(0xFF34A853), // Green
+              width: 5,
+              points: polylineCoords,
+            ),
+          );
+       }
+    }
+
+    // Parse km strings to double
+    double parseKm(String text) {
+      final s = text.replaceAll(RegExp(r'[^0-9.]'), '');
+      return double.tryParse(s) ?? 0.0;
+    }
+    
+    final pickupKm = parseKm(trip.pickupKm);
+    final totalKm = trip.totalDistance;
+    
+    final pickupMins = (pickupKm * 3.5).round(); // approx 3.5 mins per km
+    final dropoffMins = (totalKm * 3.5).round();
+
     for (int i = 0; i < trip.pickupLocations.length; i++) {
        final pickup = trip.pickupLocations[i];
        final title = isBangla ? 'পিকআপ ${toBanglaDigits('${i+1}')}' : 'Pickup ${i+1}';
+       
+       final icon = await MapMarkerHelper.createCustomMarkerBitmap(
+         String.fromCharCode('A'.codeUnitAt(0) + i), 
+         const Color(0xFF4285F4) // Blue
+       );
        generatedMarkers.add(
          Marker(
            markerId: MarkerId('pickup_$i'),
            position: LatLng(pickup.latitude, pickup.longitude),
            infoWindow: InfoWindow(title: title, snippet: pickup.address),
-           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+           icon: icon,
          ),
        );
-       points.add(PointLatLng(pickup.latitude, pickup.longitude));
     }
 
     for (int i = 0; i < trip.dropoffLocations.length; i++) {
        final drop = trip.dropoffLocations[i];
        final title = isBangla ? 'ড্রপ অফ ${toBanglaDigits('${i+1}')}' : 'Dropoff ${i+1}';
+       
+       final icon = await MapMarkerHelper.createCustomMarkerBitmap(
+         String.fromCharCode('B'.codeUnitAt(0) + i), 
+         const Color(0xFF34A853) // Green
+       );
        generatedMarkers.add(
          Marker(
            markerId: MarkerId('dropoff_$i'),
            position: LatLng(drop.latitude, drop.longitude),
            infoWindow: InfoWindow(title: title, snippet: drop.address),
-           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+           icon: icon,
          ),
        );
-       points.add(PointLatLng(drop.latitude, drop.longitude));
-    }
-
-    final generatedPolylines = <Polyline>{};
-
-    if (points.length >= 2) {
-       PolylinePoints polylinePoints = PolylinePoints();
-       List<LatLng> polylineCoordinates = [];
-
-       for (int i = 0; i < points.length - 1; i++) {
-          PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-            googleApiKey: AppUrls.googleApiKey,
-            request: PolylineRequest(
-               origin: points[i],
-               destination: points[i+1],
-               mode: TravelMode.driving,
-            ),
-          );
-          if (result.points.isNotEmpty) {
-             for (var point in result.points) {
-                polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-             }
-          }
-       }
-
-       if (polylineCoordinates.isNotEmpty) {
-         generatedPolylines.add(
-           Polyline(
-             polylineId: const PolylineId('route'),
-             color: const Color(0xFF0000FF), // Blue
-             width: 5,
-             points: polylineCoordinates,
-           ),
-         );
-       }
     }
 
     emit(state.copyWith(
@@ -493,6 +556,17 @@ class HomeController extends Cubit<HomeState> {
     return error;
   }
 
+  Future<String?> acceptRideShareTrip(String tripUuid) async {
+    final error = await repository.acceptRideShareTrip(
+      tripUuid: tripUuid,
+    );
+    if (error == null) {
+      removeTrip(tripUuid);
+      fetchBidTrips();
+    }
+    return error;
+  }
+
   Future<String?> updateTripRideStatus(String tripUuid, String status) async {
     final error = await repository.updateTripRideStatus(
       tripUuid: tripUuid,
@@ -530,5 +604,10 @@ class HomeController extends Cubit<HomeState> {
   
   void clearTripToReview() {
     emit(state.copyWith(clearReview: true));
+  }
+
+  void selectTripForPreview(RentalTripModel? trip) {
+    emit(state.copyWith(previewTrip: trip, clearPreview: trip == null));
+    _generateAndEmitMapData(state.bidTrips);
   }
 }

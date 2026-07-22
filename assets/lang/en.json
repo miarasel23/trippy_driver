@@ -304,5 +304,7 @@
   "smooth_ride": "Smooth ride",
   "others": "Others",
   "please_select_rating": "Please select a rating",
-  "review_submitted_successfully": "Review submitted successfully!"
+  "review_submitted_successfully": "Review submitted successfully!",
+  "min_bid_is": "Min bid is",
+  "max_bid_is": "Max bid is"
 }

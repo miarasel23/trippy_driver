@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../controller/home_controller.dart';
 import '../../../../core/utils/localization/app_localization.dart';
 import '../model/rental_trip_model.dart';
 import 'translated_text.dart';
+import '../../../../utils/app_urls.dart';
 
 class OfferBottomSheet extends StatefulWidget {
   final RentalTripModel trip;
@@ -12,21 +14,23 @@ class OfferBottomSheet extends StatefulWidget {
   const OfferBottomSheet({super.key, required this.trip, required this.isRideShare});
 
   static void show(BuildContext context, RentalTripModel trip, bool isRideShare) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
+    final homeController = context.read<HomeController>();
+    final scaffold = Scaffold.of(context);
+    
+    scaffold.showBottomSheet(
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.transparent, // Allow map to be visible
-      builder: (ctx) {
+      (ctx) {
         return BlocProvider.value(
-          value: context.read<HomeController>(),
+          value: homeController,
           child: Padding(
             padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
             child: OfferBottomSheet(trip: trip, isRideShare: isRideShare),
           ),
         );
       },
-    );
+    ).closed.then((_) {
+      homeController.selectTripForPreview(null);
+    });
   }
 
   @override
@@ -38,15 +42,33 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
   String? _bidError;
   bool _isSubmitting = false;
   bool _isEditingFare = false;
+  Timer? _timer;
+  double _remainingSeconds = 60.0;
+  double _totalSeconds = 60.0;
 
   @override
   void initState() {
     super.initState();
     _bidController = TextEditingController(text: widget.trip.customerOfferAmmount.round().toString());
+    
+    _totalSeconds = 60.0;
+    _remainingSeconds = 60.0;
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      setState(() {
+        _remainingSeconds -= 1;
+      });
+      if (_remainingSeconds <= 0) {
+        timer.cancel();
+        if (mounted) Navigator.of(context).pop();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
     _bidController.dispose();
     super.dispose();
   }
@@ -69,9 +91,13 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
     final currency = isBangla ? '৳' : 'BDT';
     
     if (amt > maxBid) {
-      setState(() => _bidError = "\${loc.translate('max_bid_is') ?? 'Max bid is'} $currency\${maxBid.round()}");
+      final val = isBangla ? _toBanglaDigits(maxBid.round().toString()) : maxBid.round().toString();
+      final String maxText = loc.translate('max_bid_is') ?? 'Max bid is';
+      setState(() => _bidError = "$maxText $currency$val");
     } else if (amt < minBid) {
-      setState(() => _bidError = "\${loc.translate('min_bid_is') ?? 'Min bid is'} $currency\${minBid.round()}");
+      final val = isBangla ? _toBanglaDigits(minBid.round().toString()) : minBid.round().toString();
+      final String minText = loc.translate('min_bid_is') ?? 'Min bid is';
+      setState(() => _bidError = "$minText $currency$val");
     } else {
       setState(() => _bidError = null);
     }
@@ -87,6 +113,21 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: Colors.red));
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.translate('wait_customer_acceptance') ?? 'Waiting for customer acceptance...'), backgroundColor: Colors.green));
+        Navigator.pop(context); // Close bottom sheet
+      }
+    }
+  }
+
+  Future<void> _acceptRideShare() async {
+    setState(() => _isSubmitting = true);
+    final error = await context.read<HomeController>().acceptRideShareTrip(widget.trip.uuid);
+    if (mounted) {
+      setState(() => _isSubmitting = false);
+      final loc = AppLocalizations.of(context);
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: Colors.red));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.translate('trip_accepted') ?? 'Trip accepted'), backgroundColor: Colors.green));
         Navigator.pop(context); // Close bottom sheet
       }
     }
@@ -127,6 +168,21 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
     
     final distanceText = "~${widget.trip.totalDistance} km";
     final customerAvatar = widget.trip.customer.isNotEmpty ? widget.trip.customer.first.profilePicture : '';
+    final customerName = widget.trip.customer.isNotEmpty && widget.trip.customer.first.name.isNotEmpty 
+        ? widget.trip.customer.first.name 
+        : loc.translate('customer') ?? "Customer";
+    final customerRating = widget.trip.customer.isNotEmpty ? _translateNumbersAndCommonWords(widget.trip.customer.first.averageRating.toStringAsFixed(1), isBangla) : _translateNumbersAndCommonWords("4.5", isBangla);
+    
+    // timeText calculation
+    int mins = 0;
+    if (widget.trip.pickupKm.isNotEmpty) {
+      final match = RegExp(r'([\d.]+)').firstMatch(widget.trip.pickupKm);
+      if (match != null) {
+        final dist = double.tryParse(match.group(1) ?? '0') ?? 0.0;
+        mins = (dist * 2.5).round();
+      }
+    }
+    final timeText = _translateNumbersAndCommonWords("$mins min", isBangla);
 
     return Container(
       decoration: BoxDecoration(
@@ -134,47 +190,105 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header profile and distance
+              // Service name + progress bar header
+              Builder(builder: (context) {
+                final rawService = widget.trip.serviceName.isNotEmpty
+                    ? widget.trip.serviceName
+                    : widget.trip.carService.serviceName;
+                final serviceLabel = rawService.replaceAll('_', ' ').toUpperCase();
+                final progress = _totalSeconds > 0 ? (_remainingSeconds / _totalSeconds) : 0.0;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: theme.colorScheme.primary.withOpacity(0.5), width: 1.5),
+                          ),
+                          child: Text(
+                            serviceLabel,
+                            style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (_remainingSeconds > 0)
+                      LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          _remainingSeconds <= 20 ? Colors.redAccent : const Color(0xFFC4F934),
+                        ),
+                        minHeight: 3,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    const SizedBox(height: 8),
+                  ],
+                );
+              }),
+              // Single header row: avatar + name + rating on left, BDT + km on right
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   CircleAvatar(
                     radius: 20,
                     backgroundImage: customerAvatar.isNotEmpty
-                        ? NetworkImage(customerAvatar)
+                        ? NetworkImage(customerAvatar.startsWith('http') ? customerAvatar : '${AppUrls.imageBaseUrl}$customerAvatar')
                         : null,
                     backgroundColor: theme.colorScheme.surfaceContainerHighest,
                     child: customerAvatar.isEmpty
                         ? Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant, size: 24)
                         : null,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
                         Text(
-                          distanceText,
-                          style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 14),
-                        ),
-                        Text(
-                          "$currency$formattedAmount",
+                          customerName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.star, color: Colors.amber, size: 12),
+                        const SizedBox(width: 2),
+                        Text(
+                          customerRating,
+                          style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 11),
                         ),
                       ],
                     ),
                   ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        "$currency$formattedAmount",
+                        maxLines: 1,
+                        style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 22, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        distanceText,
+                        style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.55), fontSize: 12),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               
               // Locations
               Row(
@@ -221,28 +335,32 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                 ],
               ),
               
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
               
               // Accept Button
               ElevatedButton(
-                onPressed: _isSubmitting ? null : () => _submitBid(baseAmount),
+                onPressed: _isSubmitting 
+                  ? null 
+                  : () {
+                        _submitBid(baseAmount);
+                    },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.onSurface,
                   foregroundColor: theme.colorScheme.surface,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _isSubmitting
-                  ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.surface))
+                  ? SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.surface))
                   : Text(
                       "${loc.translate('accept_for') ?? 'Accept for'} $currency$formattedAmount",
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
                     ),
               ),
               
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
               
-              if (widget.isRideShare) ...[
+              if (true) ...[
                 Text(
                   loc.translate('offer_your_fare') ?? 'Offer your fare',
                   style: TextStyle(
@@ -251,7 +369,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 
                 if (_isEditingFare)
                   Row(
@@ -260,6 +378,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                         flex: 2,
                         child: TextField(
                           controller: _bidController,
+                          autofocus: true,
                           keyboardType: TextInputType.number,
                           style: TextStyle(
                             color: theme.colorScheme.onSurface,
@@ -276,7 +395,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             prefixText: '$currency ',
                             prefixStyle: TextStyle(
                               color: theme.colorScheme.onSurface,
@@ -291,7 +410,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                       Expanded(
                         flex: 1,
                         child: SizedBox(
-                          height: _bidError != null ? 76 : 56,
+                          height: _bidError != null ? 68 : 52,
                           child: ElevatedButton(
                             onPressed: (_bidError == null && !_isSubmitting) 
                               ? () {
@@ -329,7 +448,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: theme.colorScheme.surfaceContainerHighest,
                             foregroundColor: theme.colorScheme.onSurface,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           child: Text(
@@ -345,7 +464,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: theme.colorScheme.surfaceContainerHighest,
                             foregroundColor: theme.colorScheme.onSurface,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           child: Text(
@@ -364,7 +483,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.colorScheme.surfaceContainerHighest,
                           foregroundColor: theme.colorScheme.onSurface,
-                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         child: const Icon(Icons.edit, size: 20),
@@ -373,20 +492,20 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                   ),
               ],
               
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.surfaceContainerHighest,
                   foregroundColor: theme.colorScheme.onSurface,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
                 child: Text(
                   loc.translate('close') ?? 'Close',
-                  style: const TextStyle(fontSize: 16),
+                  style: const TextStyle(fontSize: 14),
                 ),
               ),
             ],
