@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 import '../../../core/network/api_service.dart';
 import '../../../store/user_data_store.dart';
@@ -85,12 +86,12 @@ class HomeRepository {
     final Map<String, String> queryParams = {
       "platform": platform,
       "language_code": languageCode,
-      "action_when": "rental_list_for_driver",
+      "action_when": "all_rental_trip_list",
       "driver_uuid": uuid,
       "trip_status": "REQUESTED",
     };
 
-    final uri = Uri.parse(AppUrls.rentalTripList).replace(queryParameters: queryParams);
+    final uri = Uri.parse(AppUrls.allRentalTripList).replace(queryParameters: queryParams);
 
     try {
       final response = await ApiService().get(
@@ -238,7 +239,7 @@ class HomeRepository {
         if (body['status'] == true && body['data'] != null) {
           final List<dynamic> data = body['data'];
           allTrips.addAll(data.map((e) => RentalTripModel.fromJson(e)).toList());
-          print('alllltrips=====${allTrips}');
+          print('alllltrips=====${response.body}');
         }
       }
       return allTrips;
@@ -283,8 +284,7 @@ class HomeRepository {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final body = jsonDecode(response.body);
-        print('active_bid_trips=====${body}');
-        print(uri);
+        print("data_after_complated====="+body);
         if (body['status'] == true && body['data'] != null) {
           final List<dynamic> data = body['data'];
           final trips = <RentalTripModel>[];
@@ -442,4 +442,60 @@ class HomeRepository {
     }
   }
 
+  Future<String?> submitReview({
+    required String customerUuid,
+    required String driverUuid,
+    required String tripUuid,
+    required int rating,
+    String? comments,
+  }) async {
+    final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
+    if (token == null) return "User not authenticated";
+
+    String platform = Platform.isAndroid ? "android" : (Platform.isIOS ? "ios" : "web");
+    final prefs = await SharedPreferences.getInstance();
+    final languageCode = prefs.getString('active_language_code') ?? 'en';
+
+    final Map<String, String> data = {
+      "platform": platform,
+      "language_code": languageCode,
+      "action_when": "give_review",
+      "customer_uuid": customerUuid,
+      "driver_uuid": driverUuid,
+      "trip_uuid": tripUuid,
+      "rating": rating.toString(),
+      "given_by": "DRIVER",
+    };
+    
+    if (comments != null && comments.isNotEmpty) {
+      data["comments"] = comments;
+    }
+
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse(AppUrls.giveReview));
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
+      request.fields.addAll(data);
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      print("response ${response.body}");
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        try {
+          final jsonResponse = jsonDecode(response.body);
+          if (jsonResponse['status'] == false) {
+            return jsonResponse['message']?.toString() ?? "Failed to submit review";
+          }
+        } catch (_) {}
+        return null;
+      } else {
+        return "Failed to submit review: ${response.statusCode}";
+      }
+    } catch (e) {
+      return "An unexpected error occurred: $e";
+    }
+  }
 }

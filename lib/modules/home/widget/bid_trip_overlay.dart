@@ -21,8 +21,13 @@ class BidTripOverlay extends StatelessWidget {
           final service = t.serviceName.isNotEmpty ? t.serviceName : t.carService.serviceName;
           if (service == 'RIDE_SHARE') return false;
           
-          final status = t.myBid?.status ?? t.tripStatus;
-          return status != 'ACCEPTED';
+          final status = t.tripStatus;
+          final bidStatus = t.myBid?.status;
+          
+          if (status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || bidStatus == 'ACCEPTED') {
+            return false;
+          }
+          return true;
         }).toList();
 
         if (pendingTrips.isEmpty) {

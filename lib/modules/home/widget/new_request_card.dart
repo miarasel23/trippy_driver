@@ -68,28 +68,49 @@ class _NewRequestCardState extends State<NewRequestCard> {
   @override
   Widget build(BuildContext context) {
     final isBangla = Localizations.localeOf(context).languageCode == 'bn';
-    final createdAt = _parseCreatedAt(widget.trip.createdAt);
+    final createdAtStr = widget.trip.myBid?.createdAt ?? widget.trip.createdAt;
+    final createdAt = _parseCreatedAt(createdAtStr);
     final rawService = widget.trip.serviceName.isNotEmpty
         ? widget.trip.serviceName
         : widget.trip.carService.serviceName;
     final isRideShare = rawService.toUpperCase().contains('RIDE') ||
         rawService.toUpperCase() == 'RIDE_SHARE';
-    final totalDuration = const Duration(minutes: 1);
-    final expireTime = createdAt.add(totalDuration);
-    final remaining = expireTime.difference(DateTime.now());
+    final String status = widget.trip.myBid?.status ?? widget.trip.tripStatus;
+    final bool hasActiveBid = widget.trip.myBid != null && status != 'ACCEPTED' && status != 'CANCELLED';
 
-    if (remaining.isNegative) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.read<HomeController>().removeTrip(widget.trip.uuid);
-      });
-      return const SizedBox.shrink();
+    final totalDuration = hasActiveBid ? const Duration(seconds: 100) : const Duration(minutes: 1);
+    Duration remaining;
+    int currentRound = 0;
+
+    if (hasActiveBid) {
+      final elapsed = DateTime.now().difference(createdAt);
+      currentRound = elapsed.inMinutes;
+      int remainingSeconds = totalDuration.inSeconds - (elapsed.inSeconds % totalDuration.inSeconds);
+      if (remainingSeconds == totalDuration.inSeconds) remainingSeconds = 0;
+      remaining = Duration(seconds: remainingSeconds);
+    } else {
+      final expireTime = createdAt.add(totalDuration);
+      remaining = expireTime.difference(DateTime.now());
+      if (remaining.isNegative) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          context.read<HomeController>().removeTrip(widget.trip.uuid);
+        });
+        return const SizedBox.shrink();
+      }
     }
 
+    final animationKey = "${createdAtStr}_$currentRound";
+
     return TweenAnimationBuilder<double>(
+      key: ValueKey(animationKey),
       tween: Tween<double>(begin: remaining.inSeconds.toDouble(), end: 0),
       duration: remaining,
       onEnd: () {
-        context.read<HomeController>().removeTrip(widget.trip.uuid);
+        if (!hasActiveBid) {
+          context.read<HomeController>().removeTrip(widget.trip.uuid);
+        } else {
+          if (mounted) setState(() {});
+        }
       },
       builder: (context, value, child) {
         return _buildCardContent(context, value, totalDuration.inSeconds.toDouble(), isRideShare, isBangla);

@@ -9,8 +9,15 @@ import 'cancel_trip_dialog.dart';
 import '../helper/accepted_trip_card_helper.dart';
 import '../../../../utils/app_urls.dart';
 
-class AcceptedTripCard extends StatelessWidget {
+class AcceptedTripCard extends StatefulWidget {
   const AcceptedTripCard({Key? key}) : super(key: key);
+
+  @override
+  State<AcceptedTripCard> createState() => _AcceptedTripCardState();
+}
+
+class _AcceptedTripCardState extends State<AcceptedTripCard> {
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -266,8 +273,20 @@ class AcceptedTripCard extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      context.read<HomeController>().updateTripRideStatus(trip.uuid, nextStatus!);
+                    onPressed: _isLoading ? null : () async {
+                      if (mounted) {
+                        setState(() {
+                          _isLoading = true;
+                        });
+                      }
+                      
+                      await context.read<HomeController>().updateTripRideStatus(trip.uuid, nextStatus!);
+                      
+                      if (mounted) {
+                        setState(() {
+                          _isLoading = false;
+                        });
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
@@ -276,10 +295,16 @@ class AcceptedTripCard extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 4,
                     ),
-                    child: Text(
-                      actionLabel,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.1),
-                    ),
+                    child: _isLoading 
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : Text(
+                          actionLabel,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.1),
+                        ),
                   ),
                 ),
               ],

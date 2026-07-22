@@ -58,15 +58,7 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
           if (createdAt.isAfter(now.add(const Duration(hours: 1)))) {
             createdAt = createdAt.subtract(const Duration(hours: 7));
           }
-          final expireTime = createdAt.add(const Duration(minutes: 1));
-          if (expireTime.difference(DateTime.now()).isNegative) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                context.read<HomeController>().removeBidTrip(t.uuid);
-              }
-            });
-            return false;
-          }
+          // Never expire locally; wait for server status change.
           return true;
         }).toList();
 
@@ -84,7 +76,11 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
         if (createdAt.isAfter(now.add(const Duration(hours: 1)))) {
           createdAt = createdAt.subtract(const Duration(hours: 7));
         }
-        final remaining = createdAt.add(const Duration(minutes: 1)).difference(DateTime.now());
+        final elapsed = DateTime.now().difference(createdAt);
+        final totalSeconds = 100; // 1 minute 40 seconds countdown
+        int remainingSeconds = totalSeconds - (elapsed.inSeconds % totalSeconds);
+        if (remainingSeconds == totalSeconds) remainingSeconds = 0;
+        final remaining = Duration(seconds: remainingSeconds);
 
         String timeString = "${remaining.inMinutes}:${(remaining.inSeconds % 60).toString().padLeft(2, '0')}";
         if (isBangla) {

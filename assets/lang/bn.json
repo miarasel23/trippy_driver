@@ -293,5 +293,20 @@
   "completed": "সম্পন্ন",
   "ride_completed_show_details": "যাত্রা সম্পন্ন - বিস্তারিত দেখুন",
   "platform_fee": "প্ল্যাটফর্ম ফি",
-  "close": "বন্ধ করুন"
+  "close": "বন্ধ করুন",
+  "trip_details": "ট্রিপের বিস্তারিত",
+  "trip_completed": "Trip Complated",
+  "hope_you_enjoyed": "আশা করি আপনি রাইডটি উপভোগ করেছেন!",
+  "final_fare": "চূড়ান্ত ভাড়া",
+  "paid_via": "পরিশোধ করা হয়েছে",
+  "destination": "গন্তব্য",
+  "give_a_compliment": "একটি প্রশংসা দিন",
+  "submit_rating": "রেটিং জমা দিন",
+  "clean_car": "পরিষ্কার গাড়ি",
+  "great_music": "দারুণ মিউজিক",
+  "professional": "পেশাদারিত্ব",
+  "smooth_ride": "আরামদায়ক রাইড",
+  "others": "অন্যান্য",
+  "please_select_rating": "অনুগ্রহ করে একটি রেটিং নির্বাচন করুন",
+  "review_submitted_successfully": "রিভিউ সফলভাবে জমা দেওয়া হয়েছে!"
 }

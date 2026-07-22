@@ -22,6 +22,8 @@ class HomeState extends Equatable {
   final bool isLoadingTrips;
   final Set<Marker> markers;
   final Set<Polyline> polylines;
+  final String? toastMessageKey;
+  final RentalTripModel? tripToReview;
 
   const HomeState({
     required this.isOnline,
@@ -31,6 +33,8 @@ class HomeState extends Equatable {
     this.isLoadingTrips = false,
     this.markers = const <Marker>{},
     this.polylines = const <Polyline>{},
+    this.toastMessageKey,
+    this.tripToReview,
   });
 
   HomeState copyWith({
@@ -41,6 +45,10 @@ class HomeState extends Equatable {
     bool? isLoadingTrips,
     Set<Marker>? markers,
     Set<Polyline>? polylines,
+    String? toastMessageKey,
+    bool clearToast = false,
+    RentalTripModel? tripToReview,
+    bool clearReview = false,
   }) {
     return HomeState(
       isOnline: isOnline ?? this.isOnline,
@@ -50,11 +58,13 @@ class HomeState extends Equatable {
       isLoadingTrips: isLoadingTrips ?? this.isLoadingTrips,
       markers: markers ?? this.markers,
       polylines: polylines ?? this.polylines,
+      toastMessageKey: clearToast ? null : (toastMessageKey ?? this.toastMessageKey),
+      tripToReview: clearReview ? null : (tripToReview ?? this.tripToReview),
     );
   }
 
   @override
-  List<Object?> get props => [isOnline, serviceMode, rentalTrips, bidTrips, isLoadingTrips, markers, polylines];
+  List<Object?> get props => [isOnline, serviceMode, rentalTrips, bidTrips, isLoadingTrips, markers, polylines, toastMessageKey, tripToReview];
 }
 
 class HomeController extends Cubit<HomeState> {
@@ -289,12 +299,27 @@ class HomeController extends Cubit<HomeState> {
     final bids = uniqueBids.values.toList();
 
     if (bids.isNotEmpty || results[0] != null || results[1] != null) {
+      String? newToastKey;
+      RentalTripModel? newTripToReview;
+      
       final validBids = bids.where((t) {
         if (_ignoredBidTripIds.contains(t.uuid)) return false;
         final ts = t.tripStatus;
-        if (ts == 'CANCELLED' || t.myBid?.status == 'CANCELLED') return false;
+        if (ts == 'CANCELLED' || t.myBid?.status == 'CANCELLED') {
+           final old = state.bidTrips.firstWhere((oldBid) => oldBid.uuid == t.uuid, orElse: () => t);
+           if (old.tripStatus == 'ACCEPTED' || old.myBid?.status == 'ACCEPTED') {
+               newToastKey = 'customer_cancelled_trip_${DateTime.now().millisecondsSinceEpoch}';
+           }
+           return false;
+        }
         
-        
+        if (ts == 'COMPLETED') {
+           final customer = t.customer.isNotEmpty ? t.customer.first : null;
+           if (customer != null && customer.reviewStatus == false && state.tripToReview?.uuid != t.uuid) {
+               newTripToReview = t;
+           }
+           return false;
+        }
         
         return true;
       }).toList();
@@ -318,14 +343,14 @@ class HomeController extends Cubit<HomeState> {
       }
 
 
-      if (stateChanged) {
+      if (stateChanged || newToastKey != null || newTripToReview != null) {
         final updatedList = newMap.values.toList();
-        await _generateAndEmitMapData(updatedList);
+        await _generateAndEmitMapData(updatedList, newToastKey, newTripToReview);
       }
     }
   }
 
-  Future<void> _generateAndEmitMapData(List<RentalTripModel> bids) async {
+  Future<void> _generateAndEmitMapData(List<RentalTripModel> bids, [String? toastKey, RentalTripModel? newTripToReview]) async {
     final acceptedTrips = bids.where((t) {
       final status = t.tripStatus;
       final bidStatus = t.myBid?.status;
@@ -343,7 +368,14 @@ class HomeController extends Cubit<HomeState> {
     }
 
     if (tripToDisplay == null) {
-      emit(state.copyWith(bidTrips: bids, markers: const <Marker>{}, polylines: const <Polyline>{}));
+      emit(state.copyWith(
+        bidTrips: bids, 
+        markers: const <Marker>{}, 
+        polylines: const <Polyline>{},
+        toastMessageKey: toastKey,
+        clearToast: toastKey == null,
+        tripToReview: newTripToReview,
+      ));
       return;
     }
 
@@ -425,6 +457,9 @@ class HomeController extends Cubit<HomeState> {
       bidTrips: bids, 
       markers: generatedMarkers,
       polylines: generatedPolylines,
+      toastMessageKey: toastKey,
+      clearToast: toastKey == null,
+      tripToReview: newTripToReview,
     ));
   }
 
@@ -468,5 +503,32 @@ class HomeController extends Cubit<HomeState> {
     }
     return error;
   }
-}
 
+  Future<String?> submitReview({
+    required String tripUuid,
+    required String customerUuid,
+    required int rating,
+    String? comments,
+  }) async {
+    final driverUuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
+    if (driverUuid == null) return "User not authenticated";
+
+    final error = await repository.submitReview(
+      customerUuid: customerUuid,
+      driverUuid: driverUuid,
+      tripUuid: tripUuid,
+      rating: rating,
+      comments: comments,
+    );
+
+    if (error == null) {
+      // Clear the review screen
+      emit(state.copyWith(clearReview: true));
+    }
+    return error;
+  }
+  
+  void clearTripToReview() {
+    emit(state.copyWith(clearReview: true));
+  }
+}

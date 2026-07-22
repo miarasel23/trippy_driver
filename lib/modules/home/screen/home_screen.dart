@@ -15,6 +15,10 @@ import '../widget/bid_trip_overlay.dart';
 import '../widget/pending_bid_trip_card.dart';
 import '../widget/accepted_trip_card.dart';
 import '../widget/service_mode_bottom_sheet.dart';
+import '../widget/review_bottom_sheet.dart';
+
+import '../../../core/utils/ui_utils.dart';
+import '../../../../core/utils/localization/app_localization.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -82,6 +86,38 @@ class _HomeViewState extends State<HomeView> {
         extendBodyBehindAppBar: true,
         body: Stack(
           children: [
+            BlocListener<HomeController, HomeState>(
+              listenWhen: (previous, current) => previous.toastMessageKey != current.toastMessageKey && current.toastMessageKey != null,
+              listener: (context, state) {
+                if (state.toastMessageKey != null) {
+                   final loc = AppLocalizations.of(context);
+                   final keyParts = state.toastMessageKey!.split('_');
+                   final key = keyParts.length >= 3 ? keyParts.sublist(0, 3).join('_') : state.toastMessageKey!;
+                   final msg = loc.translate(key) ?? "Customer cancelled trip";
+                   UiUtils.showAppSnackBar(context, msg, type: 'error');
+                }
+              },
+              child: const SizedBox.shrink(),
+            ),
+            BlocListener<HomeController, HomeState>(
+              listenWhen: (previous, current) => previous.tripToReview?.uuid != current.tripToReview?.uuid && current.tripToReview != null,
+              listener: (context, state) {
+                if (state.tripToReview != null) {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => BlocProvider.value(
+                      value: context.read<HomeController>(),
+                      child: ReviewBottomSheet(trip: state.tripToReview!),
+                    ),
+                  ).whenComplete(() {
+                    context.read<HomeController>().clearTripToReview();
+                  });
+                }
+              },
+              child: const SizedBox.shrink(),
+            ),
             // 1. Google Map Background
             BlocBuilder<HomeController, HomeState>(
               builder: (context, state) {

@@ -40,33 +40,36 @@ class RentalTripModel {
   });
 
   factory RentalTripModel.fromJson(Map<String, dynamic> json) {
+    final tripDetails = json['trip_details'] as Map<String, dynamic>? ?? json;
+    final locationDetails = json['location_details'] as Map<String, dynamic>?;
+
     final distanceObj = json['distance'] as Map<String, dynamic>?;
     final double totalDist = distanceObj != null ? double.tryParse(distanceObj['total_km']?.toString() ?? '0') ?? 0.0 : 0.0;
 
     return RentalTripModel(
-      id: json['id'] ?? 0,
-      uuid: json['uuid'] ?? '',
-      serviceName: json['service_name'] ?? '',
-      paymentMethod: json['payment_method'] ?? '',
-      startDatetime: json['start_datetime'] ?? '',
-      offerAmmount: (json['offer_ammount'] ?? 0).toDouble(),
-      customerOfferAmmount: (json['customer_offer_ammount'] ?? 0).toDouble(),
-      tripStatus: json['trip_status'] ?? '',
-      createdAt: json['created_at'] ?? '',
-      pickupKm: json['pickup_km'] ?? '0 m',
+      id: tripDetails['id'] ?? 0,
+      uuid: tripDetails['uuid'] ?? '',
+      serviceName: tripDetails['service_name'] ?? '',
+      paymentMethod: tripDetails['payment_method'] ?? '',
+      startDatetime: tripDetails['start_datetime'] ?? '',
+      offerAmmount: (tripDetails['offer_ammount'] ?? 0).toDouble(),
+      customerOfferAmmount: (tripDetails['customer_offer_ammount'] ?? 0).toDouble(),
+      tripStatus: tripDetails['trip_status'] ?? '',
+      createdAt: tripDetails['created_at'] ?? '',
+      pickupKm: tripDetails['pickup_km'] ?? '0 m',
       totalDistance: totalDist,
-      carCategory: CarCategory.fromJson(json['car_category'] ?? {}),
-      carService: CarService.fromJson(json['car_service'] ?? {}),
-      pickupLocations: (json['pickup_locations'] as List?)
+      carCategory: CarCategory.fromJson(tripDetails['car_category'] ?? {}),
+      carService: CarService.fromJson(tripDetails['car_service'] ?? {}),
+      pickupLocations: ((locationDetails?['pickup_locations'] ?? json['pickup_locations']) as List?)
               ?.map((e) => LocationModel.fromJson(e))
               .toList() ??
           [],
-      dropoffLocations: (json['dropoff_locations'] as List?)
+      dropoffLocations: ((locationDetails?['dropoff_locations'] ?? json['dropoff_locations']) as List?)
               ?.map((e) => LocationModel.fromJson(e))
               .toList() ??
           [],
       myBid: json['my_bid'] != null ? MyBid.fromJson(json['my_bid']) : null,
-      note: json['note'] ?? json['trip_details']?['note'] ?? '',
+      note: tripDetails['note'] ?? json['note'] ?? '',
       customer: (json['customer'] != null && json['customer'] is List && (json['customer'] as List).isNotEmpty)
           ? (json['customer'] as List).map((e) => CustomerModel.fromJson(e)).toList()
           : (json['customer_details'] != null && json['customer_details'] is Map)
@@ -197,7 +200,7 @@ class CustomerModel {
   factory CustomerModel.fromJson(Map<String, dynamic> json) {
     return CustomerModel(
       rentBidUuid: json['rent_bid_uuid'] ?? '',
-      customerUuid: json['customer_uuid'] ?? '',
+      customerUuid: json['customer_uuid'] ?? json['uuid'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       profilePicture: json['profile_picture'] ?? '',

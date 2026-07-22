@@ -289,5 +289,20 @@
   "completed": "Completed",
   "ride_completed_show_details": "Ride completed - Show details",
   "platform_fee": "Platform fee",
-  "close": "Close"
+  "close": "Close",
+  "trip_details": "Trip Details",
+  "trip_completed": "Trip Complated",
+  "hope_you_enjoyed": "Hope you enjoyed the ride!",
+  "final_fare": "FINAL FARE",
+  "paid_via": "Paid via",
+  "destination": "Destination",
+  "give_a_compliment": "GIVE A COMPLIMENT",
+  "submit_rating": "Submit Rating",
+  "clean_car": "Clean car",
+  "great_music": "Great music",
+  "professional": "Professional",
+  "smooth_ride": "Smooth ride",
+  "others": "Others",
+  "please_select_rating": "Please select a rating",
+  "review_submitted_successfully": "Review submitted successfully!"
 }
