@@ -19,71 +19,63 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Attempt to load user data from local store safely
-      try {
-        await UserDataStore.getUserData();
-        // print removed
-      } catch (e, stack) {
-        // print removed
-        // print removed
-      }
+      // Load saved credentials from local store
+      try { await UserDataStore.getUserData(); } catch (_) {}
+      try { await UserDataStore.getAccessToken(); } catch (_) {}
+      try { await UserDataStore.getUuid(); } catch (_) {}
 
-      try {
-        await UserDataStore.getAccessToken();
-        // print removed
-      } catch (e) {
-        // print removed
-      }
+      final token = UserDataStore.accessToken;
+      final isLoggedIn = token != null && token.isNotEmpty;
 
-      try {
-        await UserDataStore.getUuid();
-      } catch (e) {}
+      if (isLoggedIn) {
+        // ✅ Already logged in — go to home immediately, no animation wait
+        // Refresh user profile silently in the background
+        _refreshUserDataInBackground(token);
 
-      // Start the 4-second animation timer
-      final animationFuture = Future.delayed(const Duration(seconds: 4));
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, AppRoutes.navbar);
+        }
+      } else {
+        // 🔐 Not logged in — show brand animation for 3 seconds, then go to login
+        await Future.delayed(const Duration(seconds: 3));
 
-      // Fetch fresh user data from API in the background so ride status is up to date
-      if (UserDataStore.accessToken != null && UserDataStore.accessToken!.isNotEmpty) {
-        try {
-          String platform = "web";
-          if (Theme.of(context).platform == TargetPlatform.android) platform = "android";
-          else if (Theme.of(context).platform == TargetPlatform.iOS) platform = "ios";
-          
-          final prefs = await SharedPreferences.getInstance();
-          final lang = prefs.getString('active_language_code') ?? 'en';
-          
-          await SplashRepository().receivingUserData(
-            plaform: platform, 
-            languageCode: lang, 
-            actionWhen: "admin_login", 
-            token: UserDataStore.accessToken!
-          );
-        } catch (_) {}
-      }
-      
-      await animationFuture;
-      
-      if (mounted) {
-        final token = UserDataStore.accessToken;
-        
-        // If token is missing, redirect to login
-        if (token == null || token.isEmpty) {
-          // print removed
+        if (mounted) {
           await UserDataStore.clearAllData();
-          Navigator.pushReplacementNamed(context, AppRoutes.navbar);
-        } else {
-          // print removed
-          // If already logged in, automatically open home page
-          Navigator.pushReplacementNamed(context, AppRoutes.navbar);
+          Navigator.pushReplacementNamed(context, AppRoutes.numberInput);
         }
       }
     });
   }
 
+  /// Refreshes driver profile data from the API silently in background.
+  /// Does NOT block navigation — app opens immediately.
+  void _refreshUserDataInBackground(String token) async {
+    try {
+      String platform = "web";
+      if (mounted) {
+        final p = Theme.of(context).platform;
+        if (p == TargetPlatform.android) platform = "android";
+        else if (p == TargetPlatform.iOS) platform = "ios";
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      final lang = prefs.getString('active_language_code') ?? 'en';
+
+      await SplashRepository().receivingUserData(
+        plaform: platform,
+        languageCode: lang,
+        actionWhen: "admin_login",
+        token: token,
+      );
+    } catch (_) {
+      // Silently ignore — app uses cached data from SharedPreferences
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F8), // Match the animation background perfectly
+      backgroundColor: const Color(0xFFF4F6F8),
       body: const SafeArea(
         child: Center(
           child: TrippyBrandAnimation(),
