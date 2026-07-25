@@ -111,12 +111,14 @@ class _NewRequestCardState extends State<NewRequestCard> {
     final currency = isBangla ? '৳' : 'BDT';
 
     final formattedCarType = _formatEnum(widget.trip.carCategory.carType, loc);
-    final formattedService = _formatEnum(
-      widget.trip.serviceName.isNotEmpty
-          ? widget.trip.serviceName
-          : widget.trip.carService.serviceName,
-      loc,
-    );
+    final rawService = widget.trip.serviceName.isNotEmpty
+        ? widget.trip.serviceName
+        : widget.trip.carService.serviceName;
+    String formattedService = _formatEnum(rawService, loc);
+    if (rawService.toUpperCase() == 'HOURLY' && widget.trip.hoursBooked != null) {
+      final hrsText = _translateNumbersAndCommonWords("${widget.trip.hoursBooked}", isBangla);
+      formattedService = "$formattedService\n($hrsText ${isBangla ? 'ঘণ্টা' : 'Hours'})";
+    }
     final formattedAmount = _translateNumbersAndCommonWords("${widget.trip.customerOfferAmmount.round()}", isBangla);
     final formattedTotalDistance = _translateNumbersAndCommonWords("${widget.trip.totalDistance} km", isBangla);
     final formattedPickupDistance = _translateNumbersAndCommonWords(
@@ -310,17 +312,20 @@ class _NewRequestCardState extends State<NewRequestCard> {
                 ],
               ),
             ),
-                // Right Column: Service Avatar + Service Name
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Service avatar image
-                    () {
-                      final avatar = widget.trip.carService.avatar;
-                      final avatarUrl = avatar.isNotEmpty
-                          ? '${AppUrls.imageBaseUrl}$avatar'
-                          : null;
+            const SizedBox(width: 14),
+            // Right Column: Service Avatar + Service Name
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Service avatar image
+                () {
+                  final avatar = widget.trip.carCategory.carAvatar.isNotEmpty
+                      ? widget.trip.carCategory.carAvatar
+                      : widget.trip.carService.avatar;
+                  final avatarUrl = avatar.isNotEmpty
+                      ? '${AppUrls.imageBaseUrl}$avatar'
+                      : null;
                       return Container(
                         width: 52,
                         height: 52,

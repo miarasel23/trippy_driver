@@ -209,7 +209,11 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                 final rawService = widget.trip.serviceName.isNotEmpty
                     ? widget.trip.serviceName
                     : widget.trip.carService.serviceName;
-                final serviceLabel = rawService.replaceAll('_', ' ').toUpperCase();
+                var serviceLabel = rawService.replaceAll('_', ' ').toUpperCase();
+                if (rawService.toUpperCase() == 'HOURLY' && widget.trip.hoursBooked != null) {
+                  final hrsText = _translateNumbersAndCommonWords("${widget.trip.hoursBooked}", isBangla);
+                  serviceLabel = "$serviceLabel ($hrsText ${isBangla ? 'ঘণ্টা' : 'HOURS'})";
+                }
                 final progress = _totalSeconds > 0 ? (_remainingSeconds / _totalSeconds) : 0.0;
                 final int mins = (_remainingSeconds / 60).floor();
                 final int secs = (_remainingSeconds % 60).floor();

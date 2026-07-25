@@ -309,5 +309,8 @@
   "min_bid_is": "Min bid is",
   "max_bid_is": "Max bid is",
   "account_status": "Account status",
-  "account_restricted_support": "Account restricted, please call support."
+  "account_restricted_support": "Account restricted, please call support.",
+  "no_active_bids": "No active bids",
+  "customer_offer": "Customer Offer",
+  "view_on_map": "Preview on Map"
 }

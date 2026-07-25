@@ -4,8 +4,7 @@ import '../../../core/utils/localization/app_localization.dart';
 import '../../home/screen/home_screen.dart';
 import '../../home/controller/home_controller.dart';
 import '../../profile/screen/profile_screen.dart';
-import '../../../store/user_data_store.dart';
-import '../../splash/repository/splash_repository.dart';
+import 'bids_screen.dart';
 
 class NavbarScreen extends StatefulWidget {
   const NavbarScreen({super.key});
@@ -16,17 +15,17 @@ class NavbarScreen extends StatefulWidget {
 
 class _NavbarScreenState extends State<NavbarScreen> {
   int _selectedIndex = 0;
-
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const Center(child: Text('Bids')), // Placeholder
-    const Center(child: Text('History')), // Placeholder
-    const ProfileScreen(),
-  ];
+  late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
+    _screens = [
+      const HomeScreen(),
+      BidsScreen(onNavigateToHome: () => _onItemTapped(0)),
+      const Center(child: Text('History')), // Placeholder
+      const ProfileScreen(),
+    ];
     _fetchUserData();
   }
 

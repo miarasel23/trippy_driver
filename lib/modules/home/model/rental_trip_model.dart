@@ -19,6 +19,8 @@ class RentalTripModel {
   final MyBid? myBid;
   final String note;
   final List<CustomerModel> customer;
+  final int? hoursBooked;
+  final List<BidDetail> bidDetails;
 
   RentalTripModel({
     required this.id,
@@ -41,6 +43,8 @@ class RentalTripModel {
     this.myBid,
     this.note = '',
     this.customer = const [],
+    this.hoursBooked,
+    this.bidDetails = const [],
   });
 
   factory RentalTripModel.fromJson(Map<String, dynamic> json) {
@@ -81,6 +85,15 @@ class RentalTripModel {
           : (json['customer_details'] != null && json['customer_details'] is Map)
               ? [CustomerModel.fromJson(json['customer_details'] as Map<String, dynamic>)]
               : [],
+      hoursBooked: tripDetails['hours_booked'] != null
+          ? int.tryParse(tripDetails['hours_booked'].toString())
+          : (json['hours_booked'] != null
+              ? int.tryParse(json['hours_booked'].toString())
+              : null),
+      bidDetails: ((json['bid_details'] ?? tripDetails['bid_details']) as List?)
+              ?.map((e) => BidDetail.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 }
@@ -104,6 +117,38 @@ class MyBid {
     return MyBid(
       uuid: json['uuid'] ?? '',
       amount: (json['amount'] ?? 0).toDouble(),
+      totalAmount: (json['total_amount'] ?? 0).toDouble(),
+      status: json['status'] ?? '',
+      createdAt: json['created_at'] ?? '',
+    );
+  }
+}
+
+class BidDetail {
+  final String uuid;
+  final String driverUuid;
+  final double amount;
+  final double bidAmount;
+  final double totalAmount;
+  final String status;
+  final String createdAt;
+
+  BidDetail({
+    required this.uuid,
+    required this.driverUuid,
+    required this.amount,
+    required this.bidAmount,
+    required this.totalAmount,
+    required this.status,
+    required this.createdAt,
+  });
+
+  factory BidDetail.fromJson(Map<String, dynamic> json) {
+    return BidDetail(
+      uuid: json['uuid'] ?? '',
+      driverUuid: json['driver_uuid'] ?? '',
+      amount: (json['amount'] ?? 0).toDouble(),
+      bidAmount: (json['bid_amount'] ?? json['amount'] ?? 0).toDouble(),
       totalAmount: (json['total_amount'] ?? 0).toDouble(),
       status: json['status'] ?? '',
       createdAt: json['created_at'] ?? '',

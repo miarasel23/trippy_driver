@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -247,7 +246,46 @@ class HomeRepository {
     }
   }
 
+  Future<List<RentalTripModel>?> getDriverRequestedRentalTrips() async {
+    final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
+    final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
 
+    if (uuid == null || token == null) return null;
+
+    String platform = Platform.isAndroid ? "android" : (Platform.isIOS ? "ios" : "web");
+    final prefs = await SharedPreferences.getInstance();
+    final languageCode = prefs.getString('active_language_code') ?? 'en';
+
+    final Map<String, String> params = {
+      "platform": platform,
+      "language_code": languageCode,
+      "action_when": "rental_bid_trip_list_for_driver",
+      "trip_status": "ALL",
+      "driver_uuid": uuid,
+    };
+
+    final uri = Uri.parse(AppUrls.rentalBidTripList).replace(queryParameters: params);
+
+    try {
+      final response = await ApiService().get(
+        uri,
+        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      );
+
+      List<RentalTripModel> allTrips = [];
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final body = jsonDecode(response.body);
+        if (body['status'] == true && body['data'] != null) {
+          final List<dynamic> data = body['data'];
+          allTrips.addAll(data.map((e) => RentalTripModel.fromJson(e)).toList());
+        }
+      }
+      return allTrips;
+    } catch (e) {
+      return null;
+    }
+  }
 
   Future<List<RentalTripModel>?> getActiveBidTrips() async {
     final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
