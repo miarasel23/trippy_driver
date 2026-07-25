@@ -295,12 +295,13 @@
   "platform_fee": "প্ল্যাটফর্ম ফি",
   "close": "বন্ধ করুন",
   "trip_details": "ট্রিপের বিস্তারিত",
-  "trip_completed": "Trip Complated",
+  "trip_completed": "ট্রিপ সম্পন্ন",
   "hope_you_enjoyed": "আশা করি আপনি রাইডটি উপভোগ করেছেন!",
   "final_fare": "চূড়ান্ত ভাড়া",
   "paid_via": "পরিশোধ করা হয়েছে",
   "destination": "গন্তব্য",
   "give_a_compliment": "একটি প্রশংসা দিন",
+  "write_your_compliment": "আপনার প্রশংসা লিখুন",
   "submit_rating": "রেটিং জমা দিন",
   "clean_car": "পরিষ্কার গাড়ি",
   "great_music": "দারুণ মিউজিক",
@@ -310,5 +311,7 @@
   "please_select_rating": "অনুগ্রহ করে একটি রেটিং নির্বাচন করুন",
   "review_submitted_successfully": "রিভিউ সফলভাবে জমা দেওয়া হয়েছে!",
   "min_bid_is": "সর্বনিম্ন বিড",
-  "max_bid_is": "সর্বোচ্চ বিড"
+  "max_bid_is": "সর্বোচ্চ বিড",
+  "account_status": "অ্যাকাউন্ট স্ট্যাটাস",
+  "account_restricted_support": "অ্যাকাউন্ট সীমাবদ্ধ, অনুগ্রহ করে সাপোর্টে যোগাযোগ করুন।"
 }

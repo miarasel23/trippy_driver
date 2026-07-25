@@ -6,6 +6,8 @@ import 'package:equatable/equatable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../store/user_data_store.dart';
+import '../../../store/app_globals.dart';
+import '../../splash/repository/splash_repository.dart';
 import '../model/rental_trip_model.dart';
 import '../repository/home_repository.dart';
 import 'package:geolocator/geolocator.dart';
@@ -84,6 +86,7 @@ class HomeController extends Cubit<HomeState> {
     _initIgnoredList();
     _startPolling();
     _startTracking();
+    checkAndUpdateRideStatusFromApi();
   }
 
   Future<void> _initIgnoredList() async {
@@ -112,8 +115,8 @@ class HomeController extends Cubit<HomeState> {
           _isFetchingTrips = false;
         }
       } else if (!state.isOnline) {
-        if (state.bidTrips.isNotEmpty) {
-           emit(state.copyWith(bidTrips: []));
+        if (state.bidTrips.isNotEmpty || state.rentalTrips.isNotEmpty) {
+           emit(state.copyWith(bidTrips: [], rentalTrips: []));
         }
       }
     });
@@ -169,6 +172,58 @@ class HomeController extends Cubit<HomeState> {
     return super.close();
   }
 
+  bool _isCheckingStatus = false;
+
+  Future<void> checkAndUpdateRideStatusFromApi() async {
+    // 1. Immediately emit status from local cached UserDataStore without waiting for network API
+    _emitStatusFromCache();
+
+    if (_isCheckingStatus) return;
+    _isCheckingStatus = true;
+
+    try {
+      final token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
+      if (token != null) {
+        await SplashRepository().receivingUserData(
+          plaform: AppGlobals.platform,
+          languageCode: AppGlobals.countryCode.toLowerCase() == 'bd' ? 'bn' : 'en',
+          actionWhen: 'admin_login',
+          token: token,
+        );
+        // 2. Re-emit updated status after API response completes
+        _emitStatusFromCache();
+      }
+    } finally {
+      _isCheckingStatus = false;
+    }
+  }
+
+  void _emitStatusFromCache() {
+    String status = UserDataStore.userData?.data?.user?.currentRideStatus ?? 'OFFLINE';
+    if (status == 'RIDE_SHARE') status = 'RIDE SHARE';
+    if (status == 'RENT_A_CAR') status = 'RENT A CAR';
+    if (status == 'BOTH') status = 'BOTH';
+
+    final bool isOnline = status != 'OFFLINE';
+    final serviceMode = status == 'OFFLINE' ? 'RIDE SHARE' : status;
+
+    if (!isOnline) {
+      emit(state.copyWith(
+        isOnline: false,
+        serviceMode: serviceMode,
+        rentalTrips: [],
+        bidTrips: [],
+      ));
+    } else {
+      emit(state.copyWith(
+        isOnline: true,
+        serviceMode: serviceMode,
+      ));
+      fetchRentalTrips(showLoading: false);
+      fetchBidTrips();
+    }
+  }
+
   static HomeState _getInitialState() {
     String status = UserDataStore.userData?.data?.user?.currentRideStatus ?? 'OFFLINE';
     if (status == 'RIDE_SHARE') status = 'RIDE SHARE';
@@ -210,6 +265,8 @@ class HomeController extends Cubit<HomeState> {
       emit(state.copyWith(
         serviceMode: mode,
         isOnline: mode != 'OFFLINE',
+        rentalTrips: mode == 'OFFLINE' ? [] : null,
+        bidTrips: mode == 'OFFLINE' ? [] : null,
       ));
 
       if (UserDataStore.userData?.data?.user != null) {
@@ -230,6 +287,7 @@ class HomeController extends Cubit<HomeState> {
   final Set<String> _ignoredBidTripIds = {};
 
   Future<void> fetchRentalTrips({bool showLoading = true}) async {
+    if (!state.isOnline) return;
     if (showLoading) {
       emit(state.copyWith(isLoadingTrips: true));
     }
@@ -285,6 +343,7 @@ class HomeController extends Cubit<HomeState> {
   }
 
   Future<void> fetchBidTrips() async {
+    if (!state.isOnline) return;
     final bidsFuture = repository.getBidTripList();
     final activeBidsFuture = repository.getActiveBidTrips();
     
@@ -407,8 +466,8 @@ class HomeController extends Cubit<HomeState> {
            icon: carIcon,
          ),
       );
-    } catch (e) {
-      print("Could not get driver location: $e");
+    } catch (_) {
+      // Could not get driver location
     }
 
     final polylinePoints = PolylinePoints();

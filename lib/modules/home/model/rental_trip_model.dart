@@ -112,11 +112,13 @@ class CarCategory {
   final String uuid;
   final String carType;
   final String carAvatar;
+  final int setCapacity;
 
   CarCategory({
     required this.uuid,
     required this.carType,
     required this.carAvatar,
+    this.setCapacity = 0,
   });
 
   factory CarCategory.fromJson(Map<String, dynamic> json) {
@@ -124,6 +126,7 @@ class CarCategory {
       uuid: json['uuid'] ?? '',
       carType: json['car_type'] ?? '',
       carAvatar: json['car_avatar'] ?? '',
+      setCapacity: json['set_capacity'] ?? 0,
     );
   }
 }

@@ -94,7 +94,7 @@ class _CancelTripDialogState extends State<CancelTripDialog> {
                 maxLines: 3,
                 style: TextStyle(color: widget.isDark ? Colors.white : Colors.black),
                 decoration: InputDecoration(
-                  hintText: loc.translate("write_reason"),
+                  hintText: loc.translate("please_write_your_reason") ?? "Please write your reason...",
                   hintStyle: TextStyle(color: widget.isDark ? Colors.white54 : Colors.black38),
                   filled: true,
                   fillColor: widget.isDark ? AppColors.darkCardDeep : Colors.grey.shade100,

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/localization/app_localization.dart';
 import '../../home/screen/home_screen.dart';
+import '../../home/controller/home_controller.dart';
 import '../../profile/screen/profile_screen.dart';
+import '../../../store/user_data_store.dart';
+import '../../splash/repository/splash_repository.dart';
 
 class NavbarScreen extends StatefulWidget {
   const NavbarScreen({super.key});
@@ -20,6 +24,19 @@ class _NavbarScreenState extends State<NavbarScreen> {
     const ProfileScreen(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    if (mounted) {
+      context.read<HomeController>().checkAndUpdateRideStatusFromApi();
+      setState(() {});
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -30,7 +47,6 @@ class _NavbarScreenState extends State<NavbarScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context);
-
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
@@ -77,21 +93,21 @@ class _NavbarScreenState extends State<NavbarScreen> {
       onTap: () => _onItemTapped(index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? theme.colorScheme.onSurface.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 4),
+            Icon(icon, color: color, size: 30),
+            const SizedBox(height: 5),
             Text(
               label,
               style: TextStyle(
                 color: color,
-                fontSize: 10,
+                fontSize: 13,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -101,3 +117,4 @@ class _NavbarScreenState extends State<NavbarScreen> {
     );
   }
 }
+

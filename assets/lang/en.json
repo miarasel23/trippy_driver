@@ -291,12 +291,13 @@
   "platform_fee": "Platform fee",
   "close": "Close",
   "trip_details": "Trip Details",
-  "trip_completed": "Trip Complated",
+  "trip_completed": "Trip Completed",
   "hope_you_enjoyed": "Hope you enjoyed the ride!",
   "final_fare": "FINAL FARE",
   "paid_via": "Paid via",
   "destination": "Destination",
   "give_a_compliment": "GIVE A COMPLIMENT",
+  "write_your_compliment": "Write your compliment",
   "submit_rating": "Submit Rating",
   "clean_car": "Clean car",
   "great_music": "Great music",
@@ -306,5 +307,7 @@
   "please_select_rating": "Please select a rating",
   "review_submitted_successfully": "Review submitted successfully!",
   "min_bid_is": "Min bid is",
-  "max_bid_is": "Max bid is"
+  "max_bid_is": "Max bid is",
+  "account_status": "Account status",
+  "account_restricted_support": "Account restricted, please call support."
 }

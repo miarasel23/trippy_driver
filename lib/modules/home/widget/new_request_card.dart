@@ -7,6 +7,7 @@ import '../helper/new_request_card_helper.dart';
 import 'translated_text.dart';
 import 'offer_bottom_sheet.dart';
 import '../../../../utils/app_urls.dart';
+import '../../../../store/app_globals.dart';
 class NewRequestCard extends StatefulWidget {
   final RentalTripModel trip;
 
@@ -56,14 +57,31 @@ class _NewRequestCardState extends State<NewRequestCard> {
     return minutes == 0 ? "1 min" : "$minutes min";
   }
 
+  DateTime _getNow() {
+    if (AppGlobals.countryCode.toUpperCase() == 'BD') {
+      final utc = DateTime.now().toUtc().add(const Duration(hours: 6));
+      return DateTime(utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second, utc.millisecond, utc.microsecond);
+    }
+    return DateTime.now();
+  }
+
   DateTime _parseCreatedAt(String createdAtStr) {
-    DateTime parsed = DateTime.tryParse(createdAtStr) ?? DateTime.now();
-    if (parsed.difference(DateTime.now()).inHours >= 5) {
+    final now = _getNow();
+    DateTime parsed = DateTime.tryParse(createdAtStr) ?? now;
+    if (parsed.isUtc) {
+      if (AppGlobals.countryCode.toUpperCase() == 'BD') {
+        final dhaka = parsed.add(const Duration(hours: 6));
+        parsed = DateTime(dhaka.year, dhaka.month, dhaka.day, dhaka.hour, dhaka.minute, dhaka.second);
+      } else {
+        final local = parsed.toLocal();
+        parsed = DateTime(local.year, local.month, local.day, local.hour, local.minute, local.second);
+      }
+    }
+    if (parsed.difference(now).inHours >= 5) {
       return parsed.subtract(const Duration(hours: 7));
     }
     return parsed;
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -75,40 +93,20 @@ class _NewRequestCardState extends State<NewRequestCard> {
         : widget.trip.carService.serviceName;
     final isRideShare = rawService.toUpperCase().contains('RIDE') ||
         rawService.toUpperCase() == 'RIDE_SHARE';
-    final String status = widget.trip.myBid?.status ?? widget.trip.tripStatus;
-    final String tripStatus = widget.trip.tripStatus.toUpperCase();
-    final bool hasActiveBid = widget.trip.myBid != null && 
-        status != 'ACCEPTED' && 
-        status != 'CANCELLED' && 
-        tripStatus != 'IN_PROGRESS' && 
-        tripStatus != 'RIDE_STARTED' && 
-        tripStatus != 'FIRST_COMPLETED' && 
-        tripStatus != 'COMPLETED';
 
-    final totalDuration = hasActiveBid ? const Duration(seconds: 100) : const Duration(minutes: 1);
-    Duration remaining;
-    int currentRound = 0;
+    final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
+    final now = _getNow();
+    final expireTime = createdAt.add(totalDuration);
+    final remaining = expireTime.difference(now);
 
-    if (hasActiveBid) {
-      final elapsed = DateTime.now().difference(createdAt);
-      if (elapsed.inSeconds >= 100) {
-        return const SizedBox.shrink();
-      }
-      currentRound = elapsed.inMinutes;
-      int remainingSeconds = totalDuration.inSeconds - elapsed.inSeconds;
-      if (remainingSeconds < 0) remainingSeconds = 0;
-      remaining = Duration(seconds: remainingSeconds);
-    } else {
-      final expireTime = createdAt.add(totalDuration);
-      remaining = expireTime.difference(DateTime.now());
-      if (remaining.isNegative) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.read<HomeController>().removeTrip(widget.trip.uuid);
-        });
-        return const SizedBox.shrink();
-      }
+    if (remaining.isNegative) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<HomeController>().removeTrip(widget.trip.uuid);
+      });
+      return const SizedBox.shrink();
     }
 
+    final int currentRound = now.difference(createdAt).inMinutes;
     final animationKey = "${createdAtStr}_$currentRound";
 
     return TweenAnimationBuilder<double>(
@@ -116,11 +114,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
       tween: Tween<double>(begin: remaining.inSeconds.toDouble(), end: 0),
       duration: remaining,
       onEnd: () {
-        if (!hasActiveBid) {
-          context.read<HomeController>().removeTrip(widget.trip.uuid);
-        } else {
-          if (mounted) setState(() {});
-        }
+        context.read<HomeController>().removeTrip(widget.trip.uuid);
       },
       builder: (context, value, child) {
         return _buildCardContent(context, value, totalDuration.inSeconds.toDouble(), isRideShare, isBangla);
@@ -254,21 +248,90 @@ class _NewRequestCardState extends State<NewRequestCard> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
                   ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          widget.trip.carCategory.carType,
+                          style: TextStyle(
+                              color: theme.colorScheme.primary,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(Icons.person,
+                          size: 14,
+                          color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                      const SizedBox(width: 2),
+                      Text(
+                        _translateNumbersAndCommonWords("${widget.trip.carCategory.setCapacity}", isBangla),
+                        style: TextStyle(
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            fontSize: 11),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
-                // Right Column: Service Name
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: theme.colorScheme.primary.withOpacity(0.5), width: 1.5),
-                  ),
-                  child: Text(
-                    formattedService.toUpperCase(),
-                    style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w900),
-                  ),
+                // Right Column: Service Avatar + Service Name
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Service avatar image
+                    () {
+                      final avatar = widget.trip.carService.avatar;
+                      final avatarUrl = avatar.isNotEmpty
+                          ? '${AppUrls.imageBaseUrl}$avatar'
+                          : null;
+                      return Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: avatarUrl != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.network(
+                                  avatarUrl,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => Icon(
+                                    Icons.directions_car_rounded,
+                                    size: 28,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                Icons.directions_car_rounded,
+                                size: 28,
+                                color: theme.colorScheme.primary,
+                              ),
+                      );
+                    }(),
+                    const SizedBox(height: 6),
+                    // Service name label
+                    Text(
+                      formattedService.toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

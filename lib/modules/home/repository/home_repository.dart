@@ -239,7 +239,6 @@ class HomeRepository {
         if (body['status'] == true && body['data'] != null) {
           final List<dynamic> data = body['data'];
           allTrips.addAll(data.map((e) => RentalTripModel.fromJson(e)).toList());
-          print('alllltrips=====${response.body}');
         }
       }
       return allTrips;
@@ -284,7 +283,6 @@ class HomeRepository {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final body = jsonDecode(response.body);
-        print("data_after_complated=====${body.toString()}");
         if (body['status'] == true && body['data'] != null) {
           final List<dynamic> data = body['data'];
           final trips = <RentalTripModel>[];
@@ -526,7 +524,6 @@ class HomeRepository {
 
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
-      print("response ${response.body}");
       
       if (response.statusCode == 200 || response.statusCode == 201) {
         try {

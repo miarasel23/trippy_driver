@@ -7,6 +7,7 @@ import '../model/rental_trip_model.dart';
 import 'translated_text.dart';
 import 'cancel_trip_dialog.dart';
 import '../helper/accepted_trip_card_helper.dart';
+import '../../../../store/app_globals.dart';
 
 class PendingBidTripCard extends StatefulWidget {
   const PendingBidTripCard({Key? key}) : super(key: key);
@@ -32,6 +33,32 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
     super.dispose();
   }
 
+  DateTime _getNow() {
+    if (AppGlobals.countryCode.toUpperCase() == 'BD') {
+      final utc = DateTime.now().toUtc().add(const Duration(hours: 6));
+      return DateTime(utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second, utc.millisecond, utc.microsecond);
+    }
+    return DateTime.now();
+  }
+
+  DateTime _parseCreatedAt(String createdAtStr) {
+    final now = _getNow();
+    DateTime parsed = DateTime.tryParse(createdAtStr) ?? now;
+    if (parsed.isUtc) {
+      if (AppGlobals.countryCode.toUpperCase() == 'BD') {
+        final dhaka = parsed.add(const Duration(hours: 6));
+        parsed = DateTime(dhaka.year, dhaka.month, dhaka.day, dhaka.hour, dhaka.minute, dhaka.second);
+      } else {
+        final local = parsed.toLocal();
+        parsed = DateTime(local.year, local.month, local.day, local.hour, local.minute, local.second);
+      }
+    }
+    if (parsed.difference(now).inHours >= 5) {
+      return parsed.subtract(const Duration(hours: 7));
+    }
+    return parsed;
+  }
+
   String _toBanglaDigits(String input) {
     const englishToBanglaDigits = {
       '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪',
@@ -47,7 +74,7 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
 
         if (!state.isOnline) return const SizedBox.shrink();
 
-        final now = DateTime.now();
+        final now = _getNow();
         final pendingTrips = state.bidTrips.where((t) {
           // Must have placed a bid and status is still pending (not ACCEPTED or CANCELLED)
           if (t.myBid == null) return false;
@@ -61,13 +88,15 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
           if (bidStatus == 'ACCEPTED' || bidStatus == 'CANCELLED') return false;
           
           final createdAtStr = t.myBid?.createdAt ?? t.createdAt;
-          DateTime createdAt = DateTime.tryParse(createdAtStr) ?? now;
-          if (createdAt.isAfter(now.add(const Duration(hours: 1)))) {
-            createdAt = createdAt.subtract(const Duration(hours: 7));
-          }
+          final createdAt = _parseCreatedAt(createdAtStr);
+          final rawService = t.serviceName.isNotEmpty ? t.serviceName : t.carService.serviceName;
+          final isRideShare = rawService.toUpperCase().contains('RIDE') || rawService.toUpperCase() == 'RIDE_SHARE';
+          final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
           
-          final elapsed = now.difference(createdAt);
-          if (elapsed.inSeconds >= 100) return false;
+          final expireTime = createdAt.add(totalDuration);
+          if (now.isAfter(expireTime)) {
+            return false;
+          }
           
           return true;
         }).toList();
@@ -80,17 +109,15 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
         final loc = AppLocalizations.of(context);
         final isBangla = Localizations.localeOf(context).languageCode == 'bn';
 
-        // Timer is already validated, just calculate remaining for display
         final createdAtStr = trip.myBid?.createdAt ?? trip.createdAt;
-        DateTime createdAt = DateTime.tryParse(createdAtStr) ?? now;
-        if (createdAt.isAfter(now.add(const Duration(hours: 1)))) {
-          createdAt = createdAt.subtract(const Duration(hours: 7));
-        }
-        final elapsed = DateTime.now().difference(createdAt);
-        final totalSeconds = 100; // 1 minute 40 seconds countdown
-        int remainingSeconds = totalSeconds - elapsed.inSeconds;
-        if (remainingSeconds < 0) remainingSeconds = 0;
-        final remaining = Duration(seconds: remainingSeconds);
+        final createdAt = _parseCreatedAt(createdAtStr);
+        final rawService = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
+        final isRideShare = rawService.toUpperCase().contains('RIDE') || rawService.toUpperCase() == 'RIDE_SHARE';
+        final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
+
+        final expireTime = createdAt.add(totalDuration);
+        var remaining = expireTime.difference(_getNow());
+        if (remaining.isNegative) remaining = Duration.zero;
 
         String timeString = "${remaining.inMinutes}:${(remaining.inSeconds % 60).toString().padLeft(2, '0')}";
         if (isBangla) {

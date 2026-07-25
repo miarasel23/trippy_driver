@@ -6,6 +6,7 @@ import '../../../../core/utils/localization/app_localization.dart';
 import '../model/rental_trip_model.dart';
 import 'translated_text.dart';
 import 'new_request_card.dart';
+import '../../../../store/app_globals.dart';
 
 class BidTripOverlay extends StatelessWidget {
   const BidTripOverlay({Key? key}) : super(key: key);
@@ -152,24 +153,45 @@ class _BidTripItemState extends State<_BidTripItem> {
     }
   }
 
+  DateTime _getNow() {
+    if (AppGlobals.countryCode.toUpperCase() == 'BD') {
+      final utc = DateTime.now().toUtc().add(const Duration(hours: 6));
+      return DateTime(utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second, utc.millisecond, utc.microsecond);
+    }
+    return DateTime.now();
+  }
+
+  DateTime _parseCreatedAt(String createdAtStr) {
+    final now = _getNow();
+    DateTime parsed = DateTime.tryParse(createdAtStr) ?? now;
+    if (parsed.isUtc) {
+      if (AppGlobals.countryCode.toUpperCase() == 'BD') {
+        final dhaka = parsed.add(const Duration(hours: 6));
+        parsed = DateTime(dhaka.year, dhaka.month, dhaka.day, dhaka.hour, dhaka.minute, dhaka.second);
+      } else {
+        final local = parsed.toLocal();
+        parsed = DateTime(local.year, local.month, local.day, local.hour, local.minute, local.second);
+      }
+    }
+    if (parsed.difference(now).inHours >= 5) {
+      return parsed.subtract(const Duration(hours: 7));
+    }
+    return parsed;
+  }
+
   void _calculateExpiration() {
     final createdAtStr = widget.trip.myBid?.createdAt ?? widget.trip.createdAt;
-    DateTime createdAt = DateTime.tryParse(createdAtStr) ?? DateTime.now();
+    DateTime createdAt = _parseCreatedAt(createdAtStr);
     
-    // Apply 7-hour timezone offset fix if it's in the future
-    final now = DateTime.now();
-    if (createdAt.isAfter(now.add(const Duration(hours: 1)))) {
-      createdAt = createdAt.subtract(const Duration(hours: 7));
-    }
-    
-    _expireTime = createdAt.add(const Duration(minutes: 20));
+    _expireTime = createdAt.add(const Duration(hours: 1));
     _updateRemaining();
   }
 
   void _updateRemaining() {
     if (mounted) {
       setState(() {
-        _remaining = _expireTime.difference(DateTime.now());
+        _remaining = _expireTime.difference(_getNow());
+        if (_remaining.isNegative) _remaining = Duration.zero;
       });
     }
   }

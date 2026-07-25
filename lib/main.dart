@@ -34,6 +34,11 @@ void main() async {
   AppGlobals.init();
   await initializeBackgroundService();
   
+  // Pre-load saved user credentials from local storage before running app
+  try { await UserDataStore.getUserData(); } catch (_) {}
+  try { await UserDataStore.getAccessToken(); } catch (_) {}
+  try { await UserDataStore.getUuid(); } catch (_) {}
+  
   final prefs = await SharedPreferences.getInstance();
   final initialLang = prefs.getString('active_language_code') ?? 'en';
   

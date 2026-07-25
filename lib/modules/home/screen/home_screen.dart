@@ -18,6 +18,7 @@ import '../widget/service_mode_bottom_sheet.dart';
 import '../widget/review_bottom_sheet.dart';
 
 import '../../../core/utils/ui_utils.dart';
+import '../../../store/user_data_store.dart';
 import '../../../../core/utils/localization/app_localization.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -69,7 +70,7 @@ class _HomeViewState extends State<HomeView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<HomeController>().fetchRentalTrips();
+      context.read<HomeController>().checkAndUpdateRideStatusFromApi();
     });
   }
 
@@ -173,6 +174,43 @@ class _HomeViewState extends State<HomeView> {
               children: [
                 // 2. Custom Top App Bar
                 const HomeTopBar(),
+
+                // Inactive/Restricted Account Banner
+                Builder(
+                  builder: (context) {
+                    final isActiveStr = UserDataStore.userData?.data?.user?.isActive ?? 'INACTIVE';
+                    final bool isNotActive = isActiveStr.toUpperCase() != 'ACTIVE';
+                    if (!isNotActive) return const SizedBox.shrink();
+
+                    final loc = AppLocalizations.of(context);
+                    return Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              loc.translate('account_restricted_support') ?? "Account restricted, please call support.",
+                              style: TextStyle(
+                                color: Colors.red.shade900,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                ),
                 
                 // 3. Content Area (Stack for overlapping)
                 Expanded(
@@ -192,6 +230,9 @@ class _HomeViewState extends State<HomeView> {
                       // Higher z-index: New Rental Request Cards
                       BlocBuilder<HomeController, HomeState>(
                         builder: (context, state) {
+                          if (!state.isOnline) {
+                            return const SizedBox.shrink();
+                          }
                           if (state.isLoadingTrips) {
                             return const Center(
                               child: CircularProgressIndicator(),

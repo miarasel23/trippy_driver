@@ -437,7 +437,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
                               controller: _customComplimentController,
                               maxLines: 3,
                               decoration: InputDecoration(
-                                hintText: loc.translate('write_your_compliment') ?? 'Write your compliment...',
+                                hintText: loc.translate('write_your_compliment') ?? 'Write your compliment',
                                 hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)),
                                 border: InputBorder.none,
                                 contentPadding: const EdgeInsets.all(12),
