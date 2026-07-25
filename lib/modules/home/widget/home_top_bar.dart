@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/utils/localization/app_localization.dart';
@@ -149,83 +150,11 @@ class HomeTopBar extends StatelessWidget {
 
 
 
-                    // ── Online/Offline pill toggle ──
-                    GestureDetector(
-                      onTap: () =>
-                          ServiceModeBottomSheet.show(context, theme),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                        height: 46,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2A2A2A),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Glow dot
-                            Container(
-                              width: 28,
-                              height: 28,
-                              margin: const EdgeInsets.only(right: 6),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isOnline
-                                    ? const Color(0xFF90EE90)
-                                        .withOpacity(0.15)
-                                    : Colors.red.withOpacity(0.15),
-                                border: Border.all(
-                                  color: isOnline
-                                      ? const Color(0xFF90EE90)
-                                          .withOpacity(0.5)
-                                      : Colors.red.withOpacity(0.5),
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Center(
-                                child: Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: isOnline
-                                        ? const Color(0xFF90EE90)
-                                        : Colors.red,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // Label pill
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isOnline
-                                    ? const Color(0xFF90EE90)
-                                    : const Color(0xFFFF3B30),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                isOnline
-                                    ? (loc.translate('online') ?? 'Online')
-                                    : (loc.translate('offline') ?? 'Offline'),
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  color: isOnline
-                                      ? const Color(0xFF1A1A1A)
-                                      : Colors.white,
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                    // ── Online/Offline pill toggle (with active animation) ──
+                    _OnlineToggleWidget(
+                      isOnline: isOnline,
+                      theme: theme,
+                      loc: loc,
                     ),
 
 
@@ -304,66 +233,179 @@ class HomeTopBar extends StatelessWidget {
   }
 }
 
-/// ── Small stat chip used in the bottom row ─────────────────────
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-  final bool isDark;
 
-  const _StatChip({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.isDark,
+/// ── Online / Offline Pill Toggle with Animated Radar & Breathing Glow Icon ──
+class _OnlineToggleWidget extends StatefulWidget {
+  final bool isOnline;
+  final ThemeData theme;
+  final AppLocalizations loc;
+
+  const _OnlineToggleWidget({
+    required this.isOnline,
+    required this.theme,
+    required this.loc,
   });
 
   @override
+  State<_OnlineToggleWidget> createState() => _OnlineToggleWidgetState();
+}
+
+class _OnlineToggleWidgetState extends State<_OnlineToggleWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    if (widget.isOnline) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _OnlineToggleWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isOnline != oldWidget.isOnline) {
+      if (widget.isOnline) {
+        _controller.repeat();
+      } else {
+        _controller.stop();
+        _controller.reset();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    final isOnline = widget.isOnline;
+    final loc = widget.loc;
+    final theme = widget.theme;
+
+    return GestureDetector(
+      onTap: () => ServiceModeBottomSheet.show(context, theme),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        height: 46,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
         decoration: BoxDecoration(
-          color: isDark
-              ? color.withOpacity(0.12)
-              : color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: color.withOpacity(0.20),
-            width: 1,
-          ),
+          color: const Color(0xFF2A2A2A),
+          borderRadius: BorderRadius.circular(30),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: color,
-                    ),
+            // Animated left icon / glow dot
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                final double value = _controller.value;
+                // Sine wave pulse for smooth breathing effect (0.0 -> 1.0 -> 0.0)
+                final double pulse = math.sin(value * math.pi);
+
+                return Container(
+                  width: 28,
+                  height: 28,
+                  margin: const EdgeInsets.only(right: 6),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Expanding radar / sonar ripple ring when online
+                      if (isOnline)
+                        Transform.scale(
+                          scale: 1.0 + (0.35 * value),
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFF90EE90)
+                                    .withOpacity(0.6 * (1.0 - value)),
+                                width: 1.5,
+                              ),
+                              color: const Color(0xFF90EE90)
+                                  .withOpacity(0.2 * (1.0 - value)),
+                            ),
+                          ),
+                        ),
+                      // Main breathing circle container
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isOnline
+                              ? const Color(0xFF90EE90)
+                                  .withOpacity(0.15 + (0.2 * pulse))
+                              : Colors.red.withOpacity(0.15),
+                          border: Border.all(
+                            color: isOnline
+                                ? const Color(0xFF90EE90)
+                                    .withOpacity(0.5 + (0.5 * pulse))
+                                : Colors.red.withOpacity(0.5),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Center(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            width: isOnline ? (10.0 + (2.5 * pulse)) : 10.0,
+                            height: isOnline ? (10.0 + (2.5 * pulse)) : 10.0,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isOnline
+                                  ? const Color(0xFF90EE90)
+                                  : Colors.red,
+                              boxShadow: isOnline
+                                  ? [
+                                      BoxShadow(
+                                        color: const Color(0xFF90EE90)
+                                            .withOpacity(0.6 * pulse),
+                                        blurRadius: 6,
+                                        spreadRadius: 1,
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: isDark
-                          ? Colors.white.withOpacity(0.45)
-                          : Colors.black.withOpacity(0.45),
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ],
+                );
+              },
+            ),
+            // Label pill
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isOnline
+                    ? const Color(0xFF90EE90)
+                    : const Color(0xFFFF3B30),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                isOnline
+                    ? loc.translate('online')
+                    : loc.translate('offline'),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: isOnline ? const Color(0xFF1A1A1A) : Colors.white,
+                  letterSpacing: 0.2,
+                ),
               ),
             ),
           ],
