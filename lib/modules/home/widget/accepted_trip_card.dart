@@ -28,7 +28,9 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
         final acceptedTrips = state.bidTrips.where((t) {
           final status = t.tripStatus;
           final bidStatus = t.myBid?.status;
-          return status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || status == 'COMPLETED' || bidStatus == 'ACCEPTED';
+          final isAccepted = status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || status == 'COMPLETED' || bidStatus == 'ACCEPTED';
+          if (!isAccepted) return false;
+          return AcceptedTripCardHelper.shouldShowAcceptedTripCard(t);
         }).toList();
 
         if (acceptedTrips.isEmpty) return const SizedBox.shrink();
@@ -38,11 +40,11 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
         final loc = AppLocalizations.of(context);
         final isBangla = Localizations.localeOf(context).languageCode == 'bn';
 
-        var pickupLoc = trip.pickupLocations.isNotEmpty ? trip.pickupLocations.first : null;
-        var dropoffLoc = trip.dropoffLocations.isNotEmpty ? trip.dropoffLocations.first : null;
+        final pickupLoc = AcceptedTripCardHelper.getEffectivePickup(trip);
+        final dropoffLoc = AcceptedTripCardHelper.getEffectiveDropoff(trip);
         
-        var pickup = pickupLoc?.address ?? 'Unknown';
-        var dropoff = dropoffLoc?.address ?? 'Unknown';
+        final pickup = pickupLoc?.address ?? 'Unknown';
+        final dropoff = dropoffLoc?.address ?? 'Unknown';
         final bidAmount = trip.myBid?.amount ?? trip.customerOfferAmmount;
         final totalAmount = trip.myBid?.totalAmount ?? bidAmount;
         final platformFee = totalAmount - bidAmount;
@@ -60,17 +62,6 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
         final timeText = AcceptedTripCardHelper.translateNumbersAndCommonWords("${AcceptedTripCardHelper.calculateMinutes(trip.pickupKm)} min", isBangla);
         
         final currentStatus = trip.tripStatus == 'REQUESTED' ? (trip.myBid?.status ?? trip.tripStatus) : trip.tripStatus;
-
-        final isReturnTrip = trip.serviceName.toUpperCase() == 'RETURN' || trip.serviceName.toUpperCase() == 'ROUND_TRIP';
-        if (currentStatus == 'FIRST_COMPLETED' && isReturnTrip) {
-          final temp = pickup;
-          pickup = dropoff;
-          dropoff = temp;
-
-          final tempLoc = pickupLoc;
-          pickupLoc = dropoffLoc;
-          dropoffLoc = tempLoc;
-        }
 
         String headerTitle = loc.translate('trip_accepted') ?? 'Trip Accepted';
         String? actionLabel;
@@ -189,21 +180,7 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
                             ),
                           ),
                         const SizedBox(height: 8),
-                        if (trip.startDatetime.isNotEmpty && trip.serviceName.toUpperCase() != 'RIDE_SHARE') ...[
-                          Row(
-                            children: [
-                              Icon(Icons.calendar_today, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.7)),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  AcceptedTripCardHelper.formatStartDatetime(trip.startDatetime, isBangla),
-                                  style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 13),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                        ],
+                        AcceptedTripCardHelper.buildTripDateTimes(context, trip, isBangla, theme),
                         Row(
                           children: [
                             Icon(Icons.my_location, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.8)),
@@ -215,7 +192,7 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                                 isBangla: isBangla,
-                                location: currentStatus == 'FIRST_COMPLETED' ? dropoffLoc : pickupLoc,
+                                location: pickupLoc,
                               ),
                             ),
                           ],
@@ -232,7 +209,7 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontWeight: FontWeight.w600, fontSize: 14),
                                 isBangla: isBangla,
-                                location: currentStatus == 'FIRST_COMPLETED' ? pickupLoc : dropoffLoc,
+                                location: dropoffLoc,
                               ),
                             ),
                           ],

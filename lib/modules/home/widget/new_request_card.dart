@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../model/rental_trip_model.dart';
 import '../controller/home_controller.dart';
 import '../helper/new_request_card_helper.dart';
+import '../helper/accepted_trip_card_helper.dart';
 import 'translated_text.dart';
 import 'offer_bottom_sheet.dart';
 import '../../../../utils/app_urls.dart';
@@ -57,31 +58,9 @@ class _NewRequestCardState extends State<NewRequestCard> {
     return minutes == 0 ? "1 min" : "$minutes min";
   }
 
-  DateTime _getNow() {
-    if (AppGlobals.countryCode.toUpperCase() == 'BD') {
-      final utc = DateTime.now().toUtc().add(const Duration(hours: 6));
-      return DateTime(utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second, utc.millisecond, utc.microsecond);
-    }
-    return DateTime.now();
-  }
+  DateTime _getNow() => AcceptedTripCardHelper.getNow();
 
-  DateTime _parseCreatedAt(String createdAtStr) {
-    final now = _getNow();
-    DateTime parsed = DateTime.tryParse(createdAtStr) ?? now;
-    if (parsed.isUtc) {
-      if (AppGlobals.countryCode.toUpperCase() == 'BD') {
-        final dhaka = parsed.add(const Duration(hours: 6));
-        parsed = DateTime(dhaka.year, dhaka.month, dhaka.day, dhaka.hour, dhaka.minute, dhaka.second);
-      } else {
-        final local = parsed.toLocal();
-        parsed = DateTime(local.year, local.month, local.day, local.hour, local.minute, local.second);
-      }
-    }
-    if (parsed.difference(now).inHours >= 5) {
-      return parsed.subtract(const Duration(hours: 7));
-    }
-    return parsed;
-  }
+  DateTime _parseCreatedAt(String createdAtStr) => AcceptedTripCardHelper.parseCreatedAt(createdAtStr);
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +72,10 @@ class _NewRequestCardState extends State<NewRequestCard> {
         : widget.trip.carService.serviceName;
     final isRideShare = rawService.toUpperCase().contains('RIDE') ||
         rawService.toUpperCase() == 'RIDE_SHARE';
+
+    if (!isRideShare && widget.trip.myBid != null) {
+      return const SizedBox.shrink();
+    }
 
     final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
     final now = _getNow();
@@ -141,10 +124,12 @@ class _NewRequestCardState extends State<NewRequestCard> {
     final progress = remainingSeconds / totalSeconds;
     final isLow = progress < 0.2;
 
-    final pickupAddress = widget.trip.pickupLocations.isNotEmpty ? widget.trip.pickupLocations.first.address : '';
-    final dropoffAddress = widget.trip.dropoffLocations.isNotEmpty ? widget.trip.dropoffLocations.first.address : '';
+    final pickupLoc = AcceptedTripCardHelper.getEffectivePickup(widget.trip);
+    final dropoffLoc = AcceptedTripCardHelper.getEffectiveDropoff(widget.trip);
+    final pickupAddress = pickupLoc?.address ?? '';
+    final dropoffAddress = dropoffLoc?.address ?? '';
     final distanceText = "~$formattedTotalDistance";
-    final timeText = _translateNumbersAndCommonWords("${_calculateMinutes(widget.trip.pickupKm)} min", isBangla);
+    final timeText = _translateNumbersAndCommonWords(_calculateMinutes(widget.trip.pickupKm), isBangla);
     final customerName = widget.trip.customer.isNotEmpty && widget.trip.customer.first.name.isNotEmpty 
         ? widget.trip.customer.first.name 
         : loc.translate('customer') ?? "Customer";
@@ -223,22 +208,65 @@ class _NewRequestCardState extends State<NewRequestCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    distanceText,
-                    style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 14),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    "$currency$formattedAmount",
-                    style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.bold),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            distanceText,
+                            style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 14),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "$currency$formattedAmount",
+                            style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      Builder(
+                        builder: (context) {
+                          final int mins = (remainingSeconds / 60).floor();
+                          final int secs = (remainingSeconds % 60).floor();
+                          String timeStr = "$mins:${secs.toString().padLeft(2, '0')}";
+                          if (isBangla) {
+                            timeStr = _translateNumbersAndCommonWords(timeStr, isBangla);
+                          }
+                          final Color timerColor = remainingSeconds <= (isRideShare ? 20 : 20 * 60) ? Colors.redAccent : (theme.brightness == Brightness.dark ? Colors.lightGreenAccent : Colors.green.shade700);
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: timerColor.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: timerColor.withOpacity(0.4), width: 1),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.timer_outlined, size: 14, color: timerColor),
+                                const SizedBox(width: 4),
+                                Text(
+                                  timeStr,
+                                  style: TextStyle(color: timerColor, fontSize: 13, fontWeight: FontWeight.w900),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 6),
+                  AcceptedTripCardHelper.buildTripDateTimes(context, widget.trip, isBangla, theme),
                   TranslatedText(
                     pickupAddress,
                     isBangla: isBangla,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w600),
+                    location: pickupLoc,
                   ),
                   const SizedBox(height: 4),
                   TranslatedText(
@@ -247,6 +275,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
+                    location: dropoffLoc,
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -343,7 +372,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
               value: progress,
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
               valueColor: AlwaysStoppedAnimation<Color>(
-                remainingSeconds <= 20 ? Colors.redAccent : const Color(0xFFC4F934),
+                remainingSeconds <= (isRideShare ? 20 : 20 * 60) ? Colors.redAccent : const Color(0xFFC4F934),
               ),
               minHeight: 3,
               borderRadius: const BorderRadius.only(

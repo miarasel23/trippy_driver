@@ -15,6 +15,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import '../helper/map_marker_helper.dart';
+import '../helper/accepted_trip_card_helper.dart';
 import '../../../utils/app_urls.dart';
 
 class HomeState extends Equatable {
@@ -422,7 +423,9 @@ class HomeController extends Cubit<HomeState> {
       final status = t.tripStatus;
       final bidStatus = t.myBid?.status;
       
-      return status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || bidStatus == 'ACCEPTED';
+      final isAccepted = status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || bidStatus == 'ACCEPTED';
+      if (!isAccepted) return false;
+      return AcceptedTripCardHelper.shouldShowAcceptedTripCard(t);
     }).toList();
 
     RentalTripModel? tripToDisplay = state.previewTrip;
@@ -471,10 +474,14 @@ class HomeController extends Cubit<HomeState> {
     }
 
     final polylinePoints = PolylinePoints();
+    final isReturnTrip = trip.serviceName.toUpperCase() == 'RETURN' || trip.serviceName.toUpperCase() == 'ROUND_TRIP';
+    final currentStatus = trip.tripStatus == 'REQUESTED' ? (trip.myBid?.status ?? trip.tripStatus) : trip.tripStatus;
+    final effectivePickups = (isReturnTrip && currentStatus == 'FIRST_COMPLETED') ? trip.dropoffLocations : trip.pickupLocations;
+    final effectiveDropoffs = (isReturnTrip && currentStatus == 'FIRST_COMPLETED') ? trip.pickupLocations : trip.dropoffLocations;
 
     // 1. Blue route (Driver -> First Pickup)
-    if (driverPosition != null && trip.pickupLocations.isNotEmpty) {
-       final pickup = trip.pickupLocations.first;
+    if (driverPosition != null && effectivePickups.isNotEmpty) {
+       final pickup = effectivePickups.first;
        PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
          googleApiKey: AppUrls.googleApiKey,
          request: PolylineRequest(
@@ -497,8 +504,8 @@ class HomeController extends Cubit<HomeState> {
 
     // 2. Green route (Pickups -> Dropoffs)
     final tripPoints = <PointLatLng>[];
-    for (var p in trip.pickupLocations) tripPoints.add(PointLatLng(p.latitude, p.longitude));
-    for (var p in trip.dropoffLocations) tripPoints.add(PointLatLng(p.latitude, p.longitude));
+    for (var p in effectivePickups) tripPoints.add(PointLatLng(p.latitude, p.longitude));
+    for (var p in effectiveDropoffs) tripPoints.add(PointLatLng(p.latitude, p.longitude));
 
     if (tripPoints.length >= 2) {
        List<LatLng> polylineCoords = [];
@@ -539,8 +546,8 @@ class HomeController extends Cubit<HomeState> {
     final pickupMins = (pickupKm * 3.5).round(); // approx 3.5 mins per km
     final dropoffMins = (totalKm * 3.5).round();
 
-    for (int i = 0; i < trip.pickupLocations.length; i++) {
-       final pickup = trip.pickupLocations[i];
+    for (int i = 0; i < effectivePickups.length; i++) {
+       final pickup = effectivePickups[i];
        final title = isBangla ? 'পিকআপ ${toBanglaDigits('${i+1}')}' : 'Pickup ${i+1}';
        
        final icon = await MapMarkerHelper.createCustomMarkerBitmap(
@@ -557,8 +564,8 @@ class HomeController extends Cubit<HomeState> {
        );
     }
 
-    for (int i = 0; i < trip.dropoffLocations.length; i++) {
-       final drop = trip.dropoffLocations[i];
+    for (int i = 0; i < effectiveDropoffs.length; i++) {
+       final drop = effectiveDropoffs[i];
        final title = isBangla ? 'ড্রপ অফ ${toBanglaDigits('${i+1}')}' : 'Dropoff ${i+1}';
        
        final icon = await MapMarkerHelper.createCustomMarkerBitmap(

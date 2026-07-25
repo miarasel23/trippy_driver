@@ -5,6 +5,7 @@ import '../controller/home_controller.dart';
 import '../../../../core/utils/localization/app_localization.dart';
 import '../model/rental_trip_model.dart';
 import 'translated_text.dart';
+import '../helper/accepted_trip_card_helper.dart';
 import '../../../../utils/app_urls.dart';
 
 class OfferBottomSheet extends StatefulWidget {
@@ -51,8 +52,13 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
     super.initState();
     _bidController = TextEditingController(text: widget.trip.customerOfferAmmount.round().toString());
     
-    _totalSeconds = 60.0;
-    _remainingSeconds = 60.0;
+    final totalDuration = widget.isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
+    _totalSeconds = totalDuration.inSeconds.toDouble();
+    final createdAtStr = widget.trip.myBid?.createdAt ?? widget.trip.createdAt;
+    final createdAt = AcceptedTripCardHelper.parseCreatedAt(createdAtStr);
+    final expireTime = createdAt.add(totalDuration);
+    final remaining = expireTime.difference(AcceptedTripCardHelper.getNow());
+    _remainingSeconds = remaining.isNegative ? 0.0 : remaining.inSeconds.toDouble();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
@@ -163,8 +169,10 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
     final bid10 = (baseAmount * 1.10).round();
     final bid18 = (baseAmount * 1.18).round();
 
-    final pickupAddress = widget.trip.pickupLocations.isNotEmpty ? widget.trip.pickupLocations.first.address : '';
-    final dropoffAddress = widget.trip.dropoffLocations.isNotEmpty ? widget.trip.dropoffLocations.first.address : '';
+    final pickupLoc = AcceptedTripCardHelper.getEffectivePickup(widget.trip);
+    final dropoffLoc = AcceptedTripCardHelper.getEffectiveDropoff(widget.trip);
+    final pickupAddress = pickupLoc?.address ?? '';
+    final dropoffAddress = dropoffLoc?.address ?? '';
     
     final distanceText = "~${widget.trip.totalDistance} km";
     final customerAvatar = widget.trip.customer.isNotEmpty ? widget.trip.customer.first.profilePicture : '';
@@ -203,12 +211,38 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                     : widget.trip.carService.serviceName;
                 final serviceLabel = rawService.replaceAll('_', ' ').toUpperCase();
                 final progress = _totalSeconds > 0 ? (_remainingSeconds / _totalSeconds) : 0.0;
+                final int mins = (_remainingSeconds / 60).floor();
+                final int secs = (_remainingSeconds % 60).floor();
+                String timeStr = "$mins:${secs.toString().padLeft(2, '0')}";
+                if (isBangla) {
+                  timeStr = _translateNumbersAndCommonWords(timeStr, isBangla);
+                }
+                final Color timerColor = _remainingSeconds <= (widget.isRideShare ? 20 : 20 * 60) ? Colors.redAccent : (theme.brightness == Brightness.dark ? Colors.lightGreenAccent : Colors.green.shade700);
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: timerColor.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: timerColor.withOpacity(0.4), width: 1),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.timer_outlined, size: 14, color: timerColor),
+                              const SizedBox(width: 4),
+                              Text(
+                                timeStr,
+                                style: TextStyle(color: timerColor, fontSize: 13, fontWeight: FontWeight.w900),
+                              ),
+                            ],
+                          ),
+                        ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                           decoration: BoxDecoration(
@@ -229,7 +263,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                         value: progress,
                         backgroundColor: theme.colorScheme.surfaceContainerHighest,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          _remainingSeconds <= 20 ? Colors.redAccent : const Color(0xFFC4F934),
+                          _remainingSeconds <= (widget.isRideShare ? 20 : 20 * 60) ? Colors.redAccent : const Color(0xFFC4F934),
                         ),
                         minHeight: 3,
                         borderRadius: BorderRadius.circular(4),
@@ -289,6 +323,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                 ],
               ),
               const SizedBox(height: 10),
+              AcceptedTripCardHelper.buildTripDateTimes(context, widget.trip, isBangla, theme),
               
               // Locations
               Row(
@@ -308,6 +343,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                       maxLines: 1, 
                       overflow: TextOverflow.ellipsis, 
                       style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 15),
+                      location: pickupLoc,
                     ),
                   ),
                 ],
@@ -330,6 +366,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                       maxLines: 1, 
                       overflow: TextOverflow.ellipsis, 
                       style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 15),
+                      location: dropoffLoc,
                     ),
                   ),
                 ],

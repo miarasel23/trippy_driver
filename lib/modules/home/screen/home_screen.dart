@@ -250,7 +250,14 @@ class _HomeViewState extends State<HomeView> {
                             return service == 'RIDE_SHARE' && status != 'ACCEPTED' && status != 'CANCELLED';
                           }).toList();
                           
-                          final combinedTrips = List<RentalTripModel>.from(state.rentalTrips)..addAll(rideShareBids);
+                          final rentalWithoutBids = state.rentalTrips.where((t) {
+                            final service = t.serviceName.isNotEmpty ? t.serviceName : t.carService.serviceName;
+                            final isRideShare = service.toUpperCase().contains('RIDE') || service.toUpperCase() == 'RIDE_SHARE';
+                            if (!isRideShare && t.myBid != null) return false;
+                            return true;
+                          }).toList();
+                          
+                          final combinedTrips = List<RentalTripModel>.from(rentalWithoutBids)..addAll(rideShareBids);
                           
                           // Deduplicate by UUID
                           final uniqueTrips = <String, RentalTripModel>{};

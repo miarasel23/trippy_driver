@@ -6,6 +6,7 @@ import '../../../../core/utils/localization/app_localization.dart';
 import '../model/rental_trip_model.dart';
 import 'translated_text.dart';
 import 'new_request_card.dart';
+import '../helper/accepted_trip_card_helper.dart';
 import '../../../../store/app_globals.dart';
 
 class BidTripOverlay extends StatelessWidget {
@@ -20,7 +21,8 @@ class BidTripOverlay extends StatelessWidget {
         }
         final pendingTrips = state.bidTrips.where((t) {
           final service = t.serviceName.isNotEmpty ? t.serviceName : t.carService.serviceName;
-          if (service == 'RIDE_SHARE') return false;
+          final isRideShare = service.toUpperCase().contains('RIDE') || service.toUpperCase() == 'RIDE_SHARE';
+          if (!isRideShare) return false;
           
           final status = t.tripStatus;
           final bidStatus = t.myBid?.status;
@@ -153,37 +155,17 @@ class _BidTripItemState extends State<_BidTripItem> {
     }
   }
 
-  DateTime _getNow() {
-    if (AppGlobals.countryCode.toUpperCase() == 'BD') {
-      final utc = DateTime.now().toUtc().add(const Duration(hours: 6));
-      return DateTime(utc.year, utc.month, utc.day, utc.hour, utc.minute, utc.second, utc.millisecond, utc.microsecond);
-    }
-    return DateTime.now();
-  }
+  DateTime _getNow() => AcceptedTripCardHelper.getNow();
 
-  DateTime _parseCreatedAt(String createdAtStr) {
-    final now = _getNow();
-    DateTime parsed = DateTime.tryParse(createdAtStr) ?? now;
-    if (parsed.isUtc) {
-      if (AppGlobals.countryCode.toUpperCase() == 'BD') {
-        final dhaka = parsed.add(const Duration(hours: 6));
-        parsed = DateTime(dhaka.year, dhaka.month, dhaka.day, dhaka.hour, dhaka.minute, dhaka.second);
-      } else {
-        final local = parsed.toLocal();
-        parsed = DateTime(local.year, local.month, local.day, local.hour, local.minute, local.second);
-      }
-    }
-    if (parsed.difference(now).inHours >= 5) {
-      return parsed.subtract(const Duration(hours: 7));
-    }
-    return parsed;
-  }
+  DateTime _parseCreatedAt(String createdAtStr) => AcceptedTripCardHelper.parseCreatedAt(createdAtStr);
 
   void _calculateExpiration() {
     final createdAtStr = widget.trip.myBid?.createdAt ?? widget.trip.createdAt;
     DateTime createdAt = _parseCreatedAt(createdAtStr);
-    
-    _expireTime = createdAt.add(const Duration(hours: 1));
+    final rawService = widget.trip.serviceName.isNotEmpty ? widget.trip.serviceName : widget.trip.carService.serviceName;
+    final isRideShare = rawService.toUpperCase().contains('RIDE') || rawService.toUpperCase() == 'RIDE_SHARE';
+    final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
+    _expireTime = createdAt.add(totalDuration);
     _updateRemaining();
   }
 
@@ -219,12 +201,15 @@ class _BidTripItemState extends State<_BidTripItem> {
     final amount = myBid?.amount ?? widget.trip.customerOfferAmmount;
     final status = myBid?.status ?? widget.trip.tripStatus;
     
-    final pickupLoc = widget.trip.pickupLocations.isNotEmpty ? widget.trip.pickupLocations.first : null;
-    final dropoffLoc = widget.trip.dropoffLocations.isNotEmpty ? widget.trip.dropoffLocations.first : null;
+    final pickupLoc = AcceptedTripCardHelper.getEffectivePickup(widget.trip);
+    final dropoffLoc = AcceptedTripCardHelper.getEffectiveDropoff(widget.trip);
     
     final pickup = pickupLoc?.address ?? 'Unknown';
     final dropoff = dropoffLoc?.address ?? 'Unknown';
 
+    final rawService = widget.trip.serviceName.isNotEmpty ? widget.trip.serviceName : widget.trip.carService.serviceName;
+    final isRideShare = rawService.toUpperCase().contains('RIDE') || rawService.toUpperCase() == 'RIDE_SHARE';
+    final bool isWarningTime = _remaining.inSeconds <= (isRideShare ? 20 : 20 * 60);
     bool isExpired = _remaining.isNegative;
 
     if (isExpired) {
@@ -280,18 +265,18 @@ class _BidTripItemState extends State<_BidTripItem> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: isExpired ? Colors.red : theme.colorScheme.onSurface,
+                      color: isWarningTime ? Colors.red : theme.colorScheme.onSurface,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.timer_outlined, size: 14, color: isExpired ? Colors.white : theme.colorScheme.surface),
+                        Icon(Icons.timer_outlined, size: 14, color: isWarningTime ? Colors.white : theme.colorScheme.surface),
                         const SizedBox(width: 4),
                         Text(
                           timeString,
                           style: TextStyle(
-                            color: isExpired ? Colors.white : theme.colorScheme.surface, 
+                            color: isWarningTime ? Colors.white : theme.colorScheme.surface, 
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
                           ),
@@ -311,6 +296,7 @@ class _BidTripItemState extends State<_BidTripItem> {
                 ),
                 child: Column(
                   children: [
+                    AcceptedTripCardHelper.buildTripDateTimes(context, widget.trip, isBangla, theme),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

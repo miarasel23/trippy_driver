@@ -96,8 +96,10 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
     
     final paymentMethod = widget.trip.paymentMethod ?? 'CASH';
 
-    final pickupLoc = widget.trip.pickupLocations.isNotEmpty ? widget.trip.pickupLocations.first.address : 'Unknown';
-    final dropoffLoc = widget.trip.dropoffLocations.isNotEmpty ? widget.trip.dropoffLocations.first.address : 'Unknown';
+    final effPickup = AcceptedTripCardHelper.getEffectivePickup(widget.trip);
+    final effDropoff = AcceptedTripCardHelper.getEffectiveDropoff(widget.trip);
+    final pickupLoc = effPickup?.address ?? 'Unknown';
+    final dropoffLoc = effDropoff?.address ?? 'Unknown';
 
     DateTime? tripDate;
     try {

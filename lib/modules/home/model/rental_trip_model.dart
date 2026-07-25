@@ -4,6 +4,7 @@ class RentalTripModel {
   final String serviceName;
   final String paymentMethod;
   final String startDatetime;
+  final String endDatetime;
   final double offerAmmount;
   final double customerOfferAmmount;
   final String tripStatus;
@@ -25,6 +26,7 @@ class RentalTripModel {
     required this.serviceName,
     required this.paymentMethod,
     required this.startDatetime,
+    this.endDatetime = '',
     required this.offerAmmount,
     required this.customerOfferAmmount,
     required this.tripStatus,
@@ -53,7 +55,8 @@ class RentalTripModel {
       uuid: tripDetails['uuid'] ?? '',
       serviceName: tripDetails['service_name'] ?? '',
       paymentMethod: tripDetails['payment_method'] ?? '',
-      startDatetime: tripDetails['start_datetime'] ?? '',
+      startDatetime: tripDetails['start_datetime'] ?? tripDetails['start_time'] ?? json['start_datetime'] ?? '',
+      endDatetime: tripDetails['end_datetime'] ?? tripDetails['return_datetime'] ?? tripDetails['end_time'] ?? tripDetails['return_time'] ?? json['end_datetime'] ?? json['return_datetime'] ?? '',
       offerAmmount: (tripDetails['offer_amount'] ?? tripDetails['offer_ammount'] ?? 0).toDouble(),
       customerOfferAmmount: (tripDetails['customer_offer_amount'] ?? tripDetails['customer_offer_ammount'] ?? 0).toDouble(),
       tripStatus: tripDetails['trip_status'] ?? '',

@@ -91,6 +91,7 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
           final createdAt = _parseCreatedAt(createdAtStr);
           final rawService = t.serviceName.isNotEmpty ? t.serviceName : t.carService.serviceName;
           final isRideShare = rawService.toUpperCase().contains('RIDE') || rawService.toUpperCase() == 'RIDE_SHARE';
+          if (!isRideShare) return false;
           final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
           
           final expireTime = createdAt.add(totalDuration);
@@ -124,13 +125,13 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
           timeString = _toBanglaDigits(timeString);
         }
         
-        final Color timerColor = remaining.inSeconds <= 20 ? Colors.red : Colors.lightGreen;
+        final Color timerColor = remaining.inSeconds <= (isRideShare ? 20 : 20 * 60) ? Colors.red : Colors.lightGreen;
 
-        final pickupLoc = trip.pickupLocations.isNotEmpty ? trip.pickupLocations.first : null;
-        final dropoffLoc = trip.dropoffLocations.isNotEmpty ? trip.dropoffLocations.first : null;
+        final pickupLoc = AcceptedTripCardHelper.getEffectivePickup(trip);
+        final dropoffLoc = AcceptedTripCardHelper.getEffectiveDropoff(trip);
         
-        var pickup = pickupLoc?.address ?? 'Unknown';
-        var dropoff = dropoffLoc?.address ?? 'Unknown';
+        final pickup = pickupLoc?.address ?? 'Unknown';
+        final dropoff = dropoffLoc?.address ?? 'Unknown';
         
         final customerOffer = trip.customerOfferAmmount;
         final myBid = trip.myBid?.amount ?? customerOffer;
@@ -225,21 +226,7 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
                 ),
               ),
               const SizedBox(height: 12),
-              if (trip.startDatetime.isNotEmpty) ...[
-                Row(
-                  children: [
-                    Icon(Icons.calendar_today, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.7)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        AcceptedTripCardHelper.formatStartDatetime(trip.startDatetime, isBangla),
-                        style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-              ],
+              AcceptedTripCardHelper.buildTripDateTimes(context, trip, isBangla, theme),
               Row(
                 children: [
                   Icon(Icons.my_location, size: 16, color: Colors.blue.withOpacity(0.8)),
