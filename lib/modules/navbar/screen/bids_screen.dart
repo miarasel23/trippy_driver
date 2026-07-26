@@ -11,8 +11,15 @@ import '../../../store/user_data_store.dart';
 
 class BidsScreen extends StatefulWidget {
   final VoidCallback? onNavigateToHome;
+  final void Function(int count)? onCountChanged;
+  final ValueNotifier<int>? refreshTrigger;
 
-  const BidsScreen({super.key, this.onNavigateToHome});
+  const BidsScreen({
+    super.key,
+    this.onNavigateToHome,
+    this.onCountChanged,
+    this.refreshTrigger,
+  });
 
   @override
   State<BidsScreen> createState() => _BidsScreenState();
@@ -37,10 +44,17 @@ class _BidsScreenState extends State<BidsScreen> {
         }
       }
     });
+    // Listen for external refresh triggers (e.g. tab tap from NavbarScreen)
+    widget.refreshTrigger?.addListener(_onRefreshTriggered);
+  }
+
+  void _onRefreshTriggered() {
+    _fetchBids(showLoading: true);
   }
 
   @override
   void dispose() {
+    widget.refreshTrigger?.removeListener(_onRefreshTriggered);
     _timer?.cancel();
     super.dispose();
   }
@@ -52,13 +66,15 @@ class _BidsScreenState extends State<BidsScreen> {
       });
     }
 
-    final fetched = await HomeRepository().getDriverRequestedRentalTrips();
-    if (mounted && fetched != null) {
+    final result = await HomeRepository().getDriverRequestedRentalTrips();
+    if (mounted && result != null) {
+      widget.onCountChanged?.call(result.totalFound);
       setState(() {
-        _trips = fetched;
+        _trips = result.trips;
         _isLoading = false;
       });
     } else if (mounted) {
+      widget.onCountChanged?.call(0);
       setState(() {
         _isLoading = false;
       });

@@ -277,8 +277,6 @@ class _NewRequestCardState extends State<NewRequestCard> {
                   TranslatedText(
                     pickupAddress,
                     isBangla: isBangla,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w600),
                     location: pickupLoc,
                   ),
@@ -286,8 +284,6 @@ class _NewRequestCardState extends State<NewRequestCard> {
                   TranslatedText(
                     dropoffAddress,
                     isBangla: isBangla,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
                     location: dropoffLoc,
                   ),
@@ -330,7 +326,6 @@ class _NewRequestCardState extends State<NewRequestCard> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Service avatar image
                 () {
                   final carAvatar = widget.trip.carCategory.carAvatar.isNotEmpty
                       ? widget.trip.carCategory.carAvatar
@@ -338,45 +333,50 @@ class _NewRequestCardState extends State<NewRequestCard> {
                   final avatarUrl = carAvatar.isNotEmpty
                       ? (carAvatar.startsWith('http') ? carAvatar : '${AppUrls.imageBaseUrl}$carAvatar')
                       : null;
-                      return Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: avatarUrl != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Image.network(
-                                  avatarUrl,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) => Icon(
-                                    Icons.directions_car_rounded,
-                                    size: 28,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ),
-                              )
-                            : Icon(
-                                Icons.directions_car_rounded,
-                                size: 28,
-                                color: theme.colorScheme.primary,
-                              ),
-                      );
-                    }(),
-                    const SizedBox(height: 6),
-                    // Service name label
-                    Text(
-                      formattedService.toUpperCase(),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.3,
+                  return Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withOpacity(0.15),
+                        width: 1.2,
                       ),
                     ),
+                    padding: const EdgeInsets.all(6),
+                    child: avatarUrl != null
+                        ? Image.network(
+                            avatarUrl,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.directions_car_rounded,
+                              size: 32,
+                              color: theme.colorScheme.primary,
+                            ),
+                          )
+                        : Icon(
+                            Icons.directions_car_rounded,
+                            size: 32,
+                            color: theme.colorScheme.primary,
+                          ),
+                  );
+                }(),
+                const SizedBox(height: 6),
+                // Service name label
+                SizedBox(
+                  width: 72,
+                  child: Text(
+                    formattedService.toUpperCase(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
                   ],
                 ),
               ],

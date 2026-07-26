@@ -347,14 +347,21 @@ class AcceptedTripCardHelper {
     final currency = isBangla ? '৳' : 'BDT';
     final formattedAmount = translateNumbersAndCommonWords("${amountToDisplay.round()}", isBangla);
     
-    final int mins = (remaining.inSeconds / 60).floor();
-    final int secs = (remaining.inSeconds % 60).floor();
-    String timeStr = "$mins:${secs.toString().padLeft(2, '0')}";
+    final int totalSeconds = remaining.inSeconds.clamp(0, double.maxFinite.toInt());
+    final int hours = totalSeconds ~/ 3600;
+    final int mins = (totalSeconds % 3600) ~/ 60;
+    final int secs = totalSeconds % 60;
+    String timeStr;
+    if (hours > 0) {
+      timeStr = "$hours:${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}";
+    } else {
+      timeStr = "$mins:${secs.toString().padLeft(2, '0')}";
+    }
     if (isBangla) {
       timeStr = translateNumbersAndCommonWords(timeStr, isBangla);
     }
-    final Color timerColor = remaining.inSeconds <= (isRideShare ? 20 : 20 * 60) 
-        ? Colors.redAccent 
+    final Color timerColor = remaining.inSeconds <= (isRideShare ? 20 : 20 * 60)
+        ? Colors.redAccent
         : (theme.brightness == Brightness.dark ? Colors.lightGreenAccent : Colors.green.shade700);
 
     final rawService = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
@@ -414,42 +421,35 @@ class AcceptedTripCardHelper {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                distanceText,
-                                style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 13),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (isMyBid) ...[
-                              Text(
-                                "  •  ",
-                                style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.4), fontSize: 13),
-                              ),
-                              Flexible(
-                                child: Text(
-                                  loc.translate('my_bid') ?? 'My Bid',
-                                  style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w800),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ],
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        distanceText,
+                        style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                      if (isMyBid) ...[
+                        Text(
+                          "  •  ",
+                          style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.4), fontSize: 13),
                         ),
-                        const SizedBox(height: 2),
-                        FittedBox(
+                        Text(
+                          loc.translate('my_bid') ?? 'My Bid',
+                          style: TextStyle(color: theme.colorScheme.primary, fontSize: 12.5, fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: FittedBox(
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
                           child: Text(
@@ -457,28 +457,28 @@ class AcceptedTripCardHelper {
                             style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 22, fontWeight: FontWeight.bold),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: timerColor.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: timerColor.withOpacity(0.4), width: 1),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.timer_outlined, size: 14, color: timerColor),
-                        const SizedBox(width: 4),
-                        Text(
-                          timeStr,
-                          style: TextStyle(color: timerColor, fontSize: 13, fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: timerColor.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: timerColor.withOpacity(0.4), width: 1),
                         ),
-                      ],
-                    ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.timer_outlined, size: 14, color: timerColor),
+                            const SizedBox(width: 4),
+                            Text(
+                              timeStr,
+                              style: TextStyle(color: timerColor, fontSize: 13, fontWeight: FontWeight.w900),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -487,8 +487,6 @@ class AcceptedTripCardHelper {
               TranslatedText(
                 pickupAddress,
                 isBangla: isBangla,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w600),
                 location: pickupLoc,
               ),
@@ -496,8 +494,6 @@ class AcceptedTripCardHelper {
               TranslatedText(
                 dropoffAddress,
                 isBangla: isBangla,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
                 location: dropoffLoc,
               ),
@@ -548,42 +544,47 @@ class AcceptedTripCardHelper {
                 final avatarUrl = carAvatar.isNotEmpty
                     ? (carAvatar.startsWith('http') ? carAvatar : '${AppUrls.imageBaseUrl}$carAvatar')
                     : null;
-                 return Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(10),
+                return Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withOpacity(0.15),
+                      width: 1.2,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(6),
+                  child: avatarUrl != null
+                      ? Image.network(
+                          avatarUrl,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => Icon(
+                            Icons.directions_car_rounded,
+                            size: 32,
+                            color: theme.colorScheme.primary,
+                          ),
+                        )
+                      : Icon(
+                          Icons.directions_car_rounded,
+                          size: 32,
+                          color: theme.colorScheme.primary,
                         ),
-                        child: avatarUrl != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Image.network(
-                                  avatarUrl,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) => Icon(
-                                    Icons.directions_car_rounded,
-                                    size: 28,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ),
-                              )
-                            : Icon(
-                                Icons.directions_car_rounded,
-                                size: 28,
-                                color: theme.colorScheme.primary,
-                              ),
-                      );
+                );
               },
             ),
             const SizedBox(height: 6),
-            Text(
-              formattedService,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: theme.colorScheme.primary,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
+            SizedBox(
+              width: 72,
+              child: Text(
+                formattedService,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: theme.colorScheme.primary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ],

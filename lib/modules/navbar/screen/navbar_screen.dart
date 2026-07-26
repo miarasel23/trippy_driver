@@ -15,6 +15,11 @@ class NavbarScreen extends StatefulWidget {
 
 class _NavbarScreenState extends State<NavbarScreen> {
   int _selectedIndex = 0;
+  int _bidCount = 0;
+
+  /// Incrementing this notifier triggers BidsScreen to reload with loading indicator.
+  final ValueNotifier<int> _bidsRefreshTrigger = ValueNotifier<int>(0);
+
   late final List<Widget> _screens;
 
   @override
@@ -22,11 +27,25 @@ class _NavbarScreenState extends State<NavbarScreen> {
     super.initState();
     _screens = [
       const HomeScreen(),
-      BidsScreen(onNavigateToHome: () => _onItemTapped(0)),
+      BidsScreen(
+        onNavigateToHome: () => _onItemTapped(0),
+        onCountChanged: (count) {
+          if (mounted && _bidCount != count) {
+            setState(() => _bidCount = count);
+          }
+        },
+        refreshTrigger: _bidsRefreshTrigger,
+      ),
       const Center(child: Text('History')), // Placeholder
       const ProfileScreen(),
     ];
     _fetchUserData();
+  }
+
+  @override
+  void dispose() {
+    _bidsRefreshTrigger.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchUserData() async {
@@ -37,6 +56,10 @@ class _NavbarScreenState extends State<NavbarScreen> {
   }
 
   void _onItemTapped(int index) {
+    if (index == 1 && _selectedIndex != 1) {
+      // Trigger a fresh load with loading indicator every time user taps Bids
+      _bidsRefreshTrigger.value++;
+    }
     setState(() {
       _selectedIndex = index;
     });
@@ -74,7 +97,7 @@ class _NavbarScreenState extends State<NavbarScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(Icons.grid_view_rounded, loc.translate('home'), 0, theme),
-              _buildNavItem(Icons.car_rental, loc.translate('nav_bids'), 1, theme),
+              _buildBidsNavItem(Icons.car_rental, loc.translate('nav_bids'), 1, theme),
               _buildNavItem(Icons.history, loc.translate('nav_history'), 2, theme),
               _buildNavItem(Icons.person_outline, loc.translate('nav_profile'), 3, theme),
             ],
@@ -86,7 +109,9 @@ class _NavbarScreenState extends State<NavbarScreen> {
 
   Widget _buildNavItem(IconData icon, String label, int index, ThemeData theme) {
     final isSelected = _selectedIndex == index;
-    final color = isSelected ? theme.colorScheme.onSurface : theme.colorScheme.onSurface.withOpacity(0.5);
+    final color = isSelected
+        ? theme.colorScheme.onSurface
+        : theme.colorScheme.onSurface.withOpacity(0.5);
 
     return GestureDetector(
       onTap: () {
@@ -101,7 +126,9 @@ class _NavbarScreenState extends State<NavbarScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? theme.colorScheme.onSurface.withOpacity(0.15) : Colors.transparent,
+          color: isSelected
+              ? theme.colorScheme.onSurface.withOpacity(0.15)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
@@ -114,7 +141,91 @@ class _NavbarScreenState extends State<NavbarScreen> {
               style: TextStyle(
                 color: color,
                 fontSize: 13,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontWeight:
+                    isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Bids nav item with a green notification badge when _bidCount >= 1
+  Widget _buildBidsNavItem(
+      IconData icon, String label, int index, ThemeData theme) {
+    final isSelected = _selectedIndex == index;
+    final color = isSelected
+        ? theme.colorScheme.onSurface
+        : theme.colorScheme.onSurface.withOpacity(0.5);
+
+    return GestureDetector(
+      onTap: () => _onItemTapped(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.onSurface.withOpacity(0.15)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(icon, color: color, size: 30),
+                if (_bidCount > 0)
+                  Positioned(
+                    top: -4,
+                    right: -8,
+                    child: AnimatedScale(
+                      scale: 1.0,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.elasticOut,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.lightGreen.shade500,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.lightGreen.withOpacity(0.5),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        child: Text(
+                          _bidCount > 99 ? '99+' : '$_bidCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            height: 1.2,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 13,
+                fontWeight:
+                    isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ],
@@ -123,4 +234,3 @@ class _NavbarScreenState extends State<NavbarScreen> {
     );
   }
 }
-

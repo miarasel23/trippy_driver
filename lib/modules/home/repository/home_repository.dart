@@ -247,7 +247,7 @@ class HomeRepository {
     }
   }
 
-  Future<List<RentalTripModel>?> getDriverRequestedRentalTrips() async {
+  Future<({List<RentalTripModel> trips, int totalFound})?> getDriverRequestedRentalTrips() async {
     final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
     final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
 
@@ -274,15 +274,17 @@ class HomeRepository {
       );
 
       List<RentalTripModel> allTrips = [];
+      int totalFound = 0;
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final body = jsonDecode(response.body);
         if (body['status'] == true && body['data'] != null) {
           final List<dynamic> data = body['data'];
           allTrips.addAll(data.map((e) => RentalTripModel.fromJson(e)).toList());
+          totalFound = int.tryParse(body['total_trip_found']?.toString() ?? '0') ?? 0;
         }
       }
-      return allTrips;
+      return (trips: allTrips, totalFound: totalFound);
     } catch (e) {
       return null;
     }
