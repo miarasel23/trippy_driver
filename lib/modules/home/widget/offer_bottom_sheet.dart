@@ -99,11 +99,11 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
     if (amt > maxBid) {
       final val = isBangla ? _toBanglaDigits(maxBid.round().toString()) : maxBid.round().toString();
       final String maxText = loc.translate('max_bid_is') ?? 'Max bid is';
-      setState(() => _bidError = "$maxText $currency$val");
+      setState(() => _bidError = "$maxText $currency $val");
     } else if (amt < minBid) {
       final val = isBangla ? _toBanglaDigits(minBid.round().toString()) : minBid.round().toString();
       final String minText = loc.translate('min_bid_is') ?? 'Min bid is';
-      setState(() => _bidError = "$minText $currency$val");
+      setState(() => _bidError = "$minText $currency $val");
     } else {
       setState(() => _bidError = null);
     }
@@ -179,7 +179,11 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
     final customerName = widget.trip.customer.isNotEmpty && widget.trip.customer.first.name.isNotEmpty 
         ? widget.trip.customer.first.name 
         : loc.translate('customer') ?? "Customer";
-    final customerRating = widget.trip.customer.isNotEmpty ? _translateNumbersAndCommonWords(widget.trip.customer.first.averageRating.toStringAsFixed(1), isBangla) : _translateNumbersAndCommonWords("4.5", isBangla);
+    final int totalTrips = widget.trip.customer.isNotEmpty ? widget.trip.customer.first.totalTripCount : widget.trip.totalTripCount;
+    final String rawRating = widget.trip.customer.isNotEmpty ? widget.trip.customer.first.averageRating.toStringAsFixed(1) : "4.5";
+    final String customerRating = totalTrips > 0 
+        ? "${_translateNumbersAndCommonWords(rawRating, isBangla)} (${_translateNumbersAndCommonWords(totalTrips.toString(), isBangla)})" 
+        : _translateNumbersAndCommonWords(rawRating, isBangla);
     
     // timeText calculation
     int mins = 0;
@@ -314,7 +318,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        "$currency$formattedAmount",
+                        "$currency $formattedAmount",
                         maxLines: 1,
                         style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 22, fontWeight: FontWeight.bold),
                       ),
@@ -394,7 +398,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                 child: _isSubmitting
                   ? SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.surface))
                   : Text(
-                      "${loc.translate('accept_for') ?? 'Accept for'} $currency$formattedAmount",
+                      "${loc.translate('accept_for') ?? 'Accept for'} $currency $formattedAmount",
                       style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
                     ),
               ),
@@ -493,7 +497,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           child: Text(
-                            "$currency${_translateNumbersAndCommonWords(bid10.toString(), isBangla)}",
+                            "$currency ${_translateNumbersAndCommonWords(bid10.toString(), isBangla)}",
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -509,7 +513,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           child: Text(
-                            "$currency${_translateNumbersAndCommonWords(bid18.toString(), isBangla)}",
+                            "$currency ${_translateNumbersAndCommonWords(bid18.toString(), isBangla)}",
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ),

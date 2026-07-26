@@ -4,8 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../controller/home_controller.dart';
 import '../../../../core/utils/localization/app_localization.dart';
 import '../model/rental_trip_model.dart';
-import 'translated_text.dart';
-import 'cancel_trip_dialog.dart';
 import '../helper/accepted_trip_card_helper.dart';
 import '../../../../store/app_globals.dart';
 
@@ -57,14 +55,6 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
       return parsed.subtract(const Duration(hours: 7));
     }
     return parsed;
-  }
-
-  String _toBanglaDigits(String input) {
-    const englishToBanglaDigits = {
-      '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪',
-      '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯',
-    };
-    return input.split('').map((char) => englishToBanglaDigits[char] ?? char).join();
   }
 
   @override
@@ -120,179 +110,36 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
         var remaining = expireTime.difference(_getNow());
         if (remaining.isNegative) remaining = Duration.zero;
 
-        String timeString = "${remaining.inMinutes}:${(remaining.inSeconds % 60).toString().padLeft(2, '0')}";
-        if (isBangla) {
-          timeString = _toBanglaDigits(timeString);
-        }
-        
-        final Color timerColor = remaining.inSeconds <= (isRideShare ? 20 : 20 * 60) ? Colors.red : Colors.lightGreen;
-
-        final pickupLoc = AcceptedTripCardHelper.getEffectivePickup(trip);
-        final dropoffLoc = AcceptedTripCardHelper.getEffectiveDropoff(trip);
-        
-        final pickup = pickupLoc?.address ?? 'Unknown';
-        final dropoff = dropoffLoc?.address ?? 'Unknown';
-        
-        final customerOffer = trip.customerOfferAmmount;
-        final myBid = trip.myBid?.amount ?? customerOffer;
-        
-        final currency = isBangla ? '৳' : 'BDT';
-        final displayCustomerOffer = isBangla ? _toBanglaDigits(customerOffer.round().toString()) : customerOffer.round().toString();
-        final displayMyBid = isBangla ? _toBanglaDigits(myBid.round().toString()) : myBid.round().toString();
-
-        String headerTitle = loc.translate('wait_customer_acceptance') ?? 'Waiting for customer response';
-
         return GestureDetector(
           onTap: () {
             context.read<HomeController>().selectTripForPreview(trip);
           },
           child: Container(
             margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 15,
-                offset: const Offset(0, 5),
-              ),
-            ],
-            border: Border.all(color: Colors.black.withOpacity(0.2), width: 2),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+              border: Border.all(color: Colors.black.withOpacity(0.2), width: 2),
+            ),
+            child: AcceptedTripCardHelper.buildUnifiedTripCardContent(
+              context: context,
+              trip: trip,
+              isBangla: isBangla,
+              theme: theme,
+              loc: loc,
+              remaining: remaining,
+              isRideShare: isRideShare,
+              isMyBid: true,
+            ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.timer, color: Colors.orange, size: 16),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            headerTitle,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: timerColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.timer_outlined, size: 14, color: timerColor),
-                        const SizedBox(width: 4),
-                        Text(
-                          timeString,
-                          style: TextStyle(
-                            color: timerColor, 
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: (remaining.inSeconds / 60.0).clamp(0.0, 1.0),
-                  backgroundColor: timerColor.withOpacity(0.1),
-                  color: timerColor,
-                  minHeight: 6,
-                ),
-              ),
-              const SizedBox(height: 12),
-              AcceptedTripCardHelper.buildTripDateTimes(context, trip, isBangla, theme),
-              Row(
-                children: [
-                  Icon(Icons.my_location, size: 16, color: Colors.blue.withOpacity(0.8)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TranslatedText(
-                      pickup,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      isBangla: isBangla,
-                      location: pickupLoc,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.location_on, size: 16, color: Colors.red.withOpacity(0.8)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TranslatedText(
-                      dropoff,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontWeight: FontWeight.w600, fontSize: 14),
-                      isBangla: isBangla,
-                      location: dropoffLoc,
-                    ),
-                  ),
-                ],
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Divider(height: 1),
-              ),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      loc.translate('my_bid') ?? 'Your Bid',
-                      style: TextStyle(fontSize: 12, color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      "$currency $displayMyBid",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900, 
-                        fontSize: 18,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
         );
       },
     );

@@ -144,7 +144,11 @@ class _NewRequestCardState extends State<NewRequestCard> {
         ? widget.trip.customer.first.name 
         : loc.translate('customer') ?? "Customer";
     final customerAvatar = widget.trip.customer.isNotEmpty ? widget.trip.customer.first.profilePicture : '';
-    final customerRating = widget.trip.customer.isNotEmpty ? _translateNumbersAndCommonWords(widget.trip.customer.first.averageRating.toStringAsFixed(1), isBangla) : _translateNumbersAndCommonWords("4.5", isBangla);
+    final int totalTrips = widget.trip.customer.isNotEmpty ? widget.trip.customer.first.totalTripCount : widget.trip.totalTripCount;
+    final String rawRating = widget.trip.customer.isNotEmpty ? widget.trip.customer.first.averageRating.toStringAsFixed(1) : "4.5";
+    final String customerRating = totalTrips > 0 
+        ? "${_translateNumbersAndCommonWords(rawRating, isBangla)} (${_translateNumbersAndCommonWords(totalTrips.toString(), isBangla)})" 
+        : _translateNumbersAndCommonWords(rawRating, isBangla);
     
     final String status = widget.trip.myBid?.status ?? widget.trip.tripStatus;
     final bool hasActiveBid = widget.trip.myBid != null && status != 'ACCEPTED' && status != 'CANCELLED' && !AcceptedTripCardHelper.isBidExpired(widget.trip);
@@ -231,7 +235,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            "$currency$formattedAmount",
+                            "$currency $formattedAmount",
                             style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -328,9 +332,9 @@ class _NewRequestCardState extends State<NewRequestCard> {
               children: [
                 // Service avatar image
                 () {
-                  final avatar = widget.trip.carCategory.carAvatar.isNotEmpty
-                      ? widget.trip.carCategory.carAvatar
-                      : widget.trip.carService.avatar;
+                  final avatar = widget.trip.carService.avatar.isNotEmpty
+                      ? widget.trip.carService.avatar
+                      : widget.trip.carCategory.carAvatar;
                   final avatarUrl = avatar.isNotEmpty
                       ? '${AppUrls.imageBaseUrl}$avatar'
                       : null;
@@ -419,7 +423,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "$currency$displayMyBid.",
+                      "$currency $displayMyBid.",
                       style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 4),

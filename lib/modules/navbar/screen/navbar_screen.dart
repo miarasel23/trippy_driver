@@ -89,7 +89,14 @@ class _NavbarScreenState extends State<NavbarScreen> {
     final color = isSelected ? theme.colorScheme.onSurface : theme.colorScheme.onSurface.withOpacity(0.5);
 
     return GestureDetector(
-      onTap: () => _onItemTapped(index),
+      onTap: () {
+        if (index == 0) {
+          final homeCtrl = context.read<HomeController>();
+          homeCtrl.selectTripForPreview(null);
+          homeCtrl.clearTripToReview();
+        }
+        _onItemTapped(index);
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),

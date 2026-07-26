@@ -56,7 +56,11 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
             ? trip.customer.first.name 
             : loc.translate('customer') ?? "Customer";
         final customerAvatar = trip.customer.isNotEmpty ? trip.customer.first.profilePicture : '';
-        final customerRating = trip.customer.isNotEmpty ? AcceptedTripCardHelper.translateNumbersAndCommonWords(trip.customer.first.averageRating.toStringAsFixed(1), isBangla) : AcceptedTripCardHelper.translateNumbersAndCommonWords("4.5", isBangla);
+        final int totalTrips = trip.customer.isNotEmpty ? trip.customer.first.totalTripCount : trip.totalTripCount;
+        final String rawRating = trip.customer.isNotEmpty ? trip.customer.first.averageRating.toStringAsFixed(1) : "4.5";
+        final String customerRating = totalTrips > 0 
+            ? "${AcceptedTripCardHelper.translateNumbersAndCommonWords(rawRating, isBangla)} (${AcceptedTripCardHelper.translateNumbersAndCommonWords(totalTrips.toString(), isBangla)})" 
+            : AcceptedTripCardHelper.translateNumbersAndCommonWords(rawRating, isBangla);
         final formattedTotalDistance = AcceptedTripCardHelper.translateNumbersAndCommonWords("${trip.totalDistance} km", isBangla);
         final distanceText = "~$formattedTotalDistance";
         final timeText = AcceptedTripCardHelper.translateNumbersAndCommonWords("${AcceptedTripCardHelper.calculateMinutes(trip.pickupKm)} min", isBangla);
@@ -163,7 +167,7 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "$currency$displayTotalAmount",
+                          "$currency $displayTotalAmount",
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 24,
@@ -172,7 +176,7 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
                         ),
                         if (platformFee > 0)
                           Text(
-                            "${loc.translate('platform_fee') ?? 'Platform fee'}: $currency$displayPlatformFee",
+                            "${loc.translate('platform_fee') ?? 'Platform fee'}: $currency $displayPlatformFee",
                             style: TextStyle(
                               color: theme.colorScheme.onSurface.withOpacity(0.6),
                               fontSize: 12,

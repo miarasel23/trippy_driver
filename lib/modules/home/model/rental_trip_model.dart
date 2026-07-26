@@ -21,6 +21,8 @@ class RentalTripModel {
   final List<CustomerModel> customer;
   final int? hoursBooked;
   final List<BidDetail> bidDetails;
+  final int totalTripCount;
+  final int totalTripComplete;
 
   RentalTripModel({
     required this.id,
@@ -45,6 +47,8 @@ class RentalTripModel {
     this.customer = const [],
     this.hoursBooked,
     this.bidDetails = const [],
+    this.totalTripCount = 0,
+    this.totalTripComplete = 0,
   });
 
   factory RentalTripModel.fromJson(Map<String, dynamic> json) {
@@ -94,6 +98,8 @@ class RentalTripModel {
               ?.map((e) => BidDetail.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      totalTripCount: int.tryParse(json['total_trip_count']?.toString() ?? tripDetails['total_trip_count']?.toString() ?? '0') ?? 0,
+      totalTripComplete: int.tryParse(json['total_trip_complete']?.toString() ?? tripDetails['total_trip_complete']?.toString() ?? json['total_completed_trips']?.toString() ?? '0') ?? 0,
     );
   }
 }
@@ -235,6 +241,8 @@ class CustomerModel {
   final bool hasBid;
   final bool reviewStatus;
   final double averageRating;
+  final int totalTripCount;
+  final int totalTripComplete;
 
   CustomerModel({
     required this.rentBidUuid,
@@ -249,6 +257,8 @@ class CustomerModel {
     required this.hasBid,
     required this.reviewStatus,
     required this.averageRating,
+    this.totalTripCount = 0,
+    this.totalTripComplete = 0,
   });
 
   factory CustomerModel.fromJson(Map<String, dynamic> json) {
@@ -265,6 +275,8 @@ class CustomerModel {
       hasBid: json['has_bid'] ?? false,
       reviewStatus: json['given_review'] ?? json['review_status'] ?? false,
       averageRating: double.tryParse(json['average_rating']?.toString() ?? '0') ?? 0.0,
+      totalTripCount: int.tryParse(json['total_trip_count']?.toString() ?? '0') ?? 0,
+      totalTripComplete: int.tryParse(json['total_trip_complete']?.toString() ?? json['total_completed_trips']?.toString() ?? '0') ?? 0,
     );
   }
 }

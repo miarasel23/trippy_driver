@@ -3,6 +3,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import '../model/rental_trip_model.dart';
 import '../../../../store/app_globals.dart';
+import '../../../../core/utils/localization/app_localization.dart';
+import '../widget/translated_text.dart';
+import '../../../../utils/app_urls.dart';
 
 class AcceptedTripCardHelper {
   static DateTime getNow() {
@@ -309,5 +312,275 @@ class AcceptedTripCardHelper {
     }
     int minutes = (distanceKm / 40 * 60).round();
     return minutes < 1 ? "1" : minutes.toString();
+  }
+
+  static Widget buildUnifiedTripCardContent({
+    required BuildContext context,
+    required RentalTripModel trip,
+    required bool isBangla,
+    required ThemeData theme,
+    required AppLocalizations loc,
+    required Duration remaining,
+    required bool isRideShare,
+    bool isMyBid = false,
+  }) {
+    final pickupLoc = getEffectivePickup(trip);
+    final dropoffLoc = getEffectiveDropoff(trip);
+    final pickupAddress = pickupLoc?.address ?? '';
+    final dropoffAddress = dropoffLoc?.address ?? '';
+    
+    final formattedTotalDistance = translateNumbersAndCommonWords("${trip.totalDistance} km", isBangla);
+    final distanceText = "~$formattedTotalDistance";
+    final timeText = translateNumbersAndCommonWords("${calculateMinutes(trip.pickupKm)} min", isBangla);
+    
+    final customerName = trip.customer.isNotEmpty && trip.customer.first.name.isNotEmpty 
+        ? trip.customer.first.name 
+        : loc.translate('customer') ?? "Customer";
+    final customerAvatar = trip.customer.isNotEmpty ? trip.customer.first.profilePicture : '';
+    final int totalTrips = trip.customer.isNotEmpty ? trip.customer.first.totalTripCount : trip.totalTripCount;
+    final String rawRating = trip.customer.isNotEmpty ? trip.customer.first.averageRating.toStringAsFixed(1) : "4.5";
+    final String customerRating = totalTrips > 0 
+        ? "${translateNumbersAndCommonWords(rawRating, isBangla)} (${translateNumbersAndCommonWords(totalTrips.toString(), isBangla)})" 
+        : translateNumbersAndCommonWords(rawRating, isBangla);
+        
+    final amountToDisplay = isMyBid ? (trip.myBid?.amount ?? trip.customerOfferAmmount) : trip.customerOfferAmmount;
+    final currency = isBangla ? '৳' : 'BDT';
+    final formattedAmount = translateNumbersAndCommonWords("${amountToDisplay.round()}", isBangla);
+    
+    final int mins = (remaining.inSeconds / 60).floor();
+    final int secs = (remaining.inSeconds % 60).floor();
+    String timeStr = "$mins:${secs.toString().padLeft(2, '0')}";
+    if (isBangla) {
+      timeStr = translateNumbersAndCommonWords(timeStr, isBangla);
+    }
+    final Color timerColor = remaining.inSeconds <= (isRideShare ? 20 : 20 * 60) 
+        ? Colors.redAccent 
+        : (theme.brightness == Brightness.dark ? Colors.lightGreenAccent : Colors.green.shade700);
+
+    final rawService = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
+    String formattedService = rawService.replaceAll('_', ' ').toUpperCase();
+    if (rawService.toUpperCase() == 'HOURLY' && trip.hoursBooked != null) {
+      final hrsText = translateNumbersAndCommonWords("${trip.hoursBooked}", isBangla);
+      formattedService = "$formattedService\n($hrsText ${isBangla ? 'ঘণ্টা' : 'Hours'})";
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Left Column: Avatar, Name, Rating, Time
+        SizedBox(
+          width: 70,
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundImage: customerAvatar.isNotEmpty
+                    ? NetworkImage(customerAvatar.startsWith('http') ? customerAvatar : '${AppUrls.imageBaseUrl}$customerAvatar')
+                    : null,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                child: customerAvatar.isEmpty
+                    ? Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant, size: 28)
+                    : null,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                customerName,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 11, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 2),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.star, color: Colors.amber, size: 12),
+                  const SizedBox(width: 2),
+                  Text(
+                    customerRating,
+                    style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 11),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                timeText,
+                style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 10),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Middle Column: Distance, Price, Locations
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                distanceText,
+                                style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (isMyBid) ...[
+                              Text(
+                                "  •  ",
+                                style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.4), fontSize: 13),
+                              ),
+                              Flexible(
+                                child: Text(
+                                  loc.translate('my_bid') ?? 'My Bid',
+                                  style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w800),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "$currency $formattedAmount",
+                            style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 22, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: timerColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: timerColor.withOpacity(0.4), width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.timer_outlined, size: 14, color: timerColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          timeStr,
+                          style: TextStyle(color: timerColor, fontSize: 13, fontWeight: FontWeight.w900),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              buildTripDateTimes(context, trip, isBangla, theme),
+              TranslatedText(
+                pickupAddress,
+                isBangla: isBangla,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w600),
+                location: pickupLoc,
+              ),
+              const SizedBox(height: 4),
+              TranslatedText(
+                dropoffAddress,
+                isBangla: isBangla,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
+                location: dropoffLoc,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      trip.carCategory.carType,
+                      style: TextStyle(color: theme.colorScheme.primary, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.person, size: 14, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                      const SizedBox(width: 2),
+                      Text(
+                        translateNumbersAndCommonWords("${trip.carCategory.setCapacity}", isBangla),
+                        style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 14),
+        // Right Column: Service Avatar + Service Name
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Builder(
+              builder: (context) {
+                final avatar = trip.carService.avatar.isNotEmpty
+                    ? trip.carService.avatar
+                    : trip.carCategory.carAvatar;
+                final avatarUrl = avatar.isNotEmpty
+                    ? '${AppUrls.imageBaseUrl}$avatar'
+                    : null;
+                return Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: avatarUrl != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            avatarUrl.startsWith('http') ? avatar : avatarUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Icon(Icons.directions_car, color: theme.colorScheme.primary),
+                          ),
+                        )
+                      : Icon(Icons.directions_car, color: theme.colorScheme.primary),
+                );
+              },
+            ),
+            const SizedBox(height: 6),
+            Text(
+              formattedService,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: theme.colorScheme.primary,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
