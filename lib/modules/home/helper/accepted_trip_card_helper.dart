@@ -542,30 +542,38 @@ class AcceptedTripCardHelper {
           children: [
             Builder(
               builder: (context) {
-                final avatar = trip.carService.avatar.isNotEmpty
-                    ? trip.carService.avatar
-                    : trip.carCategory.carAvatar;
-                final avatarUrl = avatar.isNotEmpty
-                    ? '${AppUrls.imageBaseUrl}$avatar'
+                final carAvatar = trip.carCategory.carAvatar.isNotEmpty
+                    ? trip.carCategory.carAvatar
+                    : trip.carService.avatar;
+                final avatarUrl = carAvatar.isNotEmpty
+                    ? (carAvatar.startsWith('http') ? carAvatar : '${AppUrls.imageBaseUrl}$carAvatar')
                     : null;
-                return Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: avatarUrl != null
-                      ? ClipRRect(
+                 return Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(10),
-                          child: Image.network(
-                            avatarUrl.startsWith('http') ? avatar : avatarUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Icon(Icons.directions_car, color: theme.colorScheme.primary),
-                          ),
-                        )
-                      : Icon(Icons.directions_car, color: theme.colorScheme.primary),
-                );
+                        ),
+                        child: avatarUrl != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.network(
+                                  avatarUrl,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => Icon(
+                                    Icons.directions_car_rounded,
+                                    size: 28,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                Icons.directions_car_rounded,
+                                size: 28,
+                                color: theme.colorScheme.primary,
+                              ),
+                      );
               },
             ),
             const SizedBox(height: 6),

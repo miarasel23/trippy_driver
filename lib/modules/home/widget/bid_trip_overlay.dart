@@ -8,6 +8,7 @@ import 'translated_text.dart';
 import 'new_request_card.dart';
 import '../helper/accepted_trip_card_helper.dart';
 import '../../../../store/app_globals.dart';
+import '../../../../utils/app_urls.dart';
 
 class BidTripOverlay extends StatelessWidget {
   const BidTripOverlay({Key? key}) : super(key: key);
@@ -231,10 +232,11 @@ class _BidTripItemState extends State<_BidTripItem> {
     final displayStatus = isBangla ? (loc.translate(status?.toLowerCase() ?? '') ?? status ?? '') : (status ?? '');
 
     final currency = isBangla ? '৳' : 'BDT';
-    
+
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Main content column
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,6 +370,53 @@ class _BidTripItemState extends State<_BidTripItem> {
               ],
             ],
           ),
+        ),
+        // Right column: Vehicle photo
+        const SizedBox(width: 12),
+        Builder(
+          builder: (context) {
+            final carAvatar = widget.trip.carCategory.carAvatar.isNotEmpty
+                ? widget.trip.carCategory.carAvatar
+                : widget.trip.carService.avatar;
+            final avatarUrl = carAvatar.isNotEmpty
+                ? (carAvatar.startsWith('http') ? carAvatar : '${AppUrls.imageBaseUrl}$carAvatar')
+                : null;
+            final formattedService = rawService.replaceAll('_', ' ').toUpperCase();
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: avatarUrl != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            avatarUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Icon(Icons.directions_car, color: theme.colorScheme.primary),
+                          ),
+                        )
+                      : Icon(Icons.directions_car, color: theme.colorScheme.primary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  formattedService,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ],
     );

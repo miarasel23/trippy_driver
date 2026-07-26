@@ -332,11 +332,11 @@ class _NewRequestCardState extends State<NewRequestCard> {
               children: [
                 // Service avatar image
                 () {
-                  final avatar = widget.trip.carService.avatar.isNotEmpty
-                      ? widget.trip.carService.avatar
-                      : widget.trip.carCategory.carAvatar;
-                  final avatarUrl = avatar.isNotEmpty
-                      ? '${AppUrls.imageBaseUrl}$avatar'
+                  final carAvatar = widget.trip.carCategory.carAvatar.isNotEmpty
+                      ? widget.trip.carCategory.carAvatar
+                      : widget.trip.carService.avatar;
+                  final avatarUrl = carAvatar.isNotEmpty
+                      ? (carAvatar.startsWith('http') ? carAvatar : '${AppUrls.imageBaseUrl}$carAvatar')
                       : null;
                       return Container(
                         width: 52,
@@ -350,7 +350,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
                                 borderRadius: BorderRadius.circular(10),
                                 child: Image.network(
                                   avatarUrl,
-                                  fit: BoxFit.contain,
+                                  fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => Icon(
                                     Icons.directions_car_rounded,
                                     size: 28,
