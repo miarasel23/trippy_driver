@@ -8,6 +8,7 @@ import '../../../core/network/api_service.dart';
 import '../../../store/user_data_store.dart';
 import '../../../utils/app_urls.dart';
 import '../model/rental_trip_model.dart';
+import '../helper/accepted_trip_card_helper.dart';
 
 class HomeRepository {
   Future<String?> updateRideStatus({
@@ -332,14 +333,20 @@ class HomeRepository {
             // Find my bid (driver's bid)
             final drivers = flatJson['drivers'] as List? ?? [];
             Map<String, dynamic>? myBidJson;
+            final rawService = flatJson['service_name']?.toString() ?? flatJson['car_service']?['service_name']?.toString() ?? '';
             for (var d in drivers) {
               if (d is Map && d['driver_uuid']?.toString().toLowerCase() == uuid.toLowerCase()) {
+                final bidCreatedAt = d['created_at']?.toString() ?? flatJson['created_at']?.toString() ?? '';
+                final bidStatus = d['bid_status']?.toString() ?? '';
+                if (AcceptedTripCardHelper.isBidTimestampExpired(bidCreatedAt, rawService, bidStatus)) {
+                  continue;
+                }
                 myBidJson = {
                   'uuid': d['rent_bid_uuid'],
                   'amount': d['bid_amount'],
                   'total_amount': d['total_amount'],
                   'status': d['bid_status'],
-                  'created_at': flatJson['created_at'],
+                  'created_at': bidCreatedAt,
                 };
                 break;
               }
@@ -350,8 +357,7 @@ class HomeRepository {
 
             try {
               final trip = RentalTripModel.fromJson(flatJson);
-              final service = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
-              if (trip.myBid != null || service == 'RIDE_SHARE') {
+              if (trip.myBid != null && !AcceptedTripCardHelper.isBidExpired(trip)) {
                 trips.add(trip);
               }
             } catch (e) {

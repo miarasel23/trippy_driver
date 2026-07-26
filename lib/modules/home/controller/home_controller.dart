@@ -603,11 +603,15 @@ class HomeController extends Cubit<HomeState> {
 
   void removeBidTrip(String uuid) async {
     _ignoredBidTripIds.add(uuid);
+    _ignoredRentalTripIds.remove(uuid);
     final updatedTrips = state.bidTrips.where((t) => t.uuid != uuid).toList();
     emit(state.copyWith(bidTrips: updatedTrips));
     
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('ignoredBidTripIds', _ignoredBidTripIds.toList());
+    await prefs.setStringList('ignoredRentalTripIds', _ignoredRentalTripIds.toList());
+    
+    fetchRentalTrips();
   }
 
   Future<String?> submitBid(String tripUuid, double bidAmount) async {

@@ -84,7 +84,11 @@ class _NewRequestCardState extends State<NewRequestCard> {
 
     if (remaining.isNegative) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.read<HomeController>().removeTrip(widget.trip.uuid);
+        if (widget.trip.myBid != null) {
+          context.read<HomeController>().removeBidTrip(widget.trip.uuid);
+        } else {
+          context.read<HomeController>().removeTrip(widget.trip.uuid);
+        }
       });
       return const SizedBox.shrink();
     }
@@ -97,7 +101,11 @@ class _NewRequestCardState extends State<NewRequestCard> {
       tween: Tween<double>(begin: remaining.inSeconds.toDouble(), end: 0),
       duration: remaining,
       onEnd: () {
-        context.read<HomeController>().removeTrip(widget.trip.uuid);
+        if (widget.trip.myBid != null) {
+          context.read<HomeController>().removeBidTrip(widget.trip.uuid);
+        } else {
+          context.read<HomeController>().removeTrip(widget.trip.uuid);
+        }
       },
       builder: (context, value, child) {
         return _buildCardContent(context, value, totalDuration.inSeconds.toDouble(), isRideShare, isBangla);
@@ -139,7 +147,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
     final customerRating = widget.trip.customer.isNotEmpty ? _translateNumbersAndCommonWords(widget.trip.customer.first.averageRating.toStringAsFixed(1), isBangla) : _translateNumbersAndCommonWords("4.5", isBangla);
     
     final String status = widget.trip.myBid?.status ?? widget.trip.tripStatus;
-    final bool hasActiveBid = widget.trip.myBid != null && status != 'ACCEPTED' && status != 'CANCELLED';
+    final bool hasActiveBid = widget.trip.myBid != null && status != 'ACCEPTED' && status != 'CANCELLED' && !AcceptedTripCardHelper.isBidExpired(widget.trip);
     final String displayMyBid = isBangla 
         ? _translateNumbersAndCommonWords("${widget.trip.myBid?.amount.round() ?? widget.trip.customerOfferAmmount.round()}", isBangla) 
         : "${widget.trip.myBid?.amount.round() ?? widget.trip.customerOfferAmmount.round()}";

@@ -46,6 +46,30 @@ class AcceptedTripCardHelper {
     return parsed;
   }
 
+  static bool isBidTimestampExpired(String createdAtStr, String serviceName, String bidStatus) {
+    final statusStr = bidStatus.toUpperCase();
+    if (statusStr == 'REJECTED' || statusStr == 'CANCELLED' || statusStr == 'EXPIRED') {
+      return true;
+    }
+    if (createdAtStr.isEmpty) return false;
+    try {
+      final createdAt = parseCreatedAt(createdAtStr);
+      final isRideShare = serviceName.toUpperCase().contains('RIDE') || serviceName.toUpperCase() == 'RIDE_SHARE';
+      final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
+      final expireTime = createdAt.add(totalDuration);
+      if (getNow().isAfter(expireTime) || expireTime.difference(getNow()).inSeconds <= 0) {
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  static bool isBidExpired(RentalTripModel trip) {
+    if (trip.myBid == null) return false;
+    final rawService = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
+    return isBidTimestampExpired(trip.myBid!.createdAt, rawService, trip.myBid!.status);
+  }
+
   static bool shouldShowAcceptedTripCard(RentalTripModel trip) {
     final status = trip.tripStatus.toUpperCase();
     if (status == 'RIDE_STARTED' || status == 'IN_PROGRESS' || status == 'COMPLETED') {

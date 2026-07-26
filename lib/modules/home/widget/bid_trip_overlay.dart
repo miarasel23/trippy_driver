@@ -22,7 +22,7 @@ class BidTripOverlay extends StatelessWidget {
         final pendingTrips = state.bidTrips.where((t) {
           final service = t.serviceName.isNotEmpty ? t.serviceName : t.carService.serviceName;
           final isRideShare = service.toUpperCase().contains('RIDE') || service.toUpperCase() == 'RIDE_SHARE';
-          if (!isRideShare) return false;
+          if (!isRideShare || t.myBid == null || AcceptedTripCardHelper.isBidExpired(t)) return false;
           
           final status = t.tripStatus;
           final bidStatus = t.myBid?.status;
