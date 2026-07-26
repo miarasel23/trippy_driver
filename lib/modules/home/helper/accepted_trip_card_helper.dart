@@ -232,6 +232,26 @@ class AcceptedTripCardHelper {
       );
     }
 
+    final rawService = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
+    if (rawService.toUpperCase() == 'HOURLY' && trip.hoursBooked != null) {
+      if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 4));
+      final hrsVal = translateNumbersAndCommonWords("${trip.hoursBooked}", isBangla);
+      widgets.add(
+        Row(
+          children: [
+            Icon(Icons.access_time_filled_rounded, size: 16, color: Colors.purple.shade700),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                "${isBangla ? 'বুকিং সময়: ' : 'Booked Time: '}$hrsVal ${isBangla ? 'ঘণ্টা' : 'Hours'}",
+                style: TextStyle(color: Colors.purple.shade700, fontWeight: FontWeight.w900, fontSize: 13.5),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (widgets.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

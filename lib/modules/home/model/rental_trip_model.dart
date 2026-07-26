@@ -86,9 +86,9 @@ class RentalTripModel {
               ? [CustomerModel.fromJson(json['customer_details'] as Map<String, dynamic>)]
               : [],
       hoursBooked: tripDetails['hours_booked'] != null
-          ? int.tryParse(tripDetails['hours_booked'].toString())
+          ? (double.tryParse(tripDetails['hours_booked'].toString())?.round() ?? int.tryParse(tripDetails['hours_booked'].toString()))
           : (json['hours_booked'] != null
-              ? int.tryParse(json['hours_booked'].toString())
+              ? (double.tryParse(json['hours_booked'].toString())?.round() ?? int.tryParse(json['hours_booked'].toString()))
               : null),
       bidDetails: ((json['bid_details'] ?? tripDetails['bid_details']) as List?)
               ?.map((e) => BidDetail.fromJson(e as Map<String, dynamic>))

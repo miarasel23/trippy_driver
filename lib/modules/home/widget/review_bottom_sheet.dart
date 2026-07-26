@@ -258,6 +258,19 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
                             ),
                           ],
                         ),
+                        if ((widget.trip.serviceName.toUpperCase() == 'HOURLY' || widget.trip.carService.serviceName.toUpperCase() == 'HOURLY') && widget.trip.hoursBooked != null) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(Icons.access_time_filled_rounded, size: 16, color: Colors.purple.shade700),
+                              const SizedBox(width: 8),
+                              Text(
+                                "${isBangla ? 'বুকিং সময়: ' : 'Booked Time: '}${AcceptedTripCardHelper.translateNumbersAndCommonWords("${widget.trip.hoursBooked}", isBangla)} ${isBangla ? 'ঘণ্টা' : 'Hours'}",
+                                style: TextStyle(color: Colors.purple.shade700, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         Divider(color: theme.colorScheme.onSurface.withOpacity(0.2), thickness: 4),
                         const SizedBox(height: 12),
