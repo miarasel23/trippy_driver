@@ -350,7 +350,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
                                 borderRadius: BorderRadius.circular(10),
                                 child: Image.network(
                                   avatarUrl,
-                                  fit: BoxFit.cover,
+                                  fit: BoxFit.contain,
                                   errorBuilder: (_, __, ___) => Icon(
                                     Icons.directions_car_rounded,
                                     size: 28,
