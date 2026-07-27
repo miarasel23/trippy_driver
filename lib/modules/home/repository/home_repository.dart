@@ -336,11 +336,12 @@ class HomeRepository {
             final drivers = flatJson['drivers'] as List? ?? [];
             Map<String, dynamic>? myBidJson;
             final rawService = flatJson['service_name']?.toString() ?? flatJson['car_service']?['service_name']?.toString() ?? '';
+            final tripStatusStr = flatJson['trip_status']?.toString() ?? flatJson['trip_details']?['trip_status']?.toString() ?? '';
             for (var d in drivers) {
               if (d is Map && d['driver_uuid']?.toString().toLowerCase() == uuid.toLowerCase()) {
                 final bidCreatedAt = d['created_at']?.toString() ?? flatJson['created_at']?.toString() ?? '';
                 final bidStatus = d['bid_status']?.toString() ?? '';
-                if (AcceptedTripCardHelper.isBidTimestampExpired(bidCreatedAt, rawService, bidStatus)) {
+                if (AcceptedTripCardHelper.isBidTimestampExpired(bidCreatedAt, rawService, bidStatus, tripStatusStr)) {
                   continue;
                 }
                 myBidJson = {
@@ -359,7 +360,9 @@ class HomeRepository {
 
             try {
               final trip = RentalTripModel.fromJson(flatJson);
-              if (trip.myBid != null && !AcceptedTripCardHelper.isBidExpired(trip)) {
+              final isRideShareActive = (rawService.toUpperCase().contains('RIDE') || rawService.toUpperCase() == 'RIDE_SHARE') &&
+                  ['ACCEPTED', 'RIDE_STARTED', 'FIRST_COMPLETED', 'IN_PROGRESS', 'COMPLETED'].contains(trip.tripStatus.toUpperCase());
+              if (isRideShareActive || (trip.myBid != null && !AcceptedTripCardHelper.isBidExpired(trip))) {
                 trips.add(trip);
               }
             } catch (e) {

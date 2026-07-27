@@ -49,8 +49,17 @@ class AcceptedTripCardHelper {
     return parsed;
   }
 
-  static bool isBidTimestampExpired(String createdAtStr, String serviceName, String bidStatus) {
+  static bool isBidTimestampExpired(String createdAtStr, String serviceName, String bidStatus, [String? tripStatus]) {
     final statusStr = bidStatus.toUpperCase();
+    final tripStatusStr = (tripStatus ?? '').toUpperCase();
+    if (statusStr == 'ACCEPTED' || 
+        tripStatusStr == 'ACCEPTED' || 
+        tripStatusStr == 'RIDE_STARTED' || 
+        tripStatusStr == 'FIRST_COMPLETED' || 
+        tripStatusStr == 'IN_PROGRESS' || 
+        tripStatusStr == 'COMPLETED') {
+      return false;
+    }
     if (statusStr == 'REJECTED' || statusStr == 'CANCELLED' || statusStr == 'EXPIRED') {
       return true;
     }
@@ -69,8 +78,18 @@ class AcceptedTripCardHelper {
 
   static bool isBidExpired(RentalTripModel trip) {
     if (trip.myBid == null) return false;
+    final status = trip.tripStatus.toUpperCase();
+    final bidStatus = trip.myBid!.status.toUpperCase();
+    if (status == 'ACCEPTED' || 
+        status == 'RIDE_STARTED' || 
+        status == 'FIRST_COMPLETED' || 
+        status == 'IN_PROGRESS' || 
+        status == 'COMPLETED' || 
+        bidStatus == 'ACCEPTED') {
+      return false;
+    }
     final rawService = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
-    return isBidTimestampExpired(trip.myBid!.createdAt, rawService, trip.myBid!.status);
+    return isBidTimestampExpired(trip.myBid!.createdAt, rawService, trip.myBid!.status, trip.tripStatus);
   }
 
   static bool shouldShowAcceptedTripCard(RentalTripModel trip) {
