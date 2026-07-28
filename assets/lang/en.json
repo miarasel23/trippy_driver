@@ -286,7 +286,7 @@
   "going_pickup_point": "Going Pick Up Point",
   "ride_started": "Ride started",
   "first_completed": "First Completed",
-  "completed": "Completed",
+  "completed": "Complete",
   "ride_completed_show_details": "Ride completed - Show details",
   "platform_fee": "Platform fee",
   "close": "Close",
@@ -316,5 +316,7 @@
   "no_accepted_trips": "No accepted trips found",
   "no_completed_trips": "No completed trips found",
   "no_cancelled_trips": "No cancelled trips found",
-  "exit_preview": "Exit Preview"
+  "exit_preview": "Exit Preview",
+  "details": "Details",
+  "accepted_details": "Accepted Details"
 }

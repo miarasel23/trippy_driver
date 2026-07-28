@@ -21,6 +21,7 @@ class _NavbarScreenState extends State<NavbarScreen> {
 
   /// Incrementing this notifier triggers BidsScreen to reload with loading indicator.
   final ValueNotifier<int> _bidsRefreshTrigger = ValueNotifier<int>(0);
+  final ValueNotifier<int> _historyRefreshTrigger = ValueNotifier<int>(0);
 
   late final List<Widget> _screens;
 
@@ -45,6 +46,7 @@ class _NavbarScreenState extends State<NavbarScreen> {
             setState(() => _historyCount = count);
           }
         },
+        refreshTrigger: _historyRefreshTrigger,
       ),
       const ProfileScreen(),
     ];
@@ -54,6 +56,7 @@ class _NavbarScreenState extends State<NavbarScreen> {
   @override
   void dispose() {
     _bidsRefreshTrigger.dispose();
+    _historyRefreshTrigger.dispose();
     super.dispose();
   }
 
@@ -68,6 +71,8 @@ class _NavbarScreenState extends State<NavbarScreen> {
     if (index == 1 && _selectedIndex != 1) {
       // Trigger a fresh load with loading indicator every time user taps Bids
       _bidsRefreshTrigger.value++;
+    } else if (index == 2 && _selectedIndex != 2) {
+      _historyRefreshTrigger.value++;
     }
     setState(() {
       _selectedIndex = index;

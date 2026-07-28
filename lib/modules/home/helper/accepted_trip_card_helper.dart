@@ -186,7 +186,8 @@ class AcceptedTripCardHelper {
   }
 
   static LocationModel? getEffectivePickup(RentalTripModel trip) {
-    final isReturnTrip = trip.serviceName.toUpperCase() == 'RETURN' || trip.serviceName.toUpperCase() == 'ROUND_TRIP';
+    final service = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
+    final isReturnTrip = service.toUpperCase() == 'RETURN' || service.toUpperCase() == 'ROUND_TRIP';
     final currentStatus = trip.tripStatus == 'REQUESTED' ? (trip.myBid?.status ?? trip.tripStatus) : trip.tripStatus;
     if (isReturnTrip && currentStatus == 'FIRST_COMPLETED') {
       return trip.dropoffLocations.isNotEmpty ? trip.dropoffLocations.first : (trip.pickupLocations.isNotEmpty ? trip.pickupLocations.first : null);
@@ -195,7 +196,8 @@ class AcceptedTripCardHelper {
   }
 
   static LocationModel? getEffectiveDropoff(RentalTripModel trip) {
-    final isReturnTrip = trip.serviceName.toUpperCase() == 'RETURN' || trip.serviceName.toUpperCase() == 'ROUND_TRIP';
+    final service = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
+    final isReturnTrip = service.toUpperCase() == 'RETURN' || service.toUpperCase() == 'ROUND_TRIP';
     final currentStatus = trip.tripStatus == 'REQUESTED' ? (trip.myBid?.status ?? trip.tripStatus) : trip.tripStatus;
     if (isReturnTrip && currentStatus == 'FIRST_COMPLETED') {
       return trip.pickupLocations.isNotEmpty ? trip.pickupLocations.first : (trip.dropoffLocations.isNotEmpty ? trip.dropoffLocations.first : null);

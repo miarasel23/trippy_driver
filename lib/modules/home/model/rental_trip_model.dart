@@ -51,6 +51,37 @@ class RentalTripModel {
     this.totalTripComplete = 0,
   });
 
+  RentalTripModel copyWith({
+    String? tripStatus,
+  }) {
+    return RentalTripModel(
+      id: this.id,
+      uuid: this.uuid,
+      serviceName: this.serviceName,
+      paymentMethod: this.paymentMethod,
+      startDatetime: this.startDatetime,
+      endDatetime: this.endDatetime,
+      offerAmmount: this.offerAmmount,
+      customerOfferAmmount: this.customerOfferAmmount,
+      tripStatus: tripStatus ?? this.tripStatus,
+      pickupKm: this.pickupKm,
+      totalDistance: this.totalDistance,
+      givenReview: this.givenReview,
+      carCategory: this.carCategory,
+      carService: this.carService,
+      pickupLocations: this.pickupLocations,
+      dropoffLocations: this.dropoffLocations,
+      createdAt: this.createdAt,
+      myBid: this.myBid,
+      note: this.note,
+      customer: this.customer,
+      hoursBooked: this.hoursBooked,
+      bidDetails: this.bidDetails,
+      totalTripCount: this.totalTripCount,
+      totalTripComplete: this.totalTripComplete,
+    );
+  }
+
   factory RentalTripModel.fromJson(Map<String, dynamic> json) {
     final tripDetails = json['trip_details'] as Map<String, dynamic>? ?? json;
     final locationDetails = json['location_details'] as Map<String, dynamic>?;

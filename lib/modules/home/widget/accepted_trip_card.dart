@@ -79,7 +79,8 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
           nextStatus = 'RIDE_STARTED';
         } else if (currentStatus == 'RIDE_STARTED') {
           headerTitle = loc.translate('ride_started') ?? 'Ride started';
-          if (trip.serviceName == 'RETURN' || trip.serviceName == 'ROUND_TRIP') {
+          final service = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
+          if (service == 'RETURN' || service == 'ROUND_TRIP') {
             actionLabel = loc.translate('first_completed') ?? 'First Completed';
             nextStatus = 'FIRST_COMPLETED';
           } else {

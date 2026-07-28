@@ -252,8 +252,8 @@ class HomeController extends Cubit<HomeState> {
     final error = await repository.cancelTrip(driverUuid: driverUuid, tripUuid: tripUuid, comment: comment);
     if (error == null) {
       // Refresh trips after cancellation
-      fetchBidTrips();
-      fetchRentalTrips();
+      await fetchBidTrips();
+      await fetchRentalTrips();
     }
     return error;
   }
@@ -429,6 +429,13 @@ class HomeController extends Cubit<HomeState> {
     }).toList();
 
     RentalTripModel? tripToDisplay = state.previewTrip;
+    if (tripToDisplay != null) {
+      tripToDisplay = bids.firstWhere(
+        (t) => t.uuid == tripToDisplay!.uuid,
+        orElse: () => tripToDisplay!,
+      );
+    }
+
     if (tripToDisplay == null && acceptedTrips.isNotEmpty) {
       tripToDisplay = acceptedTrips.first;
     }
@@ -441,6 +448,7 @@ class HomeController extends Cubit<HomeState> {
         toastMessageKey: toastKey,
         clearToast: toastKey == null,
         tripToReview: newTripToReview,
+        previewTrip: state.previewTrip != null ? tripToDisplay : null,
       ));
       return;
     }
@@ -597,6 +605,7 @@ class HomeController extends Cubit<HomeState> {
       toastMessageKey: toastKey,
       clearToast: toastKey == null,
       tripToReview: newTripToReview,
+      previewTrip: state.previewTrip != null ? tripToDisplay : null,
     ));
   }
 
@@ -629,7 +638,7 @@ class HomeController extends Cubit<HomeState> {
     );
     if (error == null) {
       removeTrip(tripUuid); // Hide the card on success
-      fetchBidTrips();      // Refresh bids to show overlay
+      await fetchBidTrips();      // Refresh bids to show overlay
     }
     return error;
   }
@@ -640,7 +649,7 @@ class HomeController extends Cubit<HomeState> {
     );
     if (error == null) {
       removeTrip(tripUuid);
-      fetchBidTrips();
+      await fetchBidTrips();
     }
     return error;
   }
@@ -651,10 +660,23 @@ class HomeController extends Cubit<HomeState> {
       status: status,
     );
     if (error == null) {
-      fetchBidTrips();
+      if (state.previewTrip?.uuid == tripUuid) {
+        final updatedTrip = state.previewTrip!.copyWith(tripStatus: status);
+        if (status == 'COMPLETED') {
+          emit(state.copyWith(
+            clearPreview: true,
+            tripToReview: updatedTrip,
+          ));
+        } else {
+          emit(state.copyWith(previewTrip: updatedTrip));
+        }
+      }
+      await fetchBidTrips();
     }
     return error;
   }
+
+
 
   Future<String?> submitReview({
     required String tripUuid,
@@ -674,8 +696,9 @@ class HomeController extends Cubit<HomeState> {
     );
 
     if (error == null) {
-      // Clear the review screen
+      // Clear the review screen and reload home page active trips
       emit(state.copyWith(clearReview: true));
+      await fetchBidTrips();
     }
     return error;
   }

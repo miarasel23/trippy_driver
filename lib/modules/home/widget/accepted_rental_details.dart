@@ -7,14 +7,14 @@ import 'cancel_trip_dialog.dart';
 import '../helper/accepted_trip_card_helper.dart';
 import '../../../../utils/app_urls.dart';
 
-class PreviewTripCard extends StatefulWidget {
-  const PreviewTripCard({Key? key}) : super(key: key);
+class AcceptedRentalDetails extends StatefulWidget {
+  const AcceptedRentalDetails({Key? key}) : super(key: key);
 
   @override
-  State<PreviewTripCard> createState() => _PreviewTripCardState();
+  State<AcceptedRentalDetails> createState() => _AcceptedRentalDetailsState();
 }
 
-class _PreviewTripCardState extends State<PreviewTripCard> {
+class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
   bool _isLoading = false;
 
   @override
@@ -64,7 +64,8 @@ class _PreviewTripCardState extends State<PreviewTripCard> {
           actionLabel = loc.translate('start_ride') ?? 'Start Ride';
           nextStatus = 'RIDE_STARTED';
         } else if (currentStatus == 'RIDE_STARTED') {
-          if (trip.serviceName == 'RETURN' || trip.serviceName == 'ROUND_TRIP') {
+          final service = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
+          if (service == 'RETURN' || service == 'ROUND_TRIP') {
             actionLabel = loc.translate('first_completed') ?? 'First Completed';
             nextStatus = 'FIRST_COMPLETED';
           } else {
@@ -100,7 +101,7 @@ class _PreviewTripCardState extends State<PreviewTripCard> {
                   Icon(Icons.remove_red_eye_rounded, color: theme.colorScheme.primary, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    loc.translate('preview') ?? 'Preview Mode',
+                    loc.translate('accepted_details') ?? 'Accepted Details',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
@@ -325,7 +326,7 @@ class _PreviewTripCardState extends State<PreviewTripCard> {
                   },
                   icon: const Icon(Icons.close_fullscreen_rounded, size: 18),
                   label: Text(
-                    loc.translate('exit_preview') ?? 'Exit Preview',
+                    loc.translate('close') ?? 'Close',
                     style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
                   ),
                   style: ElevatedButton.styleFrom(

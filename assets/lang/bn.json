@@ -290,7 +290,7 @@
   "going_pickup_point": "পিকআপ পয়েন্টে যাচ্ছি",
   "ride_started": "যাত্রা শুরু হয়েছে",
   "first_completed": "প্রথম অংশ সম্পন্ন",
-  "completed": "সম্পন্ন",
+  "completed": "সম্পন্ন করুন",
   "ride_completed_show_details": "যাত্রা সম্পন্ন - বিস্তারিত দেখুন",
   "platform_fee": "প্ল্যাটফর্ম ফি",
   "close": "বন্ধ করুন",
@@ -320,5 +320,7 @@
   "no_accepted_trips": "কোনো গৃহীত ট্রিপ পাওয়া যায়নি",
   "no_completed_trips": "কোনো সম্পন্ন ট্রিপ পাওয়া যায়নি",
   "no_cancelled_trips": "কোনো বাতিল ট্রিপ পাওয়া যায়নি",
-  "exit_preview": "প্রিভিউ থেকে প্রস্থান করুন"
+  "exit_preview": "প্রিভিউ থেকে প্রস্থান করুন",
+  "details": "বিস্তারিত",
+  "accepted_details": "গৃহীত বিবরণ"
 }

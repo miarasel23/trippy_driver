@@ -14,7 +14,7 @@ import '../widget/new_request_card.dart';
 import '../widget/bid_trip_overlay.dart';
 import '../widget/pending_bid_trip_card.dart';
 import '../widget/accepted_trip_card.dart';
-import '../widget/preview_trip_card.dart';
+import '../widget/accepted_rental_details.dart';
 import '../widget/service_mode_bottom_sheet.dart';
 import '../widget/review_bottom_sheet.dart';
 
@@ -301,7 +301,7 @@ class _HomeViewState extends State<HomeView> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (state.previewTrip != null)
-                        const PreviewTripCard()
+                        const AcceptedRentalDetails()
                       else ...[
                         const PendingBidTripCard(),
                         const AcceptedTripCard(),
