@@ -316,5 +316,9 @@
   "account_restricted_support": "অ্যাকাউন্ট সীমাবদ্ধ, অনুগ্রহ করে সাপোর্টে যোগাযোগ করুন.",
   "no_active_bids": "কোনো সক্রিয় বিড নেই",
   "customer_offer": "গ্রাহকের অফার",
-  "view_on_map": "ম্যাপে দেখুন"
+  "view_on_map": "ম্যাপে দেখুন",
+  "no_accepted_trips": "কোনো গৃহীত ট্রিপ পাওয়া যায়নি",
+  "no_completed_trips": "কোনো সম্পন্ন ট্রিপ পাওয়া যায়নি",
+  "no_cancelled_trips": "কোনো বাতিল ট্রিপ পাওয়া যায়নি",
+  "exit_preview": "প্রিভিউ থেকে প্রস্থান করুন"
 }

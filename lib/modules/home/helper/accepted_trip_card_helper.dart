@@ -342,6 +342,7 @@ class AcceptedTripCardHelper {
     required Duration remaining,
     required bool isRideShare,
     bool isMyBid = false,
+    bool showTimer = true,
   }) {
     final pickupLoc = getEffectivePickup(trip);
     final dropoffLoc = getEffectiveDropoff(trip);
@@ -478,25 +479,26 @@ class AcceptedTripCardHelper {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: timerColor.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: timerColor.withOpacity(0.4), width: 1),
+                      if (showTimer)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: timerColor.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: timerColor.withOpacity(0.4), width: 1),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.timer_outlined, size: 14, color: timerColor),
+                              const SizedBox(width: 4),
+                              Text(
+                                timeStr,
+                                style: TextStyle(color: timerColor, fontSize: 13, fontWeight: FontWeight.w900),
+                              ),
+                            ],
+                          ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.timer_outlined, size: 14, color: timerColor),
-                            const SizedBox(width: 4),
-                            Text(
-                              timeStr,
-                              style: TextStyle(color: timerColor, fontSize: 13, fontWeight: FontWeight.w900),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ],

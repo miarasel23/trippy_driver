@@ -14,6 +14,7 @@ import '../widget/new_request_card.dart';
 import '../widget/bid_trip_overlay.dart';
 import '../widget/pending_bid_trip_card.dart';
 import '../widget/accepted_trip_card.dart';
+import '../widget/preview_trip_card.dart';
 import '../widget/service_mode_bottom_sheet.dart';
 import '../widget/review_bottom_sheet.dart';
 
@@ -288,18 +289,26 @@ class _HomeViewState extends State<HomeView> {
             ),
           ),
           
-          // Persistent Accepted Trip Card (if any) at the bottom
-          const Positioned(
+          // Persistent Cards at the bottom
+          Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  PendingBidTripCard(),
-                  AcceptedTripCard(),
-                ],
+              child: BlocBuilder<HomeController, HomeState>(
+                builder: (context, state) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (state.previewTrip != null)
+                        const PreviewTripCard()
+                      else ...[
+                        const PendingBidTripCard(),
+                        const AcceptedTripCard(),
+                      ],
+                    ],
+                  );
+                },
               ),
             ),
           ),

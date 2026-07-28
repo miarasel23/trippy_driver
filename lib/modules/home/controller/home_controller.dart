@@ -481,24 +481,28 @@ class HomeController extends Cubit<HomeState> {
 
     // 1. Blue route (Driver -> First Pickup)
     if (driverPosition != null && effectivePickups.isNotEmpty) {
-       final pickup = effectivePickups.first;
-       PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-         googleApiKey: AppUrls.googleApiKey,
-         request: PolylineRequest(
-            origin: PointLatLng(driverPosition.latitude, driverPosition.longitude),
-            destination: PointLatLng(pickup.latitude, pickup.longitude),
-            mode: TravelMode.driving,
-         ),
-       );
-       if (result.points.isNotEmpty) {
-          generatedPolylines.add(
-            Polyline(
-              polylineId: const PolylineId('driver_to_pickup'),
-              color: const Color(0xFF4285F4), // Blue
-              width: 5,
-              points: result.points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
-            ),
-          );
+       try {
+         final pickup = effectivePickups.first;
+         PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+           googleApiKey: AppUrls.googleApiKey,
+           request: PolylineRequest(
+              origin: PointLatLng(driverPosition.latitude, driverPosition.longitude),
+              destination: PointLatLng(pickup.latitude, pickup.longitude),
+              mode: TravelMode.driving,
+           ),
+         );
+         if (result.points.isNotEmpty) {
+            generatedPolylines.add(
+              Polyline(
+                polylineId: const PolylineId('driver_to_pickup'),
+                color: const Color(0xFF4285F4), // Blue
+                width: 5,
+                points: result.points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
+              ),
+            );
+         }
+       } catch (e) {
+         // ignore polyline error
        }
     }
 
@@ -508,29 +512,33 @@ class HomeController extends Cubit<HomeState> {
     for (var p in effectiveDropoffs) tripPoints.add(PointLatLng(p.latitude, p.longitude));
 
     if (tripPoints.length >= 2) {
-       List<LatLng> polylineCoords = [];
-       for (int i = 0; i < tripPoints.length - 1; i++) {
-          PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-            googleApiKey: AppUrls.googleApiKey,
-            request: PolylineRequest(
-               origin: tripPoints[i],
-               destination: tripPoints[i+1],
-               mode: TravelMode.driving,
-            ),
-          );
-          if (result.points.isNotEmpty) {
-             polylineCoords.addAll(result.points.map((p) => LatLng(p.latitude, p.longitude)));
-          }
-       }
-       if (polylineCoords.isNotEmpty) {
-          generatedPolylines.add(
-            Polyline(
-              polylineId: const PolylineId('trip_route'),
-              color: const Color(0xFF34A853), // Green
-              width: 5,
-              points: polylineCoords,
-            ),
-          );
+       try {
+         List<LatLng> polylineCoords = [];
+         for (int i = 0; i < tripPoints.length - 1; i++) {
+            PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+              googleApiKey: AppUrls.googleApiKey,
+              request: PolylineRequest(
+                 origin: tripPoints[i],
+                 destination: tripPoints[i+1],
+                 mode: TravelMode.driving,
+              ),
+            );
+            if (result.points.isNotEmpty) {
+               polylineCoords.addAll(result.points.map((p) => LatLng(p.latitude, p.longitude)));
+            }
+         }
+         if (polylineCoords.isNotEmpty) {
+            generatedPolylines.add(
+              Polyline(
+                polylineId: const PolylineId('trip_route'),
+                color: const Color(0xFF34A853), // Green
+                width: 5,
+                points: polylineCoords,
+              ),
+            );
+         }
+       } catch (e) {
+         // ignore polyline error
        }
     }
 

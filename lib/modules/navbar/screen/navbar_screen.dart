@@ -5,6 +5,7 @@ import '../../home/screen/home_screen.dart';
 import '../../home/controller/home_controller.dart';
 import '../../profile/screen/profile_screen.dart';
 import 'bids_screen.dart';
+import 'history_screen.dart';
 
 class NavbarScreen extends StatefulWidget {
   const NavbarScreen({super.key});
@@ -16,6 +17,7 @@ class NavbarScreen extends StatefulWidget {
 class _NavbarScreenState extends State<NavbarScreen> {
   int _selectedIndex = 0;
   int _bidCount = 0;
+  int _historyCount = 0;
 
   /// Incrementing this notifier triggers BidsScreen to reload with loading indicator.
   final ValueNotifier<int> _bidsRefreshTrigger = ValueNotifier<int>(0);
@@ -36,7 +38,14 @@ class _NavbarScreenState extends State<NavbarScreen> {
         },
         refreshTrigger: _bidsRefreshTrigger,
       ),
-      const Center(child: Text('History')), // Placeholder
+      HistoryScreen(
+        onNavigateToHome: () => _onItemTapped(0),
+        onCountChanged: (count) {
+          if (mounted && _historyCount != count) {
+            setState(() => _historyCount = count);
+          }
+        },
+      ),
       const ProfileScreen(),
     ];
     _fetchUserData();
@@ -97,8 +106,8 @@ class _NavbarScreenState extends State<NavbarScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(Icons.grid_view_rounded, loc.translate('home'), 0, theme),
-              _buildBidsNavItem(Icons.car_rental, loc.translate('nav_bids'), 1, theme),
-              _buildNavItem(Icons.history, loc.translate('nav_history'), 2, theme),
+              _buildNavItem(Icons.car_rental, loc.translate('nav_bids'), 1, theme, badgeCount: _bidCount),
+              _buildNavItem(Icons.history, loc.translate('nav_history'), 2, theme, badgeCount: _historyCount),
               _buildNavItem(Icons.person_outline, loc.translate('nav_profile'), 3, theme),
             ],
           ),
@@ -107,7 +116,7 @@ class _NavbarScreenState extends State<NavbarScreen> {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index, ThemeData theme) {
+  Widget _buildNavItem(IconData icon, String label, int index, ThemeData theme, {int badgeCount = 0}) {
     final isSelected = _selectedIndex == index;
     final color = isSelected
         ? theme.colorScheme.onSurface
@@ -134,50 +143,11 @@ class _NavbarScreenState extends State<NavbarScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 30),
-            const SizedBox(height: 5),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 13,
-                fontWeight:
-                    isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Bids nav item with a green notification badge when _bidCount >= 1
-  Widget _buildBidsNavItem(
-      IconData icon, String label, int index, ThemeData theme) {
-    final isSelected = _selectedIndex == index;
-    final color = isSelected
-        ? theme.colorScheme.onSurface
-        : theme.colorScheme.onSurface.withOpacity(0.5);
-
-    return GestureDetector(
-      onTap: () => _onItemTapped(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? theme.colorScheme.onSurface.withOpacity(0.15)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
             Stack(
               clipBehavior: Clip.none,
               children: [
                 Icon(icon, color: color, size: 30),
-                if (_bidCount > 0)
+                if (badgeCount > 0)
                   Positioned(
                     top: -4,
                     right: -8,
@@ -186,8 +156,7 @@ class _NavbarScreenState extends State<NavbarScreen> {
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.elasticOut,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.lightGreen.shade500,
                           borderRadius: BorderRadius.circular(10),
@@ -204,7 +173,7 @@ class _NavbarScreenState extends State<NavbarScreen> {
                           minHeight: 18,
                         ),
                         child: Text(
-                          _bidCount > 99 ? '99+' : '$_bidCount',
+                          badgeCount > 99 ? '99+' : '$badgeCount',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10,
@@ -224,8 +193,7 @@ class _NavbarScreenState extends State<NavbarScreen> {
               style: TextStyle(
                 color: color,
                 fontSize: 13,
-                fontWeight:
-                    isSelected ? FontWeight.bold : FontWeight.normal,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ],

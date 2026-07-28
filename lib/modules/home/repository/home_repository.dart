@@ -378,6 +378,86 @@ class HomeRepository {
     }
   }
 
+  Future<({List<RentalTripModel> trips, int totalAcceptedCount})?> getHistoryTrips() async {
+    final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
+    final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
+
+    if (uuid == null || token == null) return null;
+
+    String platform = Platform.isAndroid ? "android" : (Platform.isIOS ? "ios" : "web");
+    final prefs = await SharedPreferences.getInstance();
+    final languageCode = prefs.getString('active_language_code') ?? 'en';
+
+    final Map<String, String> params = {
+      "platform": platform,
+      "language_code": languageCode,
+      "action_when": "accept_or_cancel_or_complete_trip_for_driver",
+      "driver_uuid": uuid,
+      "status": "ALL",
+    };
+
+    final uri = Uri.parse(AppUrls.getActiveBidTrips);
+   
+    try {
+      final response = await ApiService().post(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+        },
+        body: params,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final body = jsonDecode(response.body);
+        if (body['status'] == true && body['data'] != null) {
+          final List<dynamic> data = body['data'];
+          final trips = <RentalTripModel>[];
+          for (var item in data) {
+            if (item is! Map) continue;
+            
+            final Map<String, dynamic> flatJson = Map<String, dynamic>.from(item);
+
+            // Find my bid (driver's bid)
+            final drivers = flatJson['drivers'] as List? ?? [];
+            Map<String, dynamic>? myBidJson;
+            for (var d in drivers) {
+              if (d is Map && d['driver_uuid']?.toString().toLowerCase() == uuid.toLowerCase()) {
+                myBidJson = {
+                  'uuid': d['rent_bid_uuid'],
+                  'amount': d['bid_amount'],
+                  'total_amount': d['total_amount'],
+                  'status': d['bid_status'],
+                  'created_at': d['created_at']?.toString() ?? flatJson['created_at']?.toString() ?? '',
+                };
+                break;
+              }
+            }
+            if (myBidJson != null) {
+              flatJson['my_bid'] = myBidJson;
+            }
+
+            try {
+              final trip = RentalTripModel.fromJson(flatJson);
+              trips.add(trip);
+            } catch (e) {
+              // Ignore parsing errors for individual trips
+            }
+          }
+          int totalAcceptedCount = 0;
+          if (body.containsKey('total_accepted_count')) {
+            totalAcceptedCount = int.tryParse(body['total_accepted_count']?.toString() ?? '0') ?? 0;
+          }
+          return (trips: trips, totalAcceptedCount: totalAcceptedCount);
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<String?> acceptRideShareTrip({
     required String tripUuid,
   }) async {

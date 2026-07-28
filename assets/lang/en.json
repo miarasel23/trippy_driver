@@ -312,5 +312,9 @@
   "account_restricted_support": "Account restricted, please call support.",
   "no_active_bids": "No active bids",
   "customer_offer": "Customer Offer",
-  "view_on_map": "Preview on Map"
+  "view_on_map": "Preview on Map",
+  "no_accepted_trips": "No accepted trips found",
+  "no_completed_trips": "No completed trips found",
+  "no_cancelled_trips": "No cancelled trips found",
+  "exit_preview": "Exit Preview"
 }
