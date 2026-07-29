@@ -61,8 +61,8 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
         final String customerRating = totalTrips > 0 
             ? "${AcceptedTripCardHelper.translateNumbersAndCommonWords(rawRating, isBangla)} (${AcceptedTripCardHelper.translateNumbersAndCommonWords(totalTrips.toString(), isBangla)})" 
             : AcceptedTripCardHelper.translateNumbersAndCommonWords(rawRating, isBangla);
-        final formattedTotalDistance = AcceptedTripCardHelper.translateNumbersAndCommonWords("${trip.totalDistance} km", isBangla);
-        final distanceText = "~$formattedTotalDistance";
+        final formattedTotalDistance = AcceptedTripCardHelper.translateNumbersAndCommonWords(AcceptedTripCardHelper.calculateTripDistance(trip), isBangla);
+        final distanceText = formattedTotalDistance;
         final timeText = AcceptedTripCardHelper.translateNumbersAndCommonWords("${AcceptedTripCardHelper.calculateMinutes(trip.pickupKm)} min", isBangla);
         
         final currentStatus = trip.tripStatus == 'REQUESTED' ? (trip.myBid?.status ?? trip.tripStatus) : trip.tripStatus;

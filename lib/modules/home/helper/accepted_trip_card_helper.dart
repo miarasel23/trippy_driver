@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import '../model/rental_trip_model.dart';
@@ -205,6 +206,35 @@ class AcceptedTripCardHelper {
     return trip.dropoffLocations.isNotEmpty ? trip.dropoffLocations.first : null;
   }
 
+  static String calculateTripDistance(RentalTripModel trip) {
+    final pickupLoc = getEffectivePickup(trip);
+    final dropoffLoc = getEffectiveDropoff(trip);
+    
+    if (pickupLoc == null || dropoffLoc == null) {
+      return "0.0 km";
+    }
+
+    try {
+      double distanceInMeters = Geolocator.distanceBetween(
+        pickupLoc.latitude,
+        pickupLoc.longitude,
+        dropoffLoc.latitude,
+        dropoffLoc.longitude,
+      );
+      
+      double distanceInKm = distanceInMeters / 1000;
+      
+      final rawService = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
+      if (rawService.toUpperCase() == 'RETURN' || rawService.toUpperCase() == 'ROUND_TRIP') {
+        distanceInKm *= 2;
+      }
+      
+      return "${distanceInKm.toStringAsFixed(1)} km";
+    } catch (e) {
+      return "0.0 km";
+    }
+  }
+
   static Widget buildTripDateTimes(BuildContext context, RentalTripModel trip, bool isBangla, ThemeData theme) {
     if (trip.serviceName.toUpperCase() == 'RIDE_SHARE') {
       return const SizedBox.shrink();
@@ -351,8 +381,8 @@ class AcceptedTripCardHelper {
     final pickupAddress = pickupLoc?.address ?? '';
     final dropoffAddress = dropoffLoc?.address ?? '';
     
-    final formattedTotalDistance = translateNumbersAndCommonWords("${trip.totalDistance} km", isBangla);
-    final distanceText = "~$formattedTotalDistance";
+    final formattedTotalDistance = translateNumbersAndCommonWords(calculateTripDistance(trip), isBangla);
+    final distanceText = formattedTotalDistance;
     final timeText = translateNumbersAndCommonWords("${calculateMinutes(trip.pickupKm)} min", isBangla);
     
     final customerName = trip.customer.isNotEmpty && trip.customer.first.name.isNotEmpty 

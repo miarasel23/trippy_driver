@@ -174,7 +174,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
     final pickupAddress = pickupLoc?.address ?? '';
     final dropoffAddress = dropoffLoc?.address ?? '';
     
-    final distanceText = "~${widget.trip.totalDistance} km";
+    final distanceText = AcceptedTripCardHelper.calculateTripDistance(widget.trip);
     final customerAvatar = widget.trip.customer.isNotEmpty ? widget.trip.customer.first.profilePicture : '';
     final customerName = widget.trip.customer.isNotEmpty && widget.trip.customer.first.name.isNotEmpty 
         ? widget.trip.customer.first.name 

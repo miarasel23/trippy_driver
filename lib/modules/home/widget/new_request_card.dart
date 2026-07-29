@@ -128,7 +128,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
       formattedService = "$formattedService\n($hrsText ${isBangla ? 'ঘণ্টা' : 'Hours'})";
     }
     final formattedAmount = _translateNumbersAndCommonWords("${widget.trip.customerOfferAmmount.round()}", isBangla);
-    final formattedTotalDistance = _translateNumbersAndCommonWords("${widget.trip.totalDistance} km", isBangla);
+    final formattedTotalDistance = _translateNumbersAndCommonWords(AcceptedTripCardHelper.calculateTripDistance(widget.trip), isBangla);
     final formattedPickupDistance = _translateNumbersAndCommonWords(
         "${widget.trip.pickupKm} away\n(~${_calculateMinutes(widget.trip.pickupKm)})", isBangla);
     final progress = remainingSeconds / totalSeconds;
@@ -138,7 +138,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
     final dropoffLoc = AcceptedTripCardHelper.getEffectiveDropoff(widget.trip);
     final pickupAddress = pickupLoc?.address ?? '';
     final dropoffAddress = dropoffLoc?.address ?? '';
-    final distanceText = "~$formattedTotalDistance";
+    final distanceText = formattedTotalDistance;
     final timeText = _translateNumbersAndCommonWords(_calculateMinutes(widget.trip.pickupKm), isBangla);
     final customerName = widget.trip.customer.isNotEmpty && widget.trip.customer.first.name.isNotEmpty 
         ? widget.trip.customer.first.name 
