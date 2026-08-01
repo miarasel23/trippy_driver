@@ -345,5 +345,12 @@
   "days_left": "অবশিষ্ট দিন",
   "renew": "রিনিউ করুন",
   "pay": "পরিশোধ করুন",
-  "recharge": "রিচার্জ করুন"
+  "recharge": "রিচার্জ করুন",
+  "registration_package": "রেজিস্ট্রেশন প্যাকেজ",
+  "choose_package": "প্যাকেজ নির্বাচন করুন",
+  "no_packages": "কোনো প্যাকেজ নেই",
+  "active_status": "সক্রিয়",
+  "valid_for": "মেয়াদ",
+  "days": "দিন",
+  "subscribe": "সাবস্ক্রাইব"
 }

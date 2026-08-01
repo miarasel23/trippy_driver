@@ -341,5 +341,12 @@
   "days_left": "Days Left",
   "renew": "Renew",
   "pay": "Pay",
-  "recharge": "Recharge"
+  "recharge": "Recharge",
+  "registration_package": "Registration Package",
+  "choose_package": "Choose Package",
+  "no_packages": "No packages available",
+  "active_status": "Active",
+  "valid_for": "Valid for",
+  "days": "days",
+  "subscribe": "Subscribe"
 }

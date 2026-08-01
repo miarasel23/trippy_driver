@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/utils/localization/app_localization.dart';
 import '../controller/account_bloc.dart';
 import '../model/package_details_model.dart';
+import '../../subscription/screen/subscription_packages_bottom_sheet.dart';
 import '../model/transaction_model.dart';
 
 class AccountScreen extends StatefulWidget {
@@ -150,11 +151,11 @@ class _AccountScreenState extends State<AccountScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // TODO: Implement recharge action
+                      SubscriptionPackagesBottomSheet.show(context, isBangla, currency);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
+                      backgroundColor: theme.colorScheme.onSurface,
+                      foregroundColor: theme.colorScheme.surface,
                       padding: const EdgeInsets.symmetric(vertical: 0),
                       minimumSize: const Size(0, 36),
                       shape: RoundedRectangleBorder(
@@ -185,8 +186,8 @@ class _AccountScreenState extends State<AccountScreen> {
                       // TODO: Implement pay action
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
-                      foregroundColor: Colors.white,
+                      backgroundColor: theme.colorScheme.onSurface,
+                      foregroundColor: theme.colorScheme.surface,
                       padding: const EdgeInsets.symmetric(vertical: 0),
                       minimumSize: const Size(0, 36),
                       shape: RoundedRectangleBorder(
@@ -366,11 +367,11 @@ class _AccountScreenState extends State<AccountScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // TODO: Implement renew action
+                    SubscriptionPackagesBottomSheet.show(context, isBangla, currency);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
+                    backgroundColor: isExpired ? Colors.redAccent : theme.colorScheme.onSurface,
+                    foregroundColor: isExpired ? Colors.white : theme.colorScheme.surface,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
