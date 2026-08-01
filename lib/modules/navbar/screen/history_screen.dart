@@ -20,6 +20,9 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   List<RentalTripModel> _trips = [];
   bool _isLoading = true;
+  int _currentPage = 1;
+  bool _hasMoreData = true;
+  bool _isFetchingMore = false;
 
   @override
   void initState() {
@@ -42,16 +45,48 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (showLoading && mounted) {
       setState(() {
         _isLoading = true;
+        _currentPage = 1;
+        _hasMoreData = true;
       });
     }
 
-    final result = await HomeRepository().getHistoryTrips();
+    final result = await HomeRepository().getHistoryTrips(page: 1);
     if (mounted) {
       widget.onCountChanged?.call(result?.totalAcceptedCount ?? 0);
       setState(() {
         _trips = result?.trips ?? [];
         _isLoading = false;
+        if ((result?.trips.length ?? 0) < 15) {
+          _hasMoreData = false;
+        }
       });
+    }
+  }
+
+  Future<void> _fetchMoreHistory() async {
+    setState(() {
+      _isFetchingMore = true;
+    });
+
+    final nextPage = _currentPage + 1;
+    final result = await HomeRepository().getHistoryTrips(page: nextPage);
+    
+    if (mounted) {
+      if (result != null && result.trips.isNotEmpty) {
+        setState(() {
+          _trips.addAll(result.trips);
+          _currentPage = nextPage;
+          if (result.trips.length < 15) {
+            _hasMoreData = false;
+          }
+          _isFetchingMore = false;
+        });
+      } else {
+        setState(() {
+          _hasMoreData = false;
+          _isFetchingMore = false;
+        });
+      }
     }
   }
 
@@ -110,12 +145,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : TabBarView(
-                children: [
-                  _buildHistoryList('ACCEPTED', theme, loc, isBangla),
-                  _buildHistoryList('COMPLETED', theme, loc, isBangla),
-                  _buildHistoryList('CANCELLED', theme, loc, isBangla),
-                ],
+            : NotificationListener<ScrollNotification>(
+                onNotification: (ScrollNotification scrollInfo) {
+                  if (scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 200) {
+                    if (!_isFetchingMore && _hasMoreData && !_isLoading) {
+                      _fetchMoreHistory();
+                    }
+                  }
+                  return false;
+                },
+                child: TabBarView(
+                  children: [
+                    _buildHistoryList('ACCEPTED', theme, loc, isBangla),
+                    _buildHistoryList('COMPLETED', theme, loc, isBangla),
+                    _buildHistoryList('CANCELLED', theme, loc, isBangla),
+                  ],
+                ),
               ),
       ),
     );
@@ -158,8 +203,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
           : ListView.builder(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.only(top: 8, bottom: 100, left: 16, right: 16),
-              itemCount: filteredTrips.length,
+              itemCount: filteredTrips.length + (_isFetchingMore ? 1 : 0),
               itemBuilder: (context, index) {
+                if (index == filteredTrips.length) {
+                  return const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
                 final trip = filteredTrips[index];
                 return _buildTripCard(context, trip, theme, loc, isBangla, status);
               },

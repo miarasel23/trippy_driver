@@ -378,7 +378,7 @@ class HomeRepository {
     }
   }
 
-  Future<({List<RentalTripModel> trips, int totalAcceptedCount})?> getHistoryTrips() async {
+  Future<({List<RentalTripModel> trips, int totalAcceptedCount})?> getHistoryTrips({int page = 1}) async {
     final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
     final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
 
@@ -394,6 +394,7 @@ class HomeRepository {
       "action_when": "accept_or_cancel_or_complete_trip_for_driver",
       "driver_uuid": uuid,
       "status": "ALL",
+      "page": page.toString(),
     };
 
     final uri = Uri.parse(AppUrls.getActiveBidTrips);
