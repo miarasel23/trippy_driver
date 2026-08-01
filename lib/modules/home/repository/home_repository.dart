@@ -669,4 +669,69 @@ class HomeRepository {
       return "An unexpected error occurred: $e";
     }
   }
+
+  Future<RentalTripModel?> getRentalTripDetails(String tripUuid) async {
+    final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
+    final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
+
+    if (uuid == null || token == null) return null;
+
+    String platform = Platform.isAndroid ? "android" : (Platform.isIOS ? "ios" : "web");
+    final prefs = await SharedPreferences.getInstance();
+    final languageCode = prefs.getString('active_language_code') ?? 'en';
+
+    final Map<String, String> params = {
+      "platform": platform,
+      "language_code": languageCode,
+      "action_when": "rental_trip_details_for_driver",
+      "driver_uuid": uuid,
+      "trip_uuid": tripUuid,
+    };
+
+    final uri = Uri.parse(AppUrls.rentalTripDetailsForDriver).replace(queryParameters: params);
+
+    try {
+      final response = await ApiService().get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final body = jsonDecode(response.body);
+        if (body['status'] == true && body['data'] != null) {
+          final Map<String, dynamic> flatJson = Map<String, dynamic>.from(body['data']);
+          
+          final drivers = flatJson['drivers'] as List? ?? [];
+          Map<String, dynamic>? myBidJson;
+          for (var d in drivers) {
+            if (d is Map && d['driver_uuid']?.toString().toLowerCase() == uuid.toLowerCase()) {
+              myBidJson = {
+                'uuid': d['rent_bid_uuid'],
+                'amount': d['bid_amount'],
+                'total_amount': d['total_amount'],
+                'status': d['bid_status'],
+                'created_at': d['created_at']?.toString() ?? flatJson['created_at']?.toString() ?? '',
+              };
+              break;
+            }
+          }
+          if (myBidJson != null) {
+            flatJson['my_bid'] = myBidJson;
+          }
+
+          try {
+            return RentalTripModel.fromJson(flatJson);
+          } catch (e) {
+            return null;
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
 }

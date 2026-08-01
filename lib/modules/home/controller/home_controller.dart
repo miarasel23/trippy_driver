@@ -112,6 +112,7 @@ class HomeController extends Cubit<HomeState> {
         try {
           await fetchRentalTrips(showLoading: false);
           await fetchBidTrips();
+          await fetchActiveRideShareDetails();
         } finally {
           _isFetchingTrips = false;
         }
@@ -418,6 +419,59 @@ class HomeController extends Cubit<HomeState> {
     }
   }
 
+  Future<void> fetchActiveRideShareDetails() async {
+    if (!state.isOnline) return;
+
+    // Find active ride share trips (status ACCEPTED, RIDE_STARTED, FIRST_COMPLETED, IN_PROGRESS)
+    final activeRideShareTrips = state.bidTrips.where((t) {
+      final service = t.serviceName.isNotEmpty ? t.serviceName : t.carService.serviceName;
+      final status = t.myBid?.status ?? t.tripStatus;
+      final tripStatus = t.tripStatus.toUpperCase();
+      
+      final isActive = tripStatus == 'ACCEPTED' || tripStatus == 'RIDE_STARTED' || tripStatus == 'FIRST_COMPLETED' || tripStatus == 'IN_PROGRESS' || status == 'ACCEPTED';
+      return service == 'RIDE_SHARE' && isActive;
+    }).toList();
+
+    if (activeRideShareTrips.isEmpty) return;
+
+    final updatedBids = List<RentalTripModel>.from(state.bidTrips);
+    bool stateChanged = false;
+    RentalTripModel? newTripToReview;
+    String? newToastKey;
+
+    for (var trip in activeRideShareTrips) {
+      final detailedTrip = await repository.getRentalTripDetails(trip.uuid);
+      if (detailedTrip != null) {
+        final index = updatedBids.indexWhere((t) => t.uuid == detailedTrip.uuid);
+        if (index != -1) {
+          final old = updatedBids[index];
+          // We always want to update the trip details if we got a successful response from the detailed API,
+          // because it contains fields like bid_summary which might not be in the list API.
+          updatedBids[index] = detailedTrip;
+          stateChanged = true;
+          
+          if (detailedTrip.tripStatus == 'CANCELLED' || detailedTrip.myBid?.status == 'CANCELLED') {
+              newToastKey = 'customer_cancelled_trip_${DateTime.now().millisecondsSinceEpoch}';
+          }
+          if (detailedTrip.tripStatus == 'COMPLETED' && detailedTrip.givenReview == false && state.tripToReview?.uuid != detailedTrip.uuid) {
+              newTripToReview = detailedTrip;
+          }
+        }
+      }
+    }
+
+    if (stateChanged || newToastKey != null || newTripToReview != null) {
+        final validBids = updatedBids.where((t) {
+            final ts = t.tripStatus;
+            if (ts == 'CANCELLED' || t.myBid?.status == 'CANCELLED') return false;
+            if (ts == 'COMPLETED') return false;
+            return true;
+        }).toList();
+
+        await _generateAndEmitMapData(validBids, newToastKey, newTripToReview);
+    }
+  }
+
   Future<void> _generateAndEmitMapData(List<RentalTripModel> bids, [String? toastKey, RentalTripModel? newTripToReview]) async {
     final acceptedTrips = bids.where((t) {
       final status = t.tripStatus;
@@ -649,7 +703,9 @@ class HomeController extends Cubit<HomeState> {
     );
     if (error == null) {
       removeTrip(tripUuid);
+      emit(state.copyWith(clearPreview: true)); // Ensure preview is cleared so AcceptedTripCard shows
       await fetchBidTrips();
+      await fetchActiveRideShareDetails();
     }
     return error;
   }
@@ -672,6 +728,7 @@ class HomeController extends Cubit<HomeState> {
         }
       }
       await fetchBidTrips();
+      await fetchActiveRideShareDetails();
     }
     return error;
   }

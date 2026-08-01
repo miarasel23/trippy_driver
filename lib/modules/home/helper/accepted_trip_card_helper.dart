@@ -550,6 +550,26 @@ class AcceptedTripCardHelper {
                 style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
                 location: dropoffLoc,
               ),
+              if (trip.note.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.edit_note_rounded, size: 16, color: theme.colorScheme.primary),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        trip.note,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withOpacity(0.8),
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 8),
               Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,

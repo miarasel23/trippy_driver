@@ -23,6 +23,7 @@ class AppUrls {
   static const String getCustomerLocations = "$baseUrl/v1/customer/get-locations";
   static const String createTripBid = "$baseUrl/v1/rental-trip/create-trip-bid";
   static const String rentalBidTripList = "$baseUrl/v1/rental-trip/rental-bid-trip-list";
+  static const String rentalTripDetailsForDriver = "$baseUrl/v1/rental-trip/rental-trip-details-for-driver";
   static const String getActiveBidTrips = "$baseUrl/v1/rental-trip/accept-or-cancel-or-complete-trip-for-driver";
   static const String startTripForDriver = "$baseUrl/v1/rental-trip/start-trip-for-driver";
   static const String createDriverTrack = "$baseUrl/v1/customer-driver-track/create";

@@ -223,6 +223,26 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                             ),
                           ],
                         ),
+                        if (trip.note.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.edit_note_rounded, size: 16, color: theme.colorScheme.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  trip.note,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurface.withOpacity(0.8),
+                                    fontSize: 13,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
