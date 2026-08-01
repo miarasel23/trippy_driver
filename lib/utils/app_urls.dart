@@ -31,6 +31,7 @@ class AppUrls {
   static const String allRentalTripList = "$baseUrl/v1/rental-trip/all-rental-trip-list";
   static const String tripRideStatusUpdate = "$baseUrl/v1/rental-trip/trip-ride-status-update";
   static const String giveReview = "$baseUrl/v1/rental-trip/give-review";
+  static const String driverTransactionHistory = "$baseUrl/v1/driver/driver-transation-history";
   static String? get profileImageUrl {
     final image = UserDataStore.userData?.data?.user?.profilePicture;
 

@@ -4,6 +4,8 @@ import '../../../core/utils/localization/app_localization.dart';
 import '../../home/screen/home_screen.dart';
 import '../../home/controller/home_controller.dart';
 import '../../profile/screen/profile_screen.dart';
+import '../../account/screen/account_screen.dart';
+import '../../account/controller/account_bloc.dart';
 import 'bids_screen.dart';
 import 'history_screen.dart';
 
@@ -48,6 +50,7 @@ class _NavbarScreenState extends State<NavbarScreen> {
         },
         refreshTrigger: _historyRefreshTrigger,
       ),
+      const AccountScreen(),
       const ProfileScreen(),
     ];
     _fetchUserData();
@@ -113,7 +116,8 @@ class _NavbarScreenState extends State<NavbarScreen> {
               _buildNavItem(Icons.grid_view_rounded, loc.translate('home'), 0, theme),
               _buildNavItem(Icons.car_rental, loc.translate('nav_bids'), 1, theme, badgeCount: _bidCount),
               _buildNavItem(Icons.history, loc.translate('nav_history'), 2, theme, badgeCount: _historyCount),
-              _buildNavItem(Icons.person_outline, loc.translate('nav_profile'), 3, theme),
+              _buildNavItem(Icons.manage_accounts_outlined, loc.translate('nav_account') ?? 'Account', 3, theme),
+              _buildNavItem(Icons.person_outline, loc.translate('nav_profile'), 4, theme),
             ],
           ),
         ),
@@ -123,9 +127,16 @@ class _NavbarScreenState extends State<NavbarScreen> {
 
   Widget _buildNavItem(IconData icon, String label, int index, ThemeData theme, {int badgeCount = 0}) {
     final isSelected = _selectedIndex == index;
-    final color = isSelected
+    Color color = isSelected
         ? theme.colorScheme.onSurface
         : theme.colorScheme.onSurface.withOpacity(0.5);
+
+    if (index == 3) {
+      final accountState = context.watch<AccountBloc>().state;
+      if (accountState.accountData != null && accountState.accountData!.dueBalance < 0) {
+        color = Colors.redAccent;
+      }
+    }
 
     return GestureDetector(
       onTap: () {

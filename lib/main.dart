@@ -18,6 +18,8 @@ import 'modules/otp/controller/otp_receive_bloc.dart';
 import 'modules/otp/repository/otp_receive_repository.dart';
 import 'modules/splash/controller/splash_bloc.dart';
 import 'modules/splash/repository/splash_repository.dart';
+import 'modules/account/controller/account_bloc.dart';
+import 'modules/account/repository/account_repository.dart';
 import 'modules/home/controller/home_controller.dart';
 import 'modules/home/repository/home_repository.dart';
 import 'modules/home/widget/accepted_trip_card.dart';
@@ -165,6 +167,7 @@ class _MyAppState extends State<MyApp> {
           create: (_) => SendOtpBloc(repository: SendOtpRepository()),
         ),
         BlocProvider(create: (_) => SplashBloc(repository: SplashRepository())),
+        BlocProvider(create: (_) => AccountBloc(repository: AccountRepository())),
         BlocProvider(create: (_) => HomeController(HomeRepository())),
         BlocProvider(
           create: (_) => EditProfilePictureBloc(
