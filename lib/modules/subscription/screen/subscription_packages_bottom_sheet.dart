@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/utils/sslcommerz_helper.dart';
 import '../../../core/utils/localization/app_localization.dart';
+import '../../../store/user_data_store.dart';
 import '../controller/subscription_bloc.dart';
 import '../repository/subscription_repository.dart';
 import '../model/subscription_package_model.dart';
@@ -190,8 +192,36 @@ class SubscriptionPackagesBottomSheet extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                // Subscribe logic goes here
+              onPressed: () async {
+                // Fetch User Details
+                final currentUser = UserDataStore.userData?.data?.user;
+                final String fullName = currentUser?.fullName ?? "Driver User";
+                final String email = currentUser?.email ?? "driver@example.com";
+                final String phone = currentUser?.phoneNumber ?? "01700000000";
+                
+                // Pay Now via Helper (opens WebView payment screen)
+                bool isSuccess = await SslcommerzHelper.initiatePayment(
+                  context: context,
+                  amount: package.price.toDouble(),
+                  packageName: package.subscriptionType,
+                  fullName: fullName,
+                  email: email,
+                  phone: phone,
+                );
+                
+                if (!context.mounted) return;
+                
+                // Handle result
+                if (isSuccess) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Payment Successful! 🎉'), backgroundColor: Colors.green),
+                  );
+                  Navigator.pop(context);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Payment Failed or Cancelled.'), backgroundColor: Colors.red),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.onSurface,

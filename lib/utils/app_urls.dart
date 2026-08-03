@@ -33,6 +33,7 @@ class AppUrls {
   static const String giveReview = "$baseUrl/v1/rental-trip/give-review";
   static const String driverTransactionHistory = "$baseUrl/v1/driver/driver-transation-history";
   static const String listCarSubscriptionForDriver = "$baseUrl/v1/subscription/list-car-subscription-for-driver";
+  static const String apiKeys = "$baseUrl/v1/global-api/api-keys";
   static String? get profileImageUrl {
     final image = UserDataStore.userData?.data?.user?.profilePicture;
 
