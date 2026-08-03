@@ -59,4 +59,53 @@ class SubscriptionRepository {
       return null;
     }
   }
+  Future<bool> purchaseSubscriptionPlan(String subscriptionUuid, String transactionId) async {
+    final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
+    final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
+
+    if (uuid == null || token == null) {
+      return false;
+    }
+
+    String platform = "web";
+    if (Platform.isAndroid) {
+      platform = "android";
+    } else if (Platform.isIOS) {
+      platform = "ios";
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final languageCode = prefs.getString('active_language_code') ?? 'en';
+
+    final queryParameters = {
+      "platform": platform,
+      "language_code": languageCode,
+      "action_when": "purchase_driver_subscription_plan",
+      "driver_uuid": uuid,
+      "country_code": "BD",
+      "subscription_uuid": subscriptionUuid,
+      "transaction_id": transactionId,
+    };
+    
+    final uri = Uri.parse(AppUrls.purchaseDriverSubscriptionPlan).replace(queryParameters: queryParameters);
+
+    try {
+      final response = await ApiService().post(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final decodedResponse = jsonDecode(response.body);
+        if (decodedResponse != null && decodedResponse['status'] == true) {
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
 }

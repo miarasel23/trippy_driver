@@ -349,4 +349,8 @@
   "valid_for": "Valid for",
   "days": "days",
   "subscribe": "Subscribe"
+  ,"transaction_details": "Transaction details"
+  ,"transaction_id": "Transaction ID"
+  ,"amount": "Amount"
+  ,"date": "Date"
 }

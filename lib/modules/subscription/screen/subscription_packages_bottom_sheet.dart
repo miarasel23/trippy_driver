@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/sslcommerz_helper.dart';
 import '../../../core/utils/localization/app_localization.dart';
 import '../../../store/user_data_store.dart';
+import '../../account/controller/account_bloc.dart';
 import '../controller/subscription_bloc.dart';
 import '../repository/subscription_repository.dart';
 import '../model/subscription_package_model.dart';
@@ -200,7 +201,7 @@ class SubscriptionPackagesBottomSheet extends StatelessWidget {
                 final String phone = currentUser?.phoneNumber ?? "01700000000";
                 
                 // Pay Now via Helper (opens WebView payment screen)
-                bool isSuccess = await SslcommerzHelper.initiatePayment(
+                String? transactionId = await SslcommerzHelper.initiatePayment(
                   context: context,
                   amount: package.price.toDouble(),
                   packageName: package.subscriptionType,
@@ -211,12 +212,27 @@ class SubscriptionPackagesBottomSheet extends StatelessWidget {
                 
                 if (!context.mounted) return;
                 
-                // Handle result
-                if (isSuccess) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Payment Successful! 🎉'), backgroundColor: Colors.green),
-                  );
-                  Navigator.pop(context);
+                if (transactionId != null) {
+                  // Call backend to record the purchase
+                  final repo = SubscriptionRepository();
+                  final apiSuccess = await repo.purchaseSubscriptionPlan(package.uuid, transactionId);
+                  
+                  if (!context.mounted) return;
+
+                  if (apiSuccess) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Payment and Subscription Successful! 🎉'), backgroundColor: Colors.green),
+                    );
+                    
+                    // Reload account page history
+                    context.read<AccountBloc>().add(const FetchAccountHistory());
+                    
+                    Navigator.pop(context);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Payment succeeded, but failed to activate subscription on server.'), backgroundColor: Colors.orange),
+                    );
+                  }
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Payment Failed or Cancelled.'), backgroundColor: Colors.red),

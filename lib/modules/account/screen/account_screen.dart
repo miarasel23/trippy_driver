@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/localization/app_localization.dart';
@@ -454,6 +455,116 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
+  void _showTransactionDetails(BuildContext context, TransactionModel tx, String displayDesc, bool isCredit, String amountStr, bool isBangla, String currency, ThemeData theme, AppLocalizations loc) {
+    String? transId;
+    final transMatch = RegExp(r'trans:\s*([A-Za-z0-9_-]+)', caseSensitive: false).firstMatch(tx.description);
+    if (transMatch != null) {
+      transId = transMatch.group(1);
+    }
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(loc.translate('transaction_details') ?? 'Transaction Details'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                displayDesc,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(loc.translate('amount') ?? 'Amount', style: TextStyle(color: Colors.grey[600])),
+                  Text(
+                    "${isCredit ? '+' : '-'}$currency $amountStr",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isCredit ? Colors.green : Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(loc.translate('date') ?? 'Date', style: TextStyle(color: Colors.grey[600])),
+                  Text(_formatDate(tx.createdAt, isBangla)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(loc.translate('current_balance') ?? 'Balance', style: TextStyle(color: Colors.grey[600])),
+                  Text("$currency ${_formatNumber(tx.mainBalance.toStringAsFixed(0), isBangla)}"),
+                ],
+              ),
+              if (transId != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.only(left: 12, right: 4, top: 4, bottom: 4),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              loc.translate('transaction_id') ?? 'Transaction ID',
+                              style: TextStyle(fontSize: 12, color: theme.colorScheme.primary),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              transId,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.copy, size: 20),
+                        color: theme.colorScheme.primary,
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: transId!));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Transaction ID copied!'),
+                              backgroundColor: Colors.green,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(loc.translate('close') ?? 'Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildHistorySection(ThemeData theme, AccountState state, AppLocalizations loc, bool isBangla, String currency) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -496,8 +607,10 @@ class _AccountScreenState extends State<AccountScreen> {
             
             String displayDesc = tx.description.replaceAll(RegExp(r'\(Booking: [\d.]+\)\s*&\s*Service charge:\s*[\d.]+'), '& Service charge');
 
-            return Container(
-              padding: const EdgeInsets.all(16),
+            return GestureDetector(
+              onTap: () => _showTransactionDetails(context, tx, displayDesc, isCredit, amountStr, isBangla, currency, theme, loc),
+              child: Container(
+                padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
@@ -562,6 +675,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     ],
                   ),
                 ],
+              ),
               ),
             );
           },

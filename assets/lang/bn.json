@@ -353,4 +353,8 @@
   "valid_for": "মেয়াদ",
   "days": "দিন",
   "subscribe": "সাবস্ক্রাইব"
+  ,"transaction_details": "লেনদেনের বিস্তারিত"
+  ,"transaction_id": "লেনদেনের আইডি"
+  ,"amount": "পরিমাণ"
+  ,"date": "তারিখ"
 }

@@ -94,9 +94,10 @@ class _SslcommerzPaymentScreenState extends State<SslcommerzPaymentScreen> {
       // ── 4. Handle result ──────────────────────────────────────────────────
       final status = result.status?.toLowerCase() ?? '';
 
-      if (status == 'success') {
-        Navigator.pop(context, true);
-      } else if (status == 'failed') {
+      if (status == 'success' || status == 'valid' || status == 'validated') {
+        final returnedTranId = result.tranId ?? tranId;
+        Navigator.pop(context, returnedTranId);
+      } else if (status == 'failed' || status == 'cancelled') {
         setState(() {
           _isProcessing = false;
           _errorMessage = 'Payment failed. Please try again.';
