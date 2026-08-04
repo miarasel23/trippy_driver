@@ -30,6 +30,7 @@ class HomeState extends Equatable {
   final bool clearToast;
   final RentalTripModel? tripToReview;
   final RentalTripModel? previewTrip;
+  final String accountStatus;
 
   const HomeState({
     required this.isOnline,
@@ -43,6 +44,7 @@ class HomeState extends Equatable {
     this.clearToast = false,
     this.tripToReview,
     this.previewTrip,
+    this.accountStatus = 'ACTIVE',
   });
 
   HomeState copyWith({
@@ -59,6 +61,7 @@ class HomeState extends Equatable {
     bool clearReview = false,
     RentalTripModel? previewTrip,
     bool clearPreview = false,
+    String? accountStatus,
   }) {
     return HomeState(
       isOnline: isOnline ?? this.isOnline,
@@ -71,11 +74,12 @@ class HomeState extends Equatable {
       toastMessageKey: clearToast ? null : (toastMessageKey ?? this.toastMessageKey),
       tripToReview: clearReview ? null : (tripToReview ?? this.tripToReview),
       previewTrip: clearPreview ? null : (previewTrip ?? this.previewTrip),
+      accountStatus: accountStatus ?? this.accountStatus,
     );
   }
 
   @override
-  List<Object?> get props => [isOnline, serviceMode, rentalTrips, bidTrips, isLoadingTrips, markers, polylines, toastMessageKey, tripToReview, previewTrip];
+  List<Object?> get props => [isOnline, serviceMode, rentalTrips, bidTrips, isLoadingTrips, markers, polylines, toastMessageKey, tripToReview, previewTrip, accountStatus];
 }
 
 class HomeController extends Cubit<HomeState> {
@@ -107,6 +111,8 @@ class HomeController extends Cubit<HomeState> {
   void _startPolling() {
     _pollingTimer?.cancel();
     _pollingTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      checkAndUpdateRideStatusFromApi();
+      
       if (state.isOnline && !_isFetchingTrips) {
         _isFetchingTrips = true;
         try {
@@ -202,6 +208,7 @@ class HomeController extends Cubit<HomeState> {
 
   void _emitStatusFromCache() {
     String status = UserDataStore.userData?.data?.user?.currentRideStatus ?? 'OFFLINE';
+    String accStatus = UserDataStore.userData?.data?.user?.isActive ?? 'INACTIVE';
     if (status == 'RIDE_SHARE') status = 'RIDE SHARE';
     if (status == 'RENT_A_CAR') status = 'RENT A CAR';
     if (status == 'BOTH') status = 'BOTH';
@@ -213,6 +220,7 @@ class HomeController extends Cubit<HomeState> {
       emit(state.copyWith(
         isOnline: false,
         serviceMode: serviceMode,
+        accountStatus: accStatus,
         rentalTrips: [],
         bidTrips: [],
       ));
@@ -220,6 +228,7 @@ class HomeController extends Cubit<HomeState> {
       emit(state.copyWith(
         isOnline: true,
         serviceMode: serviceMode,
+        accountStatus: accStatus,
       ));
       fetchRentalTrips(showLoading: false);
       fetchBidTrips();
@@ -228,6 +237,7 @@ class HomeController extends Cubit<HomeState> {
 
   static HomeState _getInitialState() {
     String status = UserDataStore.userData?.data?.user?.currentRideStatus ?? 'OFFLINE';
+    String accStatus = UserDataStore.userData?.data?.user?.isActive ?? 'INACTIVE';
     if (status == 'RIDE_SHARE') status = 'RIDE SHARE';
     if (status == 'RENT_A_CAR') status = 'RENT A CAR';
     if (status == 'BOTH') status = 'BOTH';
@@ -235,6 +245,7 @@ class HomeController extends Cubit<HomeState> {
     return HomeState(
       isOnline: status != 'OFFLINE',
       serviceMode: status == 'OFFLINE' ? 'RIDE SHARE' : status, // Default to 'RIDE SHARE' for UI if offline, or keep 'OFFLINE'
+      accountStatus: accStatus,
     );
   }
 

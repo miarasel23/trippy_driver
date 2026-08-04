@@ -7,6 +7,9 @@ import '../controller/account_bloc.dart';
 import '../model/package_details_model.dart';
 import '../../subscription/screen/subscription_packages_bottom_sheet.dart';
 import '../model/transaction_model.dart';
+import '../../subscription/screen/sslcommerz_payment_screen.dart';
+import '../../subscription/repository/subscription_repository.dart';
+import '../../../store/user_data_store.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -173,32 +176,185 @@ class _AccountScreenState extends State<AccountScreen> {
             Expanded(
               child: _buildBalanceCard(
                 theme,
-                loc.translate('due_balance') ?? 'Due Balance',
+                loc.translate('due_ammount') ?? 'Due Ammount',
                 displayDueBalance,
                 isDueCritical ? Colors.redAccent : theme.colorScheme.secondary,
                 isBangla,
                 currency,
                 icon: Icons.money_off_rounded,
                 isCritical: isDueCritical,
-                bottomWidget: dueBalance <= -10 ? SizedBox(
+                bottomWidget: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: Implement pay action
-                    },
+                    onPressed: dueBalance <= -10 ? () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) {
+                          return Dialog(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            elevation: 0,
+                            backgroundColor: Colors.transparent,
+                            child: Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surface,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.redAccent.withOpacity(0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.redAccent, size: 40),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    loc.translate('pay_due_ammount') ?? 'Pay Due Ammount',
+                                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    loc.translate('due_amount_msg') ?? 'Please pay your outstanding due balance to continue using the services smoothly.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withOpacity(0.7)),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.1)),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          loc.translate('due_ammount') ?? 'Due Ammount',
+                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                        ),
+                                        Text(
+                                          '$currency ${_formatNumber(displayDueBalance.toStringAsFixed(0), isBangla)}',
+                                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.redAccent),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 32),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: () => Navigator.pop(ctx),
+                                          style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                          ),
+                                          child: Text(loc.translate('cancel') ?? 'Cancel', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed: () async {
+                                            Navigator.pop(ctx);
+                                            final user = UserDataStore.userData?.data?.user;
+                                            final result = await Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => SslcommerzPaymentScreen(
+                                                  amount: displayDueBalance,
+                                                  packageName: 'Due Payment',
+                                                  fullName: user?.fullName ?? 'Driver',
+                                                  email: user?.email ?? 'driver@trippy.com',
+                                                  phone: user?.phoneNumber ?? '',
+                                                ),
+                                              ),
+                                            );
+
+                                            if (result != null && result is String) {
+                                              if (!context.mounted) return;
+                                              showDialog(
+                                                context: context,
+                                                barrierDismissible: false,
+                                                builder: (c) => const Center(child: CircularProgressIndicator()),
+                                              );
+                                              
+                                              final subUuid = data.activePackageDetails?.subscriptionUuid ?? '';
+                                              final success = await SubscriptionRepository().rechargeDriverAccount(subUuid, result);
+                                              
+                                              if (context.mounted) Navigator.pop(context); // close loading dialog
+                                              
+                                              if (success) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(loc.translate('payment_successful') ?? 'Payment successful & account recharged!'),
+                                                      backgroundColor: Colors.green,
+                                                    ),
+                                                  );
+                                                  context.read<AccountBloc>().add(FetchAccountHistory());
+                                                }
+                                              } else {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(loc.translate('payment_failed') ?? 'Payment failed on server.'),
+                                                      backgroundColor: Colors.red,
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            }
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: theme.colorScheme.primary,
+                                            foregroundColor: theme.colorScheme.onPrimary,
+                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            elevation: 0,
+                                          ),
+                                          child: Text(loc.translate('pay_now') ?? 'Pay Now', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    } : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.onSurface,
                       foregroundColor: theme.colorScheme.surface,
+                      disabledBackgroundColor: theme.colorScheme.surface,
+                      disabledForegroundColor: theme.colorScheme.onSurface.withOpacity(0.5),
                       padding: const EdgeInsets.symmetric(vertical: 0),
                       minimumSize: const Size(0, 36),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(
+                          color: dueBalance <= -10 ? Colors.transparent : theme.colorScheme.onSurface.withOpacity(0.2),
+                        ),
                       ),
                       elevation: 0,
                     ),
                     child: Text(loc.translate('pay') ?? 'Pay', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
-                ) : const SizedBox(height: 36),
+                ),
               ),
             ),
           ],

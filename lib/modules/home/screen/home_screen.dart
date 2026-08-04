@@ -89,6 +89,33 @@ class _HomeViewState extends State<HomeView> {
         body: Stack(
           children: [
             BlocListener<HomeController, HomeState>(
+              listenWhen: (previous, current) => previous.accountStatus != current.accountStatus && current.accountStatus.toUpperCase() != 'ACTIVE',
+              listener: (context, state) {
+                 final loc = AppLocalizations.of(context);
+                 showDialog(
+                   context: context,
+                   builder: (ctx) => AlertDialog(
+                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                     title: Row(
+                       children: [
+                         const Icon(Icons.warning_rounded, color: Colors.red),
+                         const SizedBox(width: 8),
+                         Text(loc.translate('account_restricted_title') ?? 'Account Restricted', style: const TextStyle(color: Colors.red, fontSize: 18)),
+                       ],
+                     ),
+                     content: Text(loc.translate('account_restricted_support') ?? 'Account restricted, please contact support.'),
+                     actions: [
+                       TextButton(
+                         onPressed: () => Navigator.pop(ctx),
+                         child: Text(loc.translate('ok') ?? 'OK'),
+                       )
+                     ],
+                   )
+                 );
+              },
+              child: const SizedBox.shrink(),
+            ),
+            BlocListener<HomeController, HomeState>(
               listenWhen: (previous, current) => previous.toastMessageKey != current.toastMessageKey && current.toastMessageKey != null,
               listener: (context, state) {
                 if (state.toastMessageKey != null) {
@@ -177,33 +204,38 @@ class _HomeViewState extends State<HomeView> {
                 const HomeTopBar(),
 
                 // Inactive/Restricted Account Banner
-                Builder(
-                  builder: (context) {
-                    final isActiveStr = UserDataStore.userData?.data?.user?.isActive ?? 'INACTIVE';
-                    final bool isNotActive = isActiveStr.toUpperCase() != 'ACTIVE';
+                BlocBuilder<HomeController, HomeState>(
+                  builder: (context, state) {
+                    final bool isNotActive = state.accountStatus.toUpperCase() != 'ACTIVE';
                     if (!isNotActive) return const SizedBox.shrink();
 
                     final loc = AppLocalizations.of(context);
                     return Container(
                       width: double.infinity,
                       margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
+                        color: Colors.red.shade600,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.red.shade200),
+                        boxShadow: [
+                           BoxShadow(
+                             color: Colors.red.withOpacity(0.3),
+                             blurRadius: 10,
+                             offset: const Offset(0, 4),
+                           )
+                        ],
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
-                          const SizedBox(width: 10),
+                          const Icon(Icons.warning_rounded, color: Colors.white, size: 28),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              loc.translate('account_restricted_support') ?? "Account restricted, please call support.",
-                              style: TextStyle(
-                                color: Colors.red.shade900,
+                              loc.translate('account_restricted_support') ?? "Account restricted, please contact support.",
+                              style: const TextStyle(
+                                color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                                fontSize: 14,
                               ),
                             ),
                           ),
