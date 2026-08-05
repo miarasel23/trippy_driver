@@ -12,12 +12,14 @@ class AccountRechargeDialog extends StatefulWidget {
   final String currency;
   final bool isBangla;
   final String subscriptionUuid;
+  final double? dueBalance;
 
   const AccountRechargeDialog({
     super.key,
     required this.currency,
     required this.isBangla,
     required this.subscriptionUuid,
+    this.dueBalance,
   });
 
   @override
@@ -28,17 +30,30 @@ class _AccountRechargeDialogState extends State<AccountRechargeDialog> {
   final TextEditingController _amountController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _amountFocusNode = FocusNode();
-  final List<int> _predefinedAmounts = [100, 300, 500, 700, 900, 1000, 1500, 2000, 2500, 3000];
-  int? _selectedPredefined;
+  late final List<double> _predefinedAmounts;
+  double? _selectedPredefined;
   String? _errorMessage;
   bool _isEditingAmount = false;
 
   @override
   void initState() {
     super.initState();
+    
+    final baseAmounts = [100.0, 300.0, 500.0, 700.0, 900.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0];
+    _predefinedAmounts = [];
+    
+    if (widget.dueBalance != null && widget.dueBalance! > 0) {
+      _predefinedAmounts.add(widget.dueBalance!);
+    }
+    for (var amt in baseAmounts) {
+      if (widget.dueBalance == null || (amt - widget.dueBalance!).abs() > 0.01) {
+        _predefinedAmounts.add(amt);
+      }
+    }
+
     // Default selection
     _selectedPredefined = _predefinedAmounts.first;
-    _amountController.text = _selectedPredefined.toString();
+    _amountController.text = _formatAmount(_selectedPredefined!);
     _amountController.addListener(_onAmountChanged);
   }
 
@@ -51,14 +66,25 @@ class _AccountRechargeDialogState extends State<AccountRechargeDialog> {
     super.dispose();
   }
 
+  String _formatAmount(double amount) {
+    if (amount % 1 == 0) {
+      return amount.toInt().toString();
+    } else {
+      return amount.toStringAsFixed(2);
+    }
+  }
+
   void _onAmountChanged() {
     final text = _amountController.text;
     if (text.isNotEmpty) {
-      final val = int.tryParse(text);
+      final val = double.tryParse(text);
       if (val != null) {
         // Check if the typed value matches a predefined option
-        if (_predefinedAmounts.contains(val)) {
-          setState(() => _selectedPredefined = val);
+        final matchedIndex = _predefinedAmounts.indexWhere(
+          (amount) => (amount - val).abs() < 0.01,
+        );
+        if (matchedIndex != -1) {
+          setState(() => _selectedPredefined = _predefinedAmounts[matchedIndex]);
         } else {
           setState(() => _selectedPredefined = null);
         }
@@ -75,10 +101,10 @@ class _AccountRechargeDialogState extends State<AccountRechargeDialog> {
     }
   }
 
-  void _selectPredefined(int amount) {
+  void _selectPredefined(double amount) {
     setState(() {
       _selectedPredefined = amount;
-      _amountController.text = amount.toString();
+      _amountController.text = _formatAmount(amount);
       _amountController.selection = TextSelection.fromPosition(
         TextPosition(offset: _amountController.text.length),
       );
@@ -245,7 +271,7 @@ class _AccountRechargeDialogState extends State<AccountRechargeDialog> {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Text(
-                                    '${widget.currency} ',
+                                    'BDT ',
                                     style: TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.bold,
@@ -284,7 +310,7 @@ class _AccountRechargeDialogState extends State<AccountRechargeDialog> {
                                 ],
                               )
                             : Text(
-                                '${widget.currency} ${_amountController.text.isEmpty ? '0' : _amountController.text}',
+                                'BDT ${_amountController.text.isEmpty ? '0' : _amountController.text}',
                                 style: TextStyle(
                                   fontSize: 26,
                                   fontWeight: FontWeight.bold,
@@ -369,6 +395,10 @@ class _AccountRechargeDialogState extends State<AccountRechargeDialog> {
                     itemBuilder: (context, index) {
                       final amount = _predefinedAmounts[index];
                       final isSelected = _selectedPredefined == amount;
+                      final isDue = widget.dueBalance != null && (amount - widget.dueBalance!).abs() < 0.01;
+                      final labelText = isDue 
+                          ? 'BDT ${_formatAmount(amount)} (${loc.translate('due_amount') ?? 'Due'})'
+                          : 'BDT ${_formatAmount(amount)}';
                       return GestureDetector(
                         onTap: () => _selectPredefined(amount),
                         child: AnimatedContainer(
@@ -387,7 +417,7 @@ class _AccountRechargeDialogState extends State<AccountRechargeDialog> {
                                 : [],
                           ),
                           child: Text(
-                            '${widget.currency} $amount',
+                            labelText,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,

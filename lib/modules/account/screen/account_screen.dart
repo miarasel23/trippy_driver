@@ -165,6 +165,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             currency: currency,
                             isBangla: isBangla,
                             subscriptionUuid: data.activePackageDetails?.subscriptionUuid ?? '',
+                            dueBalance: dueBalance is num ? dueBalance.toDouble().abs() : 0.0,
                           ),
                         ),
                       );
@@ -257,7 +258,7 @@ class _AccountScreenState extends State<AccountScreen> {
                                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                                         ),
                                         Text(
-                                          '$currency ${_formatNumber(displayDueBalance.toStringAsFixed(0), isBangla)}',
+                                          '$currency ${dueBalance < 0 ? '-' : ''}${_formatNumber(displayDueBalance.toStringAsFixed(0), isBangla)}',
                                           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.redAccent),
                                         ),
                                       ],
@@ -423,7 +424,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  "$currency ${_formatNumber(amount.toStringAsFixed(0), isBangla)}",
+                  "$currency ${isCritical ? '-' : ''}${_formatNumber(amount.toStringAsFixed(0), isBangla)}",
                   style: TextStyle(
                     color: isCritical ? Colors.redAccent : theme.colorScheme.onSurface,
                     fontSize: 22,
@@ -649,7 +650,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 children: [
                   Text(loc.translate('amount') ?? 'Amount', style: TextStyle(color: Colors.grey[600])),
                   Text(
-                    "${isCredit ? '+' : '-'}$currency $amountStr",
+                    "$currency ${isCredit ? '+' : '-'}$amountStr",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -827,7 +828,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        "${isCredit ? '+' : '-'}$currency $amountStr",
+                        "$currency ${isCredit ? '+' : '-'}$amountStr",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
