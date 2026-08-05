@@ -96,6 +96,7 @@ class SubscriptionRepository {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
+        body: jsonEncode({}),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         final decodedResponse = jsonDecode(response.body);
@@ -109,7 +110,7 @@ class SubscriptionRepository {
     }
   }
 
-  Future<bool> rechargeDriverAccount(String subscriptionUuid, String transactionId) async {
+  Future<bool> rechargeDriverAccount(String transactionId) async {
     final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
     final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
 
@@ -133,7 +134,6 @@ class SubscriptionRepository {
       "action_when": "recharge_driver_account",
       "driver_uuid": uuid,
       "country_code": "BD",
-      "subscription_uuid": subscriptionUuid,
       "transaction_id": transactionId,
     };
     
@@ -146,6 +146,7 @@ class SubscriptionRepository {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
+        body: jsonEncode({}),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         final decodedResponse = jsonDecode(response.body);

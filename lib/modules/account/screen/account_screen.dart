@@ -10,6 +10,8 @@ import '../model/transaction_model.dart';
 import '../../subscription/screen/sslcommerz_payment_screen.dart';
 import '../../subscription/repository/subscription_repository.dart';
 import '../../../store/user_data_store.dart';
+import 'package:trippy_rider/utils/app_urls.dart';
+import '../widget/account_recharge_dialog.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -155,7 +157,17 @@ class _AccountScreenState extends State<AccountScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      SubscriptionPackagesBottomSheet.show(context, isBangla, currency);
+                      showDialog(
+                        context: context,
+                        builder: (_) => BlocProvider.value(
+                          value: context.read<AccountBloc>(),
+                          child: AccountRechargeDialog(
+                            currency: currency,
+                            isBangla: isBangla,
+                            subscriptionUuid: data.activePackageDetails?.subscriptionUuid ?? '',
+                          ),
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.onSurface,
@@ -291,8 +303,7 @@ class _AccountScreenState extends State<AccountScreen> {
                                                 builder: (c) => const Center(child: CircularProgressIndicator()),
                                               );
                                               
-                                              final subUuid = data.activePackageDetails?.subscriptionUuid ?? '';
-                                              final success = await SubscriptionRepository().rechargeDriverAccount(subUuid, result);
+                                              final success = await SubscriptionRepository().rechargeDriverAccount(result);
                                               
                                               if (context.mounted) Navigator.pop(context); // close loading dialog
                                               

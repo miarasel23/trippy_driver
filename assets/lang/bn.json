@@ -359,5 +359,9 @@
   "due_amount": "বকেয়া টাকা",
   "due_ammount": "বকেয়া টাকা",
   "pay_due_ammount": "বকেয়া টাকা পরিশোধ করুন",
-  "account_restricted_title": "একাউন্ট সীমাবদ্ধ"
+  "account_restricted_title": "একাউন্ট সীমাবদ্ধ",
+  "recharge_account": "অ্যাকাউন্ট রিচার্জ করুন",
+  "recharge_amount_msg": "রিচার্জ করার জন্য পরিমাণ নির্বাচন করুন বা লিখুন।",
+  "min_recharge_msg": "সর্বনিম্ন রিচার্জের পরিমাণ 10",
+  "enter_amount": "পরিমাণ লিখুন"
 }

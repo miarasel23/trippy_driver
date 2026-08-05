@@ -354,5 +354,9 @@
   "due_amount": "Due Ammount",
   "due_ammount": "Due Ammount",
   "pay_due_ammount": "Pay Due Ammount",
-  "account_restricted_title": "Account Restricted"
+  "account_restricted_title": "Account Restricted",
+  "recharge_account": "Recharge Account",
+  "recharge_amount_msg": "Select or enter the amount you want to recharge.",
+  "min_recharge_msg": "Minimum recharge amount is 10",
+  "enter_amount": "Enter Amount"
 }
