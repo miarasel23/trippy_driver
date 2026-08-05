@@ -93,7 +93,6 @@ class _SslcommerzPaymentScreenState extends State<SslcommerzPaymentScreen> {
 
       // ── 4. Handle result ──────────────────────────────────────────────────
       final status = result.status?.toLowerCase() ?? '';
-
       if (status == 'success' || status == 'valid' || status == 'validated') {
         final returnedTranId = result.tranId ?? tranId;
         Navigator.pop(context, returnedTranId);
@@ -103,8 +102,7 @@ class _SslcommerzPaymentScreenState extends State<SslcommerzPaymentScreen> {
           _errorMessage = 'Payment failed. Please try again.';
         });
       } else {
-        // User dismissed the payment UI
-        Navigator.pop(context, false);
+        Navigator.pop(context, null);
       }
     } catch (e) {
       if (!mounted) return;
@@ -122,7 +120,7 @@ class _SslcommerzPaymentScreenState extends State<SslcommerzPaymentScreen> {
         title: const Text('Payment Gateway'),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context, false),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: _isProcessing
@@ -156,7 +154,7 @@ class _SslcommerzPaymentScreenState extends State<SslcommerzPaymentScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             OutlinedButton(
-                              onPressed: () => Navigator.pop(context, false),
+                              onPressed: () => Navigator.pop(context),
                               child: const Text('Go Back'),
                             ),
                             const SizedBox(width: 16),

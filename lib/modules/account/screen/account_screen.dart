@@ -288,8 +288,8 @@ class _AccountScreenState extends State<AccountScreen> {
                                                 builder: (context) => SslcommerzPaymentScreen(
                                                   amount: displayDueBalance,
                                                   packageName: 'Due Payment',
-                                                  fullName: user?.fullName ?? 'Driver',
-                                                  email: user?.email ?? 'driver@trippy.com',
+                                                  fullName: user?.fullName ?? '',
+                                                  email: user?.email ?? '',
                                                   phone: user?.phoneNumber ?? '',
                                                 ),
                                               ),
