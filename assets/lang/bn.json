@@ -363,5 +363,15 @@
   "recharge_account": "অ্যাকাউন্ট রিচার্জ করুন",
   "recharge_amount_msg": "রিচার্জ করার জন্য পরিমাণ নির্বাচন করুন বা লিখুন।",
   "min_recharge_msg": "সর্বনিম্ন রিচার্জের পরিমাণ 10",
-  "enter_amount": "পরিমাণ লিখুন"
+  "enter_amount": "পরিমাণ লিখুন",
+  "registration_info": "নিবন্ধন তথ্য",
+  "nid_number_label": "এনআইডি নম্বর",
+  "driver_id": "ড্রাইভার আইডি",
+  "role": "ভূমিকা",
+  "status": "অবস্থা",
+  "copied_to_clipboard": "ক্লিপবোর্ডে কপি করা হয়েছে",
+  "personal_info": "ব্যক্তিগত তথ্য",
+  "car_info": "গাড়ির তথ্য",
+  "car_photo": "গাড়ির ছবি",
+  "view_and_verify_documents": "নিবন্ধনের তথ্য ও অবস্থা দেখুন"
 }

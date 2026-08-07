@@ -358,5 +358,15 @@
   "recharge_account": "Recharge Account",
   "recharge_amount_msg": "Select or enter the amount you want to recharge.",
   "min_recharge_msg": "Minimum recharge amount is 10",
-  "enter_amount": "Enter Amount"
+  "enter_amount": "Enter Amount",
+  "registration_info": "Registration Info",
+  "nid_number_label": "NID Number",
+  "driver_id": "Driver ID",
+  "role": "Role",
+  "status": "Status",
+  "copied_to_clipboard": "Copied to clipboard",
+  "personal_info": "Personal Info",
+  "car_info": "Car Info",
+  "car_photo": "Car Photo",
+  "view_and_verify_documents": "View & verify registration status"
 }

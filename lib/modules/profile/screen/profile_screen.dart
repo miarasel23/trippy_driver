@@ -24,6 +24,7 @@ import '../../editProfile/controller/edit_profile_picture_state.dart';
 import '../../../utils/enums.dart';
 import '../../theme/controller/theme_bloc.dart';
 import '../../localization/Controller/localization_controller.dart';
+import 'registration_info_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -79,28 +80,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              // Container(
-                              //   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              //   decoration: BoxDecoration(
-                              //     color: Theme.of(context).colorScheme.surfaceContainer,
-                              //     borderRadius: BorderRadius.circular(16),
-                              //   ),
-                              //   child: Row(
-                              //     children: [
-                              //       Icon(Icons.star, size: 14, color: Theme.of(context).colorScheme.onSurface),
-                              //       const SizedBox(width: 4),
-                              //       Text(
-                              //         loc.translate("5"),
-                              //         style: GoogleFonts.poppins(
-                              //           fontSize: 14,
-                              //           fontWeight: FontWeight.w600,
-                              //           color: Theme.of(context).colorScheme.onSurface,
-                              //         ),
-                              //       ),
-                              //     ],
-                              //   ),
-                              // ),
-                              // const SizedBox(width: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: (user?.isActive?.toUpperCase() == 'ACTIVE')
+                                      ? Colors.green.shade100
+                                      : Colors.red.shade100,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  user?.isActive ?? 'INACTIVE',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: (user?.isActive?.toUpperCase() == 'ACTIVE')
+                                        ? Colors.green.shade800
+                                        : Colors.red.shade800,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
                               InkWell(
                                 onTap: () => _showProfilePopup(context, name, email, phone, loc.locale.languageCode),
                                 child: Text(
@@ -195,71 +194,138 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
 
-              // POINTS & VOUCHERS (Horizontal Cards)
-              // Padding(
-              //   padding: const EdgeInsets.symmetric(horizontal: 24),
-              //   child: Row(
-              //     children: [
-              //       Expanded(
-              //         child: GestureDetector(
-              //           onTap: () => Navigator.pushNamed(context, AppRoutes.points),
-              //           child: Container(
-              //             padding: const EdgeInsets.all(16),
-              //             decoration: BoxDecoration(
-              //               color: Theme.of(context).colorScheme.surfaceContainer,
-              //               borderRadius: BorderRadius.circular(16),
-              //             ),
-              //             child: Column(
-              //               crossAxisAlignment: CrossAxisAlignment.start,
-              //               children: [
-              //                 Icon(Icons.wallet_giftcard, color: Theme.of(context).colorScheme.onSurface, size: 28),
-              //                 const SizedBox(height: 12),
-              //                 Text(
-              //                   loc.translate("points"),
-              //                   style: GoogleFonts.poppins(
-              //                     fontSize: 16,
-              //                     fontWeight: FontWeight.w600,
-              //                     color: Theme.of(context).colorScheme.onSurface,
-              //                   ),
-              //                 ),
-              //               ],
-              //             ),
-              //           ),
-              //         ),
-              //       ),
-              //       const SizedBox(width: 16),
-              //       Expanded(
-              //         child: GestureDetector(
-              //           onTap: () => Navigator.pushNamed(context, AppRoutes.voucher),
-              //           child: Container(
-              //             padding: const EdgeInsets.all(16),
-              //             decoration: BoxDecoration(
-              //               color: Theme.of(context).colorScheme.surfaceContainer,
-              //               borderRadius: BorderRadius.circular(16),
-              //             ),
-              //             child: Column(
-              //               crossAxisAlignment: CrossAxisAlignment.start,
-              //               children: [
-              //                 Icon(Icons.local_offer_outlined, color: Theme.of(context).colorScheme.onSurface, size: 28),
-              //                 const SizedBox(height: 12),
-              //                 Text(
-              //                   loc.translate("voucher"),
-              //                   style: GoogleFonts.poppins(
-              //                     fontSize: 16,
-              //                     fontWeight: FontWeight.w600,
-              //                     color: Theme.of(context).colorScheme.onSurface,
-              //                   ),
-              //                 ),
-              //               ],
-              //             ),
-              //           ),
-              //         ),
-              //       ),
-              //     ],
-              //   ),
-              // ),
-              // const SizedBox(height: 24),
-              // const Divider(),
+              // HIGHLIGHTED REGISTRATION INFO CARD
+              Builder(
+                builder: (context) {
+                  final isActive = user?.isActive?.toUpperCase() == 'ACTIVE';
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
+
+                   // Card background is always Black & White (White in light mode, Dark Slate in dark mode)
+                  final cardBgColor = isDark 
+                      ? const Color(0xFF1E293B) // Dark slate / Black
+                      : Colors.white; // White
+
+                  final Color contentColor;
+                  final Color iconBgColor;
+                  final Color statusBgColor;
+                  final Color statusTextColor;
+                  final Border cardBorder;
+
+                  if (isActive) {
+                    // Active status accents (Green)
+                    contentColor = isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
+                    iconBgColor = isDark 
+                        ? const Color(0xFF81C784).withOpacity(0.15) 
+                        : const Color(0xFFE8F5E9);
+                    statusBgColor = isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
+                    statusTextColor = isDark ? Colors.black : Colors.white;
+                    cardBorder = Border.all(
+                      color: (isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32)).withOpacity(0.4),
+                      width: 1.5,
+                    );
+                  } else {
+                    // Inactive status accents (Red)
+                    contentColor = isDark ? const Color(0xFFE57373) : const Color(0xFFD32F2F);
+                    iconBgColor = isDark 
+                        ? const Color(0xFFE57373).withOpacity(0.15) 
+                        : const Color(0xFFFFEBEE);
+                    statusBgColor = isDark ? const Color(0xFFE57373) : const Color(0xFFD32F2F);
+                    statusTextColor = isDark ? Colors.black : Colors.white;
+                    cardBorder = Border.all(
+                      color: (isDark ? const Color(0xFFE57373) : const Color(0xFFD32F2F)).withOpacity(0.4),
+                      width: 1.5,
+                    );
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: cardBgColor,
+                        borderRadius: BorderRadius.circular(20),
+                        border: cardBorder,
+                        boxShadow: [
+                          BoxShadow(
+                            color: cardBgColor.withOpacity(0.15),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const RegistrationInfoScreen(),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 12.0),
+                            child: Row(
+                              children: [
+                                // Left Icon
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: iconBgColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.assignment_rounded,
+                                    color: contentColor,
+                                    size: 28,
+                                  ),
+                                ),
+                                const SizedBox(width: 18),
+                                // Text Label
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        loc.translate("registration_info") ?? "Registration Info",
+                                        style: GoogleFonts.poppins(
+                                          color: contentColor,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        loc.translate("view_and_verify_documents") ?? "View & verify registration status",
+                                        style: GoogleFonts.poppins(
+                                          color: contentColor.withOpacity(0.8),
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Status Badge & Arrow
+                                Row(
+                                  children: [
+                                    const SizedBox(width: 8),
+                                    Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: contentColor,
+                                      size: 40,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
 
               // PREFERENCES LIST
               Padding(
