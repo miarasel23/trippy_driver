@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../modules/auth/screen/number_Input_screen.dart';
 import '../modules/editProfile/screen/edit_profile_screen.dart';
-import '../modules/home/screen/home_screen.dart';
 import '../modules/navbar/screen/navbar_screen.dart';
 import '../modules/otp/screen/otp_signin_screen.dart';
+import '../modules/account/screen/account_screen.dart';
 import '../modules/profile/screen/profile_screen.dart';
+import '../modules/profile/screen/personal_info_screen.dart';
+import '../modules/profile/screen/registration_info_screen.dart';
 import '../modules/splash/screen/splash_screen.dart';
 import 'app_routes.dart';
 
@@ -33,6 +35,15 @@ class RouteGenerator {
 
       case AppRoutes.profile:
         return MaterialPageRoute(settings: settings, builder: (_) => const ProfileScreen());
+
+      case AppRoutes.personalInfo:
+        return MaterialPageRoute(settings: settings, builder: (_) => const PersonalInfoScreen());
+
+      case AppRoutes.account:
+        return MaterialPageRoute(settings: settings, builder: (_) => const AccountScreen());
+
+      case AppRoutes.registrationInfo:
+        return MaterialPageRoute(settings: settings, builder: (_) => const RegistrationInfoScreen());
 
       default:
         return MaterialPageRoute(

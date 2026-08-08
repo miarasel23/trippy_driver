@@ -373,5 +373,7 @@
   "personal_info": "ব্যক্তিগত তথ্য",
   "car_info": "গাড়ির তথ্য",
   "car_photo": "গাড়ির ছবি",
-  "view_and_verify_documents": "নিবন্ধনের তথ্য ও অবস্থা দেখুন"
+  "view_and_verify_documents": "নিবন্ধনের তথ্য ও অবস্থা দেখুন",
+  "profile_info": "প্রোফাইল তথ্য",
+  "document_info": "নথিপত্রের তথ্য"
 }

@@ -6,4 +6,8 @@ class AppRoutes {
   static const home = '/home';
   static const navbar = '/navbar';
   static const String profile = '/profile';
+  static const String personalInfo = '/personal_info';
+  static const String account = '/account';
+  static const String registrationInfo = '/registration_info';
 }
+

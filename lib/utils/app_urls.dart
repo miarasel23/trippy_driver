@@ -17,6 +17,8 @@ class AppUrls {
       "$baseUrl/v1/driver/profile-update";
   static const String driverProfilePictureUpdate =
       "$baseUrl/v1/driver/driver-profile-picture-update";
+  static const String driverDocumentList =
+      "$baseUrl/v1/driver/driver-document-list";
   static const String rentalInfo = "$baseUrl/v1/rental-trip/rental-info";
   static const String rentalTripList = "$baseUrl/v1/rental-trip/rental-trip-list";
   static const String searchLocation = "$baseUrl/v1/global-api/search-location";

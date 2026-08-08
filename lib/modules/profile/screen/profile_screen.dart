@@ -256,11 +256,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: Colors.transparent,
                         child: InkWell(
                           onTap: () {
-                            Navigator.push(
+                            Navigator.pushNamed(
                               context,
-                              MaterialPageRoute(
-                                builder: (_) => const RegistrationInfoScreen(),
-                              ),
+                              AppRoutes.registrationInfo,
                             );
                           },
                           borderRadius: BorderRadius.circular(20),

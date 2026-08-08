@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/utils/localization/app_localization.dart';
+import '../../../../routes/app_routes.dart';
 import '../../../../store/user_data_store.dart';
 import '../../../../utils/to_title_case.dart';
 import '../../../../utils/app_urls.dart';
@@ -16,11 +17,11 @@ class RegistrationInfoScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     // Fallbacks
-    final phone = user?.phoneNumber ?? '01997709990';
-    final name = toTiTleCase(user?.fullName ?? 'N/A');
-    final email = user?.email ?? 'N/A';
-    final nid = user?.nidNumber ?? 'N/A';
-    final status = user?.isActive ?? 'ACTIVE';
+    final phone = user?.phoneNumber ?? '';
+    final name = toTiTleCase(user?.fullName ?? '');
+    final email = user?.email ?? '';
+    final nid = user?.nidNumber ?? '';
+    final status = user?.isActive ?? '';
 
     return Scaffold(
       backgroundColor: isDark 
@@ -55,16 +56,7 @@ class RegistrationInfoScreen extends StatelessWidget {
                 icon: Icons.person_rounded,
                 title: loc.translate("personal_info") ?? "Personal Info",
                 isCompleted: true,
-                onTap: () => _showDetailsBottomSheet(
-                  context: context,
-                  title: loc.translate("personal_info") ?? "Personal Info",
-                  details: {
-                    loc.translate("name") ?? "Name": name,
-                    loc.translate("phone_number") ?? "Phone": phone,
-                    loc.translate("email") ?? "Email": email,
-                    loc.translate("nid_number_label") ?? "NID": nid,
-                  },
-                ),
+                onTap: () => Navigator.pushNamed(context, AppRoutes.personalInfo),
               ),
               const SizedBox(height: 16),
               // Card 2: Car Info

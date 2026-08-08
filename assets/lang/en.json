@@ -368,5 +368,7 @@
   "personal_info": "Personal Info",
   "car_info": "Car Info",
   "car_photo": "Car Photo",
-  "view_and_verify_documents": "View & verify registration status"
+  "view_and_verify_documents": "View & verify registration status",
+  "profile_info": "Profile info",
+  "document_info": "Document info"
 }
