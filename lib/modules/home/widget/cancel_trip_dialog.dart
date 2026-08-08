@@ -55,6 +55,14 @@ class _CancelTripDialogState extends State<CancelTripDialog> {
       setState(() => _isSubmitting = false);
       
       if (error == null) {
+        controller.selectTripForPreview(null);
+        final successMsg = loc.translate('trip_cancelled_successfully') ?? 'Trip cancelled successfully';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(successMsg),
+            backgroundColor: Colors.green,
+          ),
+        );
         Navigator.of(context).pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));

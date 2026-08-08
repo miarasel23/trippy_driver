@@ -254,6 +254,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             isRideShare: isRideShare,
             isMyBid: true,
             showTimer: false,
+            showTimeText: false,
           ),
           if (status == 'ACCEPTED') ...[
             const SizedBox(height: 14),

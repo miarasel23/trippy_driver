@@ -55,6 +55,18 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
         
         final currentStatus = trip.tripStatus == 'REQUESTED' ? (trip.myBid?.status ?? trip.tripStatus) : trip.tripStatus;
 
+        final statusUpper = trip.tripStatus.toUpperCase();
+        final currentStatusUpper = currentStatus.toUpperCase();
+        final showActionButtons = 
+            statusUpper != 'REQUESTED' && 
+            statusUpper != 'CANCELLED' && 
+            statusUpper != 'COMPLETED' && 
+            statusUpper != 'REJECTED' &&
+            currentStatusUpper != 'REQUESTED' && 
+            currentStatusUpper != 'CANCELLED' && 
+            currentStatusUpper != 'COMPLETED' && 
+            currentStatusUpper != 'REJECTED';
+
         String? actionLabel;
         String? nextStatus;
         if (currentStatus == 'ACCEPTED') {
@@ -248,55 +260,57 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  AcceptedTripCardHelper.buildActionButton(
-                    icon: Icons.phone,
-                    label: loc.translate('call') ?? "Call",
-                    color: theme.colorScheme.onSurface,
-                    onTap: () async {
-                      if (trip.customer.isNotEmpty) {
-                        final phone = trip.customer.first.phone;
-                        await AcceptedTripCardHelper.launchPhoneCall(phone);
-                      }
-                    },
-                  ),
-                  AcceptedTripCardHelper.buildActionButton(
-                    icon: Icons.message,
-                    label: loc.translate('message') ?? "Message",
-                    color: theme.colorScheme.onSurface,
-                    onTap: () {},
-                  ),
-                  AcceptedTripCardHelper.buildActionButton(
-                    icon: Icons.navigation,
-                    label: loc.translate('navigate') ?? "Navigate",
-                    color: theme.colorScheme.onSurface,
-                    onTap: () async {
-                      final navTarget = ['IN_PROGRESS', 'RIDE_STARTED', 'FIRST_COMPLETED', 'COMPLETED'].contains(currentStatus) 
-                          ? dropoffLoc 
-                          : pickupLoc;
-                      await AcceptedTripCardHelper.launchNavigation(navTarget);
-                    },
-                  ),
-                  AcceptedTripCardHelper.buildActionButton(
-                    icon: Icons.cancel,
-                    label: loc.translate('cancel') ?? "Cancel",
-                    color: theme.colorScheme.onSurface,
-                    onTap: () {
-                      final homeController = context.read<HomeController>();
-                      showDialog(
-                        context: context,
-                        builder: (_) => BlocProvider.value(
-                          value: homeController,
-                          child: CancelTripDialog(tripUuid: trip.uuid),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
+              if (showActionButtons) ...[
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    AcceptedTripCardHelper.buildActionButton(
+                      icon: Icons.phone,
+                      label: loc.translate('call') ?? "Call",
+                      color: theme.colorScheme.onSurface,
+                      onTap: () async {
+                        if (trip.customer.isNotEmpty) {
+                          final phone = trip.customer.first.phone;
+                          await AcceptedTripCardHelper.launchPhoneCall(phone);
+                        }
+                      },
+                    ),
+                    AcceptedTripCardHelper.buildActionButton(
+                      icon: Icons.message,
+                      label: loc.translate('message') ?? "Message",
+                      color: theme.colorScheme.onSurface,
+                      onTap: () {},
+                    ),
+                    AcceptedTripCardHelper.buildActionButton(
+                      icon: Icons.navigation,
+                      label: loc.translate('navigate') ?? "Navigate",
+                      color: theme.colorScheme.onSurface,
+                      onTap: () async {
+                        final navTarget = ['IN_PROGRESS', 'RIDE_STARTED', 'FIRST_COMPLETED', 'COMPLETED'].contains(currentStatus) 
+                            ? dropoffLoc 
+                            : pickupLoc;
+                        await AcceptedTripCardHelper.launchNavigation(navTarget);
+                      },
+                    ),
+                    AcceptedTripCardHelper.buildActionButton(
+                      icon: Icons.cancel,
+                      label: loc.translate('cancel') ?? "Cancel",
+                      color: theme.colorScheme.onSurface,
+                      onTap: () {
+                        final homeController = context.read<HomeController>();
+                        showDialog(
+                          context: context,
+                          builder: (_) => BlocProvider.value(
+                            value: homeController,
+                            child: CancelTripDialog(tripUuid: trip.uuid),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
               if (actionLabel != null && nextStatus != null) ...[
                 const SizedBox(height: 16),
                 SizedBox(

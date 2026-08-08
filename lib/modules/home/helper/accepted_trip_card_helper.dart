@@ -375,6 +375,7 @@ class AcceptedTripCardHelper {
     required bool isRideShare,
     bool isMyBid = false,
     bool showTimer = true,
+    bool showTimeText = true,
   }) {
     final pickupLoc = getEffectivePickup(trip);
     final dropoffLoc = getEffectiveDropoff(trip);
@@ -389,7 +390,7 @@ class AcceptedTripCardHelper {
         ? trip.customer.first.name 
         : loc.translate('customer') ?? "Customer";
     final customerAvatar = trip.customer.isNotEmpty ? trip.customer.first.profilePicture : '';
-    final int totalTrips = trip.customer.isNotEmpty ? trip.customer.first.totalTripCount : trip.totalTripCount;
+    final int totalTrips = trip.customer.isNotEmpty ? trip.customer.first.totalTripComplete : trip.totalTripComplete;
     final String rawRating = trip.customer.isNotEmpty ? trip.customer.first.averageRating.toStringAsFixed(1) : "4.5";
     final String customerRating = totalTrips > 0 
         ? "${translateNumbersAndCommonWords(rawRating, isBangla)} (${translateNumbersAndCommonWords(totalTrips.toString(), isBangla)})" 
@@ -459,11 +460,13 @@ class AcceptedTripCardHelper {
                   ),
                 ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                timeText,
-                style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 10),
-              ),
+              if (showTimeText) ...[
+                const SizedBox(height: 2),
+                Text(
+                  timeText,
+                  style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 10),
+                ),
+              ],
             ],
           ),
         ),
