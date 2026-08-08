@@ -261,7 +261,7 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.uploadMessage ?? 'Document copy uploaded successfully'),
+                  content: Text(state.uploadMessage ?? 'Document(s) uploaded successfully'),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -269,7 +269,7 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(state.uploadMessage ?? 'Failed to upload document copy'),
+                  content: Text(state.uploadMessage ?? 'Failed to upload document(s)'),
                   backgroundColor: Colors.redAccent,
                 ),
               );
@@ -313,7 +313,7 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
 
                         final documents = state.documents;
                         if (documents.isEmpty) {
-                          return _buildEmptyWidget(context, loc);
+                          return const UploadAllDocumentsForm();
                         }
 
                         return ListView.separated(
@@ -413,7 +413,7 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
                                               ),
                                             ),
                                             const SizedBox(width: 8),
-                                            // Status Badge (light green if active, red if not active)
+                                            // Status Badge
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                               decoration: BoxDecoration(
@@ -627,6 +627,282 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class UploadAllDocumentsForm extends StatefulWidget {
+  const UploadAllDocumentsForm({super.key});
+
+  @override
+  State<UploadAllDocumentsForm> createState() => _UploadAllDocumentsFormState();
+}
+
+class _UploadAllDocumentsFormState extends State<UploadAllDocumentsForm> {
+  final _formKey = GlobalKey<FormState>();
+  final _nidController = TextEditingController();
+  final _licenseController = TextEditingController();
+
+  File? _nidFront;
+  File? _nidBack;
+  File? _licenseFront;
+  File? _licenseBack;
+
+  @override
+  void dispose() {
+    _nidController.dispose();
+    _licenseController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source, String field) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? file = await picker.pickImage(source: source, imageQuality: 85);
+      if (file != null) {
+        setState(() {
+          if (field == 'nidFront') _nidFront = File(file.path);
+          if (field == 'nidBack') _nidBack = File(file.path);
+          if (field == 'licenseFront') _licenseFront = File(file.path);
+          if (field == 'licenseBack') _licenseBack = File(file.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
+    }
+  }
+
+  void _showImageSourceOptions(String field) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (c) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined, color: Colors.blue),
+                title: Text('Upload from Mobile Gallery', style: GoogleFonts.poppins()),
+                onTap: () {
+                  Navigator.pop(c);
+                  _pickImage(ImageSource.gallery, field);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined, color: Colors.green),
+                title: Text('Direct Camera Photo', style: GoogleFonts.poppins()),
+                onTap: () {
+                  Navigator.pop(c);
+                  _pickImage(ImageSource.camera, field);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFilePickerItem({
+    required String label,
+    required File? file,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 110,
+        decoration: BoxDecoration(
+          color: file != null ? Colors.transparent : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withOpacity(file != null ? 0.8 : 0.2),
+            width: 1.5,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: file != null
+              ? Image.file(file, fit: BoxFit.cover, width: double.infinity)
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add_a_photo_outlined, size: 24, color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(height: 6),
+                    Text(
+                      label,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+
+  void _submitForm() {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (_nidFront == null || _nidBack == null || _licenseFront == null || _licenseBack == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('All document photos are required. Please upload NID Front, NID Back, License Front, and License Back copies.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    context.read<PersonalInfoBloc>().add(
+      UploadAllDriverDocuments(
+        nidFront: _nidFront!,
+        nidBack: _nidBack!,
+        nidNumber: _nidController.text.trim(),
+        licenseFront: _licenseFront!,
+        licenseBack: _licenseBack!,
+        licenseNumber: _licenseController.text.trim(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBgColor = isDark ? const Color(0xFF1E293B) : Theme.of(context).colorScheme.surface;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardBgColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Upload Verification Documents',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // NID Number input
+            TextFormField(
+              controller: _nidController,
+              keyboardType: TextInputType.number,
+              style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface),
+              decoration: InputDecoration(
+                labelText: 'NID Number *',
+                labelStyle: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                prefixIcon: const Icon(Icons.credit_card_outlined),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              validator: (val) => (val == null || val.trim().isEmpty) ? 'NID Number is required' : null,
+            ),
+            const SizedBox(height: 16),
+
+            // NID Picker Items Row
+            Row(
+              children: [
+                Expanded(
+                  child: _buildFilePickerItem(
+                    label: 'NID Front *',
+                    file: _nidFront,
+                    onTap: () => _showImageSourceOptions('nidFront'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildFilePickerItem(
+                    label: 'NID Back *',
+                    file: _nidBack,
+                    onTap: () => _showImageSourceOptions('nidBack'),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 32),
+
+            // License Number input
+            TextFormField(
+              controller: _licenseController,
+              keyboardType: TextInputType.text,
+              style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface),
+              decoration: InputDecoration(
+                labelText: 'License Number *',
+                labelStyle: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                prefixIcon: const Icon(Icons.badge_outlined),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              validator: (val) => (val == null || val.trim().isEmpty) ? 'License Number is required' : null,
+            ),
+            const SizedBox(height: 16),
+
+            // License Picker Items Row
+            Row(
+              children: [
+                Expanded(
+                  child: _buildFilePickerItem(
+                    label: 'License Front *',
+                    file: _licenseFront,
+                    onTap: () => _showImageSourceOptions('licenseFront'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildFilePickerItem(
+                    label: 'License Back *',
+                    file: _licenseBack,
+                    onTap: () => _showImageSourceOptions('licenseBack'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+
+            // Submit Button
+            ElevatedButton.icon(
+              onPressed: _submitForm,
+              icon: const Icon(Icons.cloud_upload_outlined),
+              label: Text(
+                'Upload & Submit All',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -36,6 +36,27 @@ class UploadDriverDocument extends PersonalInfoEvent {
   List<Object?> get props => [imagePath, documentType, documentNumber];
 }
 
+class UploadAllDriverDocuments extends PersonalInfoEvent {
+  final File nidFront;
+  final File nidBack;
+  final String nidNumber;
+  final File licenseFront;
+  final File licenseBack;
+  final String licenseNumber;
+
+  const UploadAllDriverDocuments({
+    required this.nidFront,
+    required this.nidBack,
+    required this.nidNumber,
+    required this.licenseFront,
+    required this.licenseBack,
+    required this.licenseNumber,
+  });
+
+  @override
+  List<Object?> get props => [nidFront, nidBack, nidNumber, licenseFront, licenseBack, licenseNumber];
+}
+
 // --- State ---
 enum ProfileUpdateStatus { initial, loading, success, failure }
 enum DocumentUploadStatus { initial, loading, success, failure }
@@ -99,6 +120,7 @@ class PersonalInfoBloc extends Bloc<PersonalInfoEvent, PersonalInfoState> {
     on<FetchPersonalInfoDocuments>(_onFetchPersonalInfoDocuments);
     on<UpdateProfileName>(_onUpdateProfileName);
     on<UploadDriverDocument>(_onUploadDriverDocument);
+    on<UploadAllDriverDocuments>(_onUploadAllDriverDocuments);
   }
 
   Future<void> _onFetchPersonalInfoDocuments(
@@ -187,6 +209,40 @@ class PersonalInfoBloc extends Bloc<PersonalInfoEvent, PersonalInfoState> {
         emit(state.copyWith(
           uploadStatus: DocumentUploadStatus.failure,
           uploadMessage: 'Failed to upload document image to server.',
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        uploadStatus: DocumentUploadStatus.failure,
+        uploadMessage: e.toString(),
+      ));
+    }
+  }
+
+  Future<void> _onUploadAllDriverDocuments(
+      UploadAllDriverDocuments event, Emitter<PersonalInfoState> emit) async {
+    emit(state.copyWith(uploadStatus: DocumentUploadStatus.loading, uploadMessage: null));
+
+    try {
+      final success = await repository.uploadAllDriverDocuments(
+        nidFront: event.nidFront,
+        nidBack: event.nidBack,
+        nidNumber: event.nidNumber,
+        licenseFront: event.licenseFront,
+        licenseBack: event.licenseBack,
+        licenseNumber: event.licenseNumber,
+      );
+
+      if (success) {
+        emit(state.copyWith(
+          uploadStatus: DocumentUploadStatus.success,
+          uploadMessage: 'All documents uploaded successfully',
+        ));
+        add(FetchPersonalInfoDocuments());
+      } else {
+        emit(state.copyWith(
+          uploadStatus: DocumentUploadStatus.failure,
+          uploadMessage: 'Failed to upload all documents.',
         ));
       }
     } catch (e) {

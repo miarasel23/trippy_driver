@@ -212,4 +212,96 @@ class PersonalInfoRepository {
       return false;
     }
   }
+
+  Future<bool> uploadAllDriverDocuments({
+    required File nidFront,
+    required File nidBack,
+    required String nidNumber,
+    required File licenseFront,
+    required File licenseBack,
+    required String licenseNumber,
+  }) async {
+    final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
+    final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
+
+    if (uuid == null || token == null) {
+      return false;
+    }
+
+    String platform = "web";
+    if (Platform.isAndroid) {
+      platform = "android";
+    } else if (Platform.isIOS) {
+      platform = "ios";
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final languageCode = prefs.getString('active_language_code') ?? 'en';
+
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse(AppUrls.driverDocumentUpload),
+      );
+
+      request.fields.addAll({
+        "platform": platform,
+        "language_code": languageCode,
+        "action_when": "driver_document_upload",
+        "driver_uuid": uuid,
+        "status": "PROGRESS",
+        "nid_number": nidNumber,
+        "license_number": licenseNumber,
+      });
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+      });
+
+      // Add NID Front
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'nid_front_side_copy',
+          nidFront.path,
+          contentType: MediaType('image', path.extension(nidFront.path).toLowerCase() == '.png' ? 'png' : 'jpeg'),
+        ),
+      );
+
+      // Add NID Back
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'nid_back_side_copy',
+          nidBack.path,
+          contentType: MediaType('image', path.extension(nidBack.path).toLowerCase() == '.png' ? 'png' : 'jpeg'),
+        ),
+      );
+
+      // Add License Front
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'license_front_copy',
+          licenseFront.path,
+          contentType: MediaType('image', path.extension(licenseFront.path).toLowerCase() == '.png' ? 'png' : 'jpeg'),
+        ),
+      );
+
+      // Add License Back
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'license_back_copy',
+          licenseBack.path,
+          contentType: MediaType('image', path.extension(licenseBack.path).toLowerCase() == '.png' ? 'png' : 'jpeg'),
+        ),
+      );
+
+      final response = await request.send();
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
 }
