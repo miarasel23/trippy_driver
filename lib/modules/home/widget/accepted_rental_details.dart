@@ -44,7 +44,7 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
             ? trip.customer.first.name 
             : loc.translate('customer') ?? "Customer";
         final customerAvatar = trip.customer.isNotEmpty ? trip.customer.first.profilePicture : '';
-        final int totalTrips = trip.customer.isNotEmpty ? trip.customer.first.totalTripCount : trip.totalTripCount;
+        final int totalTrips = trip.customer.isNotEmpty ? trip.customer.first.totalTripComplete : trip.totalTripComplete;
         final String rawRating = trip.customer.isNotEmpty ? trip.customer.first.averageRating.toStringAsFixed(1) : "4.5";
         final String customerRating = totalTrips > 0 
             ? "${AcceptedTripCardHelper.translateNumbersAndCommonWords(rawRating, isBangla)} (${AcceptedTripCardHelper.translateNumbersAndCommonWords(totalTrips.toString(), isBangla)})" 
@@ -164,11 +164,7 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          timeText,
-                          style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 10),
-                        ),
+                        // Pickup duration (timeText) removed
                       ],
                     ),
                   ),
