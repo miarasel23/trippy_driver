@@ -9,5 +9,6 @@ class AppRoutes {
   static const String personalInfo = '/personal_info';
   static const String account = '/account';
   static const String registrationInfo = '/registration_info';
+  static const String carInfo = '/car_info';
 }
 

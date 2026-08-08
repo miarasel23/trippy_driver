@@ -65,15 +65,7 @@ class RegistrationInfoScreen extends StatelessWidget {
                 icon: Icons.directions_car_rounded,
                 title: loc.translate("car_info") ?? "Car Info",
                 isCompleted: true,
-                onTap: () => _showDetailsBottomSheet(
-                  context: context,
-                  title: loc.translate("car_info") ?? "Car Info",
-                  details: {
-                    loc.translate("service") ?? "Service Mode": user?.currentRideStatus ?? 'RIDE_SHARE',
-                    loc.translate("status") ?? "Account Status": status,
-                    loc.translate("role") ?? "Role": user?.role?.name ?? 'Driver',
-                  },
-                ),
+                onTap: () => Navigator.pushNamed(context, AppRoutes.carInfo),
               ),
               const SizedBox(height: 16),
               // Card 3: Car Photo
@@ -83,23 +75,6 @@ class RegistrationInfoScreen extends StatelessWidget {
                 title: loc.translate("car_photo") ?? "Car Photo",
                 isCompleted: true,
                 onTap: () => _showPhotoBottomSheet(context),
-              ),
-              const SizedBox(height: 16),
-              // Card 4: Phone Card
-              _buildRegistrationCard(
-                context: context,
-                icon: Icons.wallet_membership_rounded,
-                title: phone,
-                isCompleted: true,
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: phone));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(loc.translate("copied_to_clipboard") ?? "Copied to clipboard"),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
               ),
             ],
           ),
