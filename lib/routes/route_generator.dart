@@ -9,6 +9,7 @@ import '../modules/profile/screen/profile_screen.dart';
 import '../modules/profile/screen/personal_info_screen.dart';
 import '../modules/profile/screen/registration_info_screen.dart';
 import '../modules/profile/screen/car_info_screen.dart';
+import '../modules/profile/screen/car_photo_screen.dart';
 import '../modules/splash/screen/splash_screen.dart';
 import 'app_routes.dart';
 
@@ -48,6 +49,9 @@ class RouteGenerator {
 
       case AppRoutes.carInfo:
         return MaterialPageRoute(settings: settings, builder: (_) => const CarInfoScreen());
+
+      case AppRoutes.carPhoto:
+        return MaterialPageRoute(settings: settings, builder: (_) => const CarPhotoScreen());
 
       default:
         return MaterialPageRoute(

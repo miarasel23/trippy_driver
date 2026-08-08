@@ -21,6 +21,9 @@ class AppUrls {
       "$baseUrl/v1/driver/driver-document-list";
   static const String driverDocumentUpload =
       "$baseUrl/v1/driver/driver-document-upload";
+  static const String carSetupAndPhotoList = "$baseUrl/v1/driver/car-setup-and-photo-list";
+  static const String carSetupAndPhotoUpload = "$baseUrl/v1/driver/car-setup-and-photo-upload";
+  static const String listCarCategory = "$baseUrl/v1/car/list-car-category";
   static const String rentalInfo = "$baseUrl/v1/rental-trip/rental-info";
   static const String rentalTripList = "$baseUrl/v1/rental-trip/rental-trip-list";
   static const String searchLocation = "$baseUrl/v1/global-api/search-location";

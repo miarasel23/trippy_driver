@@ -10,5 +10,6 @@ class AppRoutes {
   static const String account = '/account';
   static const String registrationInfo = '/registration_info';
   static const String carInfo = '/car_info';
+  static const String carPhoto = '/car_photo';
 }
 
