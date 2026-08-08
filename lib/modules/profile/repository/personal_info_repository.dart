@@ -5,6 +5,9 @@ import '../../../../core/network/api_service.dart';
 import '../../splash/model/current_user_model.dart';
 import '../../../../store/user_data_store.dart';
 import '../../../../utils/app_urls.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart' as path;
 
 class PersonalInfoRepository {
   Future<List<dynamic>?> getDriverDocumentList() async {
@@ -118,6 +121,91 @@ class PersonalInfoRepository {
           await UserDataStore.saveUserData(currentUser);
           return true;
         }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> uploadDriverDocument({
+    required File imageFile,
+    required String documentType,
+    required String documentNumber,
+  }) async {
+    final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
+    final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
+
+    if (uuid == null || token == null) {
+      return false;
+    }
+
+    String platform = "web";
+    if (Platform.isAndroid) {
+      platform = "android";
+    } else if (Platform.isIOS) {
+      platform = "ios";
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final languageCode = prefs.getString('active_language_code') ?? 'en';
+
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse(AppUrls.driverDocumentUpload),
+      );
+
+      request.fields.addAll({
+        "platform": platform,
+        "language_code": languageCode,
+        "action_when": "driver_document_upload",
+        "driver_uuid": uuid,
+        "status": "PROGRESS",
+      });
+
+      String fileFieldName = '';
+      if (documentType == 'NID_FRONT_COPY') {
+        fileFieldName = 'nid_front_side_copy';
+        request.fields['nid_number'] = documentNumber;
+      } else if (documentType == 'NID_BACK_COPY') {
+        fileFieldName = 'nid_back_side_copy';
+        request.fields['nid_number'] = documentNumber;
+      } else if (documentType == 'LICENSE_FONT_COPY' || documentType == 'LICENSE_FRONT_COPY') {
+        fileFieldName = 'license_front_copy';
+        request.fields['license_number'] = documentNumber;
+      } else if (documentType == 'LICENSE_BACK_COPY') {
+        fileFieldName = 'license_back_copy';
+        request.fields['license_number'] = documentNumber;
+      } else {
+        fileFieldName = documentType.toLowerCase();
+        request.fields['license_number'] = documentNumber;
+      }
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+      });
+
+      final ext = path.extension(imageFile.path).toLowerCase();
+      MediaType mediaType;
+      if (ext == '.png') {
+        mediaType = MediaType('image', 'png');
+      } else {
+        mediaType = MediaType('image', 'jpeg');
+      }
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          fileFieldName,
+          imageFile.path,
+          contentType: mediaType,
+        ),
+      );
+
+      final response = await request.send();
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
       }
       return false;
     } catch (e) {

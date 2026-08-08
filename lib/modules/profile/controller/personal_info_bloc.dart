@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../repository/personal_info_repository.dart';
@@ -20,8 +21,24 @@ class UpdateProfileName extends PersonalInfoEvent {
   List<Object?> get props => [fullName];
 }
 
+class UploadDriverDocument extends PersonalInfoEvent {
+  final String imagePath;
+  final String documentType;
+  final String documentNumber;
+
+  const UploadDriverDocument({
+    required this.imagePath,
+    required this.documentType,
+    required this.documentNumber,
+  });
+
+  @override
+  List<Object?> get props => [imagePath, documentType, documentNumber];
+}
+
 // --- State ---
 enum ProfileUpdateStatus { initial, loading, success, failure }
+enum DocumentUploadStatus { initial, loading, success, failure }
 
 class PersonalInfoState extends Equatable {
   final bool isLoading;
@@ -29,6 +46,8 @@ class PersonalInfoState extends Equatable {
   final String? errorMessage;
   final ProfileUpdateStatus updateStatus;
   final String? updateMessage;
+  final DocumentUploadStatus uploadStatus;
+  final String? uploadMessage;
 
   const PersonalInfoState({
     this.isLoading = false,
@@ -36,6 +55,8 @@ class PersonalInfoState extends Equatable {
     this.errorMessage,
     this.updateStatus = ProfileUpdateStatus.initial,
     this.updateMessage,
+    this.uploadStatus = DocumentUploadStatus.initial,
+    this.uploadMessage,
   });
 
   PersonalInfoState copyWith({
@@ -44,6 +65,8 @@ class PersonalInfoState extends Equatable {
     String? errorMessage,
     ProfileUpdateStatus? updateStatus,
     String? updateMessage,
+    DocumentUploadStatus? uploadStatus,
+    String? uploadMessage,
   }) {
     return PersonalInfoState(
       isLoading: isLoading ?? this.isLoading,
@@ -51,11 +74,21 @@ class PersonalInfoState extends Equatable {
       errorMessage: errorMessage ?? this.errorMessage,
       updateStatus: updateStatus ?? this.updateStatus,
       updateMessage: updateMessage ?? this.updateMessage,
+      uploadStatus: uploadStatus ?? this.uploadStatus,
+      uploadMessage: uploadMessage ?? this.uploadMessage,
     );
   }
 
   @override
-  List<Object?> get props => [isLoading, documents, errorMessage, updateStatus, updateMessage];
+  List<Object?> get props => [
+        isLoading,
+        documents,
+        errorMessage,
+        updateStatus,
+        updateMessage,
+        uploadStatus,
+        uploadMessage,
+      ];
 }
 
 // --- Bloc ---
@@ -65,6 +98,7 @@ class PersonalInfoBloc extends Bloc<PersonalInfoEvent, PersonalInfoState> {
   PersonalInfoBloc({required this.repository}) : super(const PersonalInfoState()) {
     on<FetchPersonalInfoDocuments>(_onFetchPersonalInfoDocuments);
     on<UpdateProfileName>(_onUpdateProfileName);
+    on<UploadDriverDocument>(_onUploadDriverDocument);
   }
 
   Future<void> _onFetchPersonalInfoDocuments(
@@ -75,11 +109,17 @@ class PersonalInfoBloc extends Bloc<PersonalInfoEvent, PersonalInfoState> {
       final response = await repository.getDriverDocumentList();
       if (response != null) {
         final filteredDocs = response.where((doc) {
+          final type = doc['document_type'];
           final number = doc['document_number'];
           final isNumberNotNull = number != null &&
               number.toString().trim().isNotEmpty &&
               number.toString().toLowerCase() != 'null';
-          return isNumberNotNull;
+          
+          final typeStr = type?.toString().toUpperCase() ?? '';
+          final isVehicleSmartCard = typeStr.contains('VEHICLE_REGISTRATION_SMART_CARD_COPY') || 
+                                     typeStr.contains('SMART_CARD');
+
+          return isNumberNotNull && !isVehicleSmartCard;
         }).toList();
 
         emit(state.copyWith(
@@ -121,6 +161,38 @@ class PersonalInfoBloc extends Bloc<PersonalInfoEvent, PersonalInfoState> {
       emit(state.copyWith(
         updateStatus: ProfileUpdateStatus.failure,
         updateMessage: e.toString(),
+      ));
+    }
+  }
+
+  Future<void> _onUploadDriverDocument(
+      UploadDriverDocument event, Emitter<PersonalInfoState> emit) async {
+    emit(state.copyWith(uploadStatus: DocumentUploadStatus.loading, uploadMessage: null));
+
+    try {
+      final file = File(event.imagePath);
+      final success = await repository.uploadDriverDocument(
+        imageFile: file,
+        documentType: event.documentType,
+        documentNumber: event.documentNumber,
+      );
+
+      if (success) {
+        emit(state.copyWith(
+          uploadStatus: DocumentUploadStatus.success,
+          uploadMessage: 'Document uploaded successfully',
+        ));
+        add(FetchPersonalInfoDocuments());
+      } else {
+        emit(state.copyWith(
+          uploadStatus: DocumentUploadStatus.failure,
+          uploadMessage: 'Failed to upload document image to server.',
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        uploadStatus: DocumentUploadStatus.failure,
+        uploadMessage: e.toString(),
       ));
     }
   }

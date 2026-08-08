@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/utils/localization/app_localization.dart';
 import '../../../../store/user_data_store.dart';
 import '../../../../utils/app_urls.dart';
@@ -105,6 +107,87 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
     );
   }
 
+  void _showImageSourceBottomSheet(BuildContext context, String documentType, String documentNumber) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(18.0),
+                child: Text(
+                  'Upload new copy for ${_formatDocType(documentType)}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined, color: Colors.blue),
+                title: Text('Upload from Mobile Gallery', style: GoogleFonts.poppins()),
+                onTap: () {
+                  Navigator.pop(bottomSheetContext);
+                  _pickAndUploadImage(context, ImageSource.gallery, documentType, documentNumber);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined, color: Colors.green),
+                title: Text('Direct Camera Photo', style: GoogleFonts.poppins()),
+                onTap: () {
+                  Navigator.pop(bottomSheetContext);
+                  _pickAndUploadImage(context, ImageSource.camera, documentType, documentNumber);
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickAndUploadImage(
+    BuildContext context,
+    ImageSource source,
+    String documentType,
+    String documentNumber,
+  ) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? file = await picker.pickImage(
+        source: source,
+        imageQuality: 85,
+      );
+
+      if (file != null) {
+        if (context.mounted) {
+          context.read<PersonalInfoBloc>().add(
+            UploadDriverDocument(
+              imagePath: file.path,
+              documentType: documentType,
+              documentNumber: documentNumber,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
@@ -137,8 +220,11 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
       ),
       body: SafeArea(
         child: BlocListener<PersonalInfoBloc, PersonalInfoState>(
-          listenWhen: (previous, current) => previous.updateStatus != current.updateStatus,
+          listenWhen: (previous, current) =>
+              previous.updateStatus != current.updateStatus ||
+              previous.uploadStatus != current.uploadStatus,
           listener: (context, state) {
+            // Check Profile Update State
             if (state.updateStatus == ProfileUpdateStatus.loading) {
               showDialog(
                 context: context,
@@ -146,7 +232,6 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
                 builder: (c) => const Center(child: CircularProgressIndicator()),
               );
             } else if (state.updateStatus == ProfileUpdateStatus.success) {
-              // Pop loading indicator
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -154,14 +239,37 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
                   backgroundColor: Colors.green,
                 ),
               );
-              // Trigger setState to redraw Name with new UserDataStore credentials
               setState(() {});
             } else if (state.updateStatus == ProfileUpdateStatus.failure) {
-              // Pop loading indicator
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.updateMessage ?? 'Failed to update profile'),
+                  backgroundColor: Colors.redAccent,
+                ),
+              );
+            }
+
+            // Check Document Upload State
+            if (state.uploadStatus == DocumentUploadStatus.loading) {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (c) => const Center(child: CircularProgressIndicator()),
+              );
+            } else if (state.uploadStatus == DocumentUploadStatus.success) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.uploadMessage ?? 'Document copy uploaded successfully'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } else if (state.uploadStatus == DocumentUploadStatus.failure) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.uploadMessage ?? 'Failed to upload document copy'),
                   backgroundColor: Colors.redAccent,
                 ),
               );
@@ -251,73 +359,98 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
                                   borderRadius: BorderRadius.circular(16),
                                   child: Padding(
                                     padding: const EdgeInsets.all(18.0),
-                                    child: Row(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        // Image Thumbnail or Icon
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: url.isNotEmpty
-                                              ? Image.network(
-                                                  "${AppUrls.imageBaseUrl}$url",
-                                                  width: 60,
-                                                  height: 60,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (context, error, stackTrace) => Container(
-                                                    width: 60,
-                                                    height: 60,
-                                                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                                    child: Icon(Icons.broken_image, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                        Row(
+                                          children: [
+                                            // Image Thumbnail or Icon
+                                            ClipRRect(
+                                              borderRadius: BorderRadius.circular(12),
+                                              child: url.isNotEmpty
+                                                  ? Image.network(
+                                                      "${AppUrls.imageBaseUrl}$url",
+                                                      width: 60,
+                                                      height: 60,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (context, error, stackTrace) => Container(
+                                                        width: 60,
+                                                        height: 60,
+                                                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                                        child: Icon(Icons.broken_image, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                                      ),
+                                                    )
+                                                  : Container(
+                                                      width: 60,
+                                                      height: 60,
+                                                      color: const Color(0xFFE8F0FE),
+                                                      child: const Icon(Icons.file_present_rounded, color: Color(0xFF1A73E8)),
+                                                    ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            // Info details
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    _formatDocType(type),
+                                                    style: GoogleFonts.poppins(
+                                                      fontSize: 15,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Theme.of(context).colorScheme.onSurface,
+                                                    ),
                                                   ),
-                                                )
-                                              : Container(
-                                                  width: 60,
-                                                  height: 60,
-                                                  color: const Color(0xFFE8F0FE),
-                                                  child: const Icon(Icons.file_present_rounded, color: Color(0xFF1A73E8)),
-                                                ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        // Info details
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                _formatDocType(type),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    'Number: $number',
+                                                    style: GoogleFonts.poppins(
+                                                      fontSize: 13,
+                                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            // Status Badge (light green if active, red if not active)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                              decoration: BoxDecoration(
+                                                color: isActive ? Colors.green.shade100 : Colors.red.shade100,
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                status,
                                                 style: GoogleFonts.poppins(
-                                                  fontSize: 15,
+                                                  fontSize: 11,
                                                   fontWeight: FontWeight.bold,
-                                                  color: Theme.of(context).colorScheme.onSurface,
+                                                  color: isActive ? Colors.green.shade800 : Colors.red.shade800,
                                                 ),
                                               ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                'Number: $number',
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 13,
-                                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
-                                        const SizedBox(width: 8),
-                                        // Status Badge (light green if active, red if not active)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                          decoration: BoxDecoration(
-                                            color: isActive ? Colors.green.shade100 : Colors.red.shade100,
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Text(
-                                            status,
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold,
-                                              color: isActive ? Colors.green.shade800 : Colors.red.shade800,
+                                        if (!isActive) ...[
+                                          const SizedBox(height: 12),
+                                          const Divider(height: 1),
+                                          const SizedBox(height: 8),
+                                          ElevatedButton.icon(
+                                            onPressed: () => _showImageSourceBottomSheet(context, type, number),
+                                            icon: const Icon(Icons.camera_alt_outlined, size: 16),
+                                            label: Text(
+                                              'Upload New Document Copy',
+                                              style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              minimumSize: const Size(double.infinity, 40),
+                                              backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                              foregroundColor: Theme.of(context).colorScheme.primary,
+                                              elevation: 0,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                             ),
                                           ),
-                                        ),
+                                        ],
                                       ],
                                     ),
                                   ),
