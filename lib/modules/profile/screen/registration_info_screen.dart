@@ -227,7 +227,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
                                     Text(
                                       loc.translate("status") ?? 'Account Status',
                                       style: GoogleFonts.poppins(
-                                        fontSize: 13,
+                                        fontSize: 14,
                                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -235,12 +235,12 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
                                     const SizedBox(height: 4),
                                     Row(
                                       children: [
-                                        Icon(statusIcon, color: statusColor, size: 20),
-                                        const SizedBox(width: 6),
+                                        Icon(statusIcon, color: statusColor, size: 24),
+                                        const SizedBox(width: 8),
                                         Text(
                                           statusLabel,
                                           style: GoogleFonts.poppins(
-                                            fontSize: 18,
+                                            fontSize: 22,
                                             fontWeight: FontWeight.bold,
                                             color: Theme.of(context).colorScheme.onSurface,
                                           ),
@@ -253,8 +253,8 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
                                           ? 'Your profile is approved. You are ready to accept trips!'
                                           : 'We are verifying your documents. This usually takes 24 hours.',
                                       style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.8),
+                                        fontSize: 13,
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                                       ),
                                     ),
                                   ],
@@ -269,7 +269,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
                         Text(
                           'Verification Checklist',
                           style: GoogleFonts.poppins(
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
@@ -335,7 +335,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
     Widget? statusBadge;
 
     if (isVerified) {
-      itemBorderColor = Colors.green.withOpacity(0.2);
+      itemBorderColor = Colors.green.withValues(alpha: 0.2);
       iconBgColor = Colors.green.shade50;
       iconColor = Colors.green.shade700;
       statusBadge = Container(
@@ -352,7 +352,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
             Text(
               'Verified',
               style: GoogleFonts.poppins(
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: Colors.green.shade700,
               ),
@@ -361,7 +361,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
         ),
       );
     } else if (isWarning) {
-      itemBorderColor = Colors.red.withOpacity(0.2);
+      itemBorderColor = Colors.red.withValues(alpha: 0.2);
       iconBgColor = Colors.red.shade50;
       iconColor = Colors.red.shade700;
       statusBadge = Container(
@@ -378,7 +378,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
             Text(
               'Action Needed',
               style: GoogleFonts.poppins(
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: Colors.red.shade700,
               ),
@@ -387,7 +387,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
         ),
       );
     } else {
-      itemBorderColor = theme.colorScheme.outlineVariant.withOpacity(0.3);
+      itemBorderColor = theme.colorScheme.outlineVariant.withValues(alpha: 0.3);
       iconBgColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE8F0FE);
       iconColor = const Color(0xFF1A73E8);
       statusBadge = null;
@@ -404,7 +404,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.015),
+            color: Colors.black.withValues(alpha: 0.015),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -441,16 +441,16 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
                       Text(
                         title,
                         style: GoogleFonts.poppins(
-                          fontSize: 15,
+                          fontSize: 17,
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.onSurface,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
                         subtitle,
                         style: GoogleFonts.poppins(
-                          fontSize: 11,
+                          fontSize: 13,
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -464,7 +464,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
                 // Trailing Arrow icon shown for ALL tabs
                 Icon(
                   Icons.arrow_forward_ios_rounded,
-                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                   size: 14,
                 ),
               ],
