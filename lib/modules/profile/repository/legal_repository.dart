@@ -27,15 +27,12 @@ class LegalRepository {
           'Accept': 'application/json',
         },
       );
-
-      print("fetchPolicies response: ${response.body}");
-      print("country code: ${countryCode}");
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         return PolicyModel.fromJson(jsonResponse);
       }
     } catch (e) {
-      print("fetchPolicies error: $e");
+      // Error is handled by ApiService
     }
     return null;
   }
