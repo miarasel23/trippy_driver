@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/utils/localization/app_localization.dart';
@@ -10,10 +12,66 @@ import '../controller/send_otp_event.dart';
 import '../controller/send_otp_state.dart';
 import '../../../core/utils/ui_utils.dart';
 
-class NumberInputScreen extends StatelessWidget {
-  NumberInputScreen({super.key});
+class NumberInputScreen extends StatefulWidget {
+  const NumberInputScreen({super.key});
 
+  @override
+  State<NumberInputScreen> createState() => _NumberInputScreenState();
+}
+
+class _NumberInputScreenState extends State<NumberInputScreen> {
   final TextEditingController numberField = TextEditingController();
+  bool _isValid = false;
+  String? _validationError;
+
+  @override
+  void initState() {
+    super.initState();
+    numberField.addListener(_validateInput);
+  }
+
+  @override
+  void dispose() {
+    numberField.removeListener(_validateInput);
+    numberField.dispose();
+    super.dispose();
+  }
+
+  void _validateInput() {
+    final value = numberField.text;
+    if (value.isEmpty) {
+      setState(() {
+        _isValid = false;
+        _validationError = null;
+      });
+      return;
+    }
+    if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+      setState(() {
+        _isValid = false;
+        _validationError = "Phone number must contain only digits";
+      });
+      return;
+    }
+    if (!value.startsWith('01')) {
+      setState(() {
+        _isValid = false;
+        _validationError = "Phone number must start with 01";
+      });
+      return;
+    }
+    if (value.length != 11) {
+      setState(() {
+        _isValid = false;
+        _validationError = "Phone number must be exactly 11 digits";
+      });
+      return;
+    }
+    setState(() {
+      _isValid = true;
+      _validationError = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,10 +105,10 @@ class NumberInputScreen extends StatelessWidget {
             bottomNavigationBar: SafeArea(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF141924) : Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, -5),
                     )
@@ -66,20 +124,23 @@ class NumberInputScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     BlocBuilder<SendOtpBloc, SendOtpState>(
                       builder: (context, state) {
+                        final isDark = Theme.of(context).brightness == Brightness.dark;
+                        final activeBg = isDark ? Colors.white : Colors.black;
+                        final activeFg = isDark ? Colors.black : Colors.white;
+
                         return ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, // Pathao/inDrive vibrant color
-                            foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.white,
+                            backgroundColor: _isValid ? activeBg : (isDark ? const Color(0xFF2A3143) : Colors.grey.shade300),
+                            foregroundColor: _isValid ? activeFg : (isDark ? Colors.white38 : Colors.grey.shade600),
                             minimumSize: const Size(double.infinity, 54),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
                             elevation: 0,
                           ),
-                          onPressed: state.status == OtpStatus.loading
+                          onPressed: (state.status == OtpStatus.loading || !_isValid)
                               ? null
                               : () {
-                                  if (numberField.text.isEmpty) return;
                                   context.read<SendOtpBloc>().add(
                                     SendOtp(
                                       numberField.text,
@@ -92,7 +153,10 @@ class NumberInputScreen extends StatelessWidget {
                               SizedBox(
                                 height: 24,
                                 width: 24,
-                                child: CircularProgressIndicator(color: Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.white, strokeWidth: 2.5),
+                                child: CircularProgressIndicator(
+                                  color: isDark ? Colors.black : Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
                               ),
                             OtpStatus.failure => Text(
                               loc.translate("retry"),
@@ -126,7 +190,7 @@ class NumberInputScreen extends StatelessWidget {
                       loc.translate("enter_your_phone_number"),
                       style: GoogleFonts.poppins(
                         fontSize: 26,
-                        fontWeight: FontWeight.bold, // Uber's bold header
+                        fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
@@ -139,15 +203,14 @@ class NumberInputScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 40),
-                    // inDrive style elevated card for the input
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E2433) : Colors.white,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
+                            color: Colors.black.withValues(alpha: 0.04),
                             blurRadius: 24,
                             offset: const Offset(0, 8),
                           ),
@@ -161,11 +224,25 @@ class NumberInputScreen extends StatelessWidget {
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade700,
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade400 : Colors.grey.shade700,
                             ),
                           ),
                           const SizedBox(height: 12),
                           numberBasedLoginField(loc, numberField),
+                          if (_validationError != null) ...[
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4.0),
+                              child: Text(
+                                _validationError!,
+                                style: GoogleFonts.poppins(
+                                  color: Colors.redAccent,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -180,15 +257,16 @@ class NumberInputScreen extends StatelessWidget {
   }
 
   Widget _buildLanguageSwitcher(BuildContext context, AppLocalizations loc, String currentLang) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E2433) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -205,6 +283,7 @@ class NumberInputScreen extends StatelessWidget {
   }
 
   Widget _langButton(BuildContext context, String code, String label, bool isSelected) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
         context.read<LocalizationBloc>().add(ChangeLanguageEvent(code));
@@ -212,7 +291,7 @@ class NumberInputScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.black : Colors.transparent,
+          color: isSelected ? (isDark ? Colors.white : Colors.black) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
@@ -220,7 +299,9 @@ class NumberInputScreen extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? Colors.white : Colors.grey.shade700,
+            color: isSelected 
+                ? (isDark ? Colors.black : Colors.white) 
+                : (isDark ? Colors.grey.shade400 : Colors.grey.shade700),
           ),
         ),
       ),
@@ -228,6 +309,7 @@ class NumberInputScreen extends StatelessWidget {
   }
 
   Widget richTextEnglish(AppLocalizations loc) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
@@ -236,9 +318,17 @@ class NumberInputScreen extends StatelessWidget {
         children: [
           TextSpan(
             text: "Terms and Conditions",
+            recognizer: TapGestureRecognizer()
+              ..onTap = () {
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.legalPolicy,
+                  arguments: 'TERMS_CONDITION',
+                );
+              },
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Colors.black,
+              color: isDark ? Colors.white : Colors.black,
               fontWeight: FontWeight.w600,
               decoration: TextDecoration.underline,
             ),
@@ -249,6 +339,7 @@ class NumberInputScreen extends StatelessWidget {
   }
 
   Widget richTextBangle(AppLocalizations loc) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
@@ -257,9 +348,17 @@ class NumberInputScreen extends StatelessWidget {
         children: [
           TextSpan(
             text: "শর্তাবলী ও নিয়মাবলীর ",
+            recognizer: TapGestureRecognizer()
+              ..onTap = () {
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.legalPolicy,
+                  arguments: 'TERMS_CONDITION',
+                );
+              },
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Colors.black,
+              color: isDark ? Colors.white : Colors.black,
               fontWeight: FontWeight.w600,
               decoration: TextDecoration.underline,
             ),
@@ -274,11 +373,12 @@ class NumberInputScreen extends StatelessWidget {
   }
 
   Widget numberBasedLoginField(AppLocalizations loc, TextEditingController controller) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F3F5), // Pathao style light grey fill
-        borderRadius: BorderRadius.circular(16), // Softer, rounder edges
+        color: isDark ? const Color(0xFF141924) : const Color(0xFFF1F3F5),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
@@ -289,28 +389,31 @@ class NumberInputScreen extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            "+880",
+            "+88",
             style: GoogleFonts.poppins(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Colors.black87,
+              color: isDark ? Colors.white70 : Colors.black87,
             ),
           ),
           const SizedBox(width: 12),
           Container(
             width: 1,
             height: 24,
-            color: Colors.grey.shade400,
+            color: isDark ? Colors.white24 : Colors.grey.shade400,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: TextFormField(
               controller: controller,
               keyboardType: TextInputType.phone,
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(11),
+              ],
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.black87,
+                color: isDark ? Colors.white : Colors.black87,
                 letterSpacing: 1.5,
               ),
               decoration: InputDecoration(
@@ -318,12 +421,13 @@ class NumberInputScreen extends StatelessWidget {
                 hintStyle: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade400,
+                  color: isDark ? Colors.white24 : Colors.grey.shade400,
                   letterSpacing: 0,
                 ),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
+                counterText: "", // hides default counter under field
               ),
             ),
           ),
