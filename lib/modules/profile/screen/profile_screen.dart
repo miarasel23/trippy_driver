@@ -491,22 +491,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildListItem(
                 icon: Icons.help_outline,
                 title: loc.translate("help"),
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.legalPolicy, arguments: 'HELP_AND_SUPPORT');
+                },
               ),
               _buildListItem(
                 icon: Icons.article_outlined,
                 title: loc.translate("terms_conditions"),
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.legalPolicy, arguments: 'TERMS_CONDITION');
+                },
               ),
               _buildListItem(
                 icon: Icons.description_outlined,
                 title: loc.translate("trip_terms_conditions"),
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.legalPolicy, arguments: 'TRIP_POLICY');
+                },
               ),
               _buildListItem(
                 icon: Icons.privacy_tip_outlined,
                 title: loc.translate("privacy_policy"),
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.legalPolicy, arguments: 'PRIVACY_POLICY');
+                },
               ),
               _buildListItem(
                 icon: Icons.logout,

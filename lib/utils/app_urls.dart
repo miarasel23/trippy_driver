@@ -43,6 +43,7 @@ class AppUrls {
   static const String purchaseDriverSubscriptionPlan = "$baseUrl/v1/subscription/purchase-driver-subscription-plan";
   static const String rechargeDriverAccount = "$baseUrl/v1/subscription/recharge-driver-account";
   static const String apiKeys = "$baseUrl/v1/global-api/api-keys";
+  static const String privacyPolicyTermsList = "$baseUrl/v1/global-api/privacy-policy-terms-condition/list";
   static String? get profileImageUrl {
     final image = UserDataStore.userData?.data?.user?.profilePicture;
 

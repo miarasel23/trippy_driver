@@ -5,6 +5,19 @@ class AppGlobals {
   static String platform = "web";
   static String countryCode = "BD";
 
+  /// Maps language codes to their corresponding country codes globally.
+  /// Bangla (bn) → BD, English (en) → GB
+  static const Map<String, String> languageCountryMap = {
+    'bn': 'BD',
+    'en': 'GB',
+  };
+
+  /// Returns the country code for the given language code.
+  /// Falls back to [countryCode] if no mapping is found.
+  static String countryCodeForLanguage(String languageCode) {
+    return languageCountryMap[languageCode] ?? countryCode;
+  }
+
   static void init() {
     try {
       if (Platform.isAndroid) {
