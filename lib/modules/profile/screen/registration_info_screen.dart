@@ -146,17 +146,18 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
     switch (status.toString().toUpperCase()) {
       case 'ACTIVE':
         statusColor = Colors.green;
-        statusLabel = loc.translate("active") ?? "Active";
+        statusLabel = loc.translate("active");
         statusIcon = Icons.verified_user_rounded;
         break;
       case 'PROGRESS':
+      case 'UNDER_REVIEW':
         statusColor = Colors.orange;
-        statusLabel = loc.translate("under_review") ?? "Under Review";
+        statusLabel = loc.translate("under_review");
         statusIcon = Icons.pending_actions_rounded;
         break;
       default:
         statusColor = Colors.redAccent;
-        statusLabel = loc.translate("inactive") ?? "Inactive";
+        statusLabel = loc.translate("inactive");
         statusIcon = Icons.error_outline_rounded;
     }
 

@@ -76,6 +76,8 @@ class _NavbarScreenState extends State<NavbarScreen> {
       _bidsRefreshTrigger.value++;
     } else if (index == 2 && _selectedIndex != 2) {
       _historyRefreshTrigger.value++;
+    } else if (index == 3) {
+      context.read<AccountBloc>().add(FetchAccountHistory());
     }
     setState(() {
       _selectedIndex = index;

@@ -114,7 +114,9 @@ class _AccountScreenState extends State<AccountScreen> {
 
           return RefreshIndicator(
             onRefresh: () async {
-              context.read<AccountBloc>().add(FetchAccountHistory());
+              final bloc = context.read<AccountBloc>();
+              bloc.add(FetchAccountHistory(filterType: state.filterType));
+              await bloc.stream.firstWhere((s) => !s.isLoading);
             },
             child: ListView(
               controller: _scrollController,
@@ -122,8 +124,10 @@ class _AccountScreenState extends State<AccountScreen> {
               children: [
                 _buildBalancesSection(theme, data, state, loc, isBangla, currency),
                 const SizedBox(height: 16),
-                if (data.activePackageDetails != null)
-                  _buildPackageSection(theme, data.activePackageDetails!, loc, isBangla, currency),
+                if (data.activePackageDetails != null && data.activePackageDetails!.subscriptionUuid.isNotEmpty)
+                  _buildPackageSection(theme, data.activePackageDetails!, loc, isBangla, currency)
+                else
+                  _buildEmptyPackageSection(theme, loc, isBangla, currency),
                 const SizedBox(height: 16),
                 _buildHistorySection(theme, state, loc, isBangla, currency),
               ],
@@ -559,6 +563,93 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
+  Widget _buildEmptyPackageSection(ThemeData theme, AppLocalizations loc, bool isBangla, String currency) {
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBgColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBgColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                loc.translate('subscription_details'),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  loc.translate('inactive'),
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+          Center(
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.card_membership_rounded,
+                    size: 40,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  loc.translate('no_active_subscription'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Text(
+                    loc.translate('no_active_subscription_msg'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInfoRow(String label, String value, ThemeData theme, {bool highlight = false, Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -769,11 +860,13 @@ class _AccountScreenState extends State<AccountScreen> {
             }
 
             final tx = state.transactions[index];
-            final isCredit = tx.credit > 0;
-            final amount = isCredit ? tx.credit : tx.debit;
-            final amountStr = _formatNumber(amount.toStringAsFixed(0), isBangla);
-            
             String displayDesc = tx.description.replaceAll(RegExp(r'\(Booking: [\d.]+\)\s*&\s*Service charge:\s*[\d.]+'), '& Service charge');
+
+            final isOpeningBalance = displayDesc.toLowerCase().contains('opening balance');
+            final isDebit = tx.debit >= 1 && !isOpeningBalance;
+            final isCredit = (tx.credit > 0 || isOpeningBalance) && !isDebit;
+            final amount = (isOpeningBalance && tx.credit == 0 && tx.debit > 0) ? tx.debit : (isCredit ? tx.credit : tx.debit);
+            final amountStr = _formatNumber(amount.toStringAsFixed(0), isBangla);
 
             return GestureDetector(
               onTap: () => _showTransactionDetails(context, tx, displayDesc, isCredit, amountStr, isBangla, currency, theme, loc),

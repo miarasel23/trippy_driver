@@ -41,7 +41,21 @@ class ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
-    final active = isActive?.toUpperCase() == 'ACTIVE';
+    final statusStr = isActive?.toUpperCase() ?? 'INACTIVE';
+    final active = statusStr == 'ACTIVE';
+    final isProgress = statusStr == 'PROGRESS' || statusStr == 'UNDER_REVIEW';
+
+    final Color badgeBgColor = active
+        ? Colors.green.shade100
+        : (isProgress ? Colors.orange.shade100 : Colors.red.shade100);
+
+    final Color badgeTextColor = active
+        ? Colors.green.shade800
+        : (isProgress ? Colors.orange.shade800 : Colors.red.shade800);
+
+    final String label = active
+        ? loc.translate('active')
+        : (isProgress ? loc.translate('under_review') : loc.translate('inactive'));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,15 +74,15 @@ class ProfileHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: active ? Colors.green.shade100 : Colors.red.shade100,
+                color: badgeBgColor,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                isActive ?? 'INACTIVE',
+                label,
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: active ? Colors.green.shade800 : Colors.red.shade800,
+                  color: badgeTextColor,
                 ),
               ),
             ),
