@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/localization/app_localization.dart';
 import '../controller/account_bloc.dart';
 import '../model/package_details_model.dart';
-import '../widget/account_recharge_dialog.dart';
-import '../widget/account_widgets.dart';
+import '../widget/account_recharge_dialog_widget.dart';
+import '../widget/account_widget.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});

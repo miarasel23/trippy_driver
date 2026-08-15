@@ -22,7 +22,7 @@ import 'modules/account/controller/account_bloc.dart';
 import 'modules/account/repository/account_repository.dart';
 import 'modules/home/controller/home_controller.dart';
 import 'modules/home/repository/home_repository.dart';
-import 'modules/home/widget/accepted_trip_card.dart';
+import 'modules/home/widget/accepted_trip_card_widget.dart';
 import 'routes/app_routes.dart';
 import 'routes/route_generator.dart';
 import 'store/user_data_store.dart';

@@ -5,7 +5,7 @@ import '../controller/home_controller.dart';
 import '../../../../core/utils/localization/app_localization.dart';
 import '../model/rental_trip_model.dart';
 import '../helper/accepted_trip_card_helper.dart';
-import 'offer_bottom_sheet_widgets.dart';
+import 'offer_bottom_sheet_helper.dart';
 
 class OfferBottomSheet extends StatefulWidget {
   final RentalTripModel trip;

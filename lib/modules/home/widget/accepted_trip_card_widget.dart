@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../controller/home_controller.dart';
 import '../../../../core/utils/localization/app_localization.dart';
 import '../model/rental_trip_model.dart';
-import 'translated_text.dart';
+import 'translated_text_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'cancel_trip_dialog.dart';
 import '../helper/accepted_trip_card_helper.dart';

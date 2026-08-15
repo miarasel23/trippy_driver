@@ -7,7 +7,7 @@ import '../../../../core/utils/localization/app_localization.dart';
 import '../../../../store/user_data_store.dart';
 import '../../../../utils/app_urls.dart';
 import '../../../../utils/to_title_case.dart';
-import '../../../../widgets/full_screen_image_gallery.dart';
+import '../../../../widgets/full_screen_image_gallery_widget.dart';
 import '../controller/car_info_bloc.dart';
 import '../repository/car_info_repository.dart';
 

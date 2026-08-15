@@ -5,8 +5,8 @@ import '../model/rental_trip_model.dart';
 import '../controller/home_controller.dart';
 import '../helper/new_request_card_helper.dart';
 import '../helper/accepted_trip_card_helper.dart';
-import 'translated_text.dart';
-import 'offer_bottom_sheet.dart';
+import 'translated_text_widget.dart';
+import 'offer_bottom_sheet_widget.dart';
 import '../../../../utils/app_urls.dart';
 import '../../../../store/app_globals.dart';
 class NewRequestCard extends StatefulWidget {

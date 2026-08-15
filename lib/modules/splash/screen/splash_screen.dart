@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../routes/app_routes.dart';
 import '../../../store/user_data_store.dart';
 import '../repository/splash_repository.dart';
-import '../widget/trippy_brand_animation.dart';
+import '../widget/trippy_brand_animation_widget.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

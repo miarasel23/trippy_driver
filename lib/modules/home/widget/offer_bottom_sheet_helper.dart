@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/utils/localization/app_localization.dart';
 
 import '../model/rental_trip_model.dart';
-import 'translated_text.dart';
+import 'translated_text_widget.dart';
 import '../../../../utils/app_urls.dart';
 
 // ─── Offer utility ──────────────────────────────────────────────────────────

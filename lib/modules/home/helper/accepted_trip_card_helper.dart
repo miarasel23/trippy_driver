@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../model/rental_trip_model.dart';
 import '../../../../store/app_globals.dart';
 import '../../../../core/utils/localization/app_localization.dart';
-import '../widget/translated_text.dart';
+import '../widget/translated_text_widget.dart';
 import '../../../../utils/app_urls.dart';
 
 class AcceptedTripCardHelper {

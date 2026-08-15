@@ -12,7 +12,7 @@ import '../../splash/model/current_user_model.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-import '../widgets/profile_widgets.dart';
+import '../widgets/profile_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

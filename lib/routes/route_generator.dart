@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../modules/auth/screen/number_Input_screen.dart';
+import '../modules/auth/screen/number_input_screen.dart';
 import '../modules/editProfile/screen/edit_profile_screen.dart';
 import '../modules/navbar/screen/navbar_screen.dart';
 import '../modules/otp/screen/otp_signin_screen.dart';

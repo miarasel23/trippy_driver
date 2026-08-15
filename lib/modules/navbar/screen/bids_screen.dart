@@ -6,7 +6,7 @@ import '../../home/controller/home_controller.dart';
 import '../../home/helper/accepted_trip_card_helper.dart';
 import '../../home/model/rental_trip_model.dart';
 import '../../home/repository/home_repository.dart';
-import '../../home/widget/translated_text.dart';
+import '../../home/widget/translated_text_widget.dart';
 import '../../../store/user_data_store.dart';
 
 class BidsScreen extends StatefulWidget {
