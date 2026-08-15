@@ -18,6 +18,7 @@ import '../widget/accepted_rental_details.dart';
 import '../widget/service_mode_bottom_sheet.dart';
 import '../widget/review_bottom_sheet.dart';
 
+import '../../../routes/app_routes.dart';
 import '../../../core/utils/ui_utils.dart';
 import '../../../store/user_data_store.dart';
 import '../../../../core/utils/localization/app_localization.dart';
@@ -89,7 +90,9 @@ class _HomeViewState extends State<HomeView> {
         body: Stack(
           children: [
             BlocListener<HomeController, HomeState>(
-              listenWhen: (previous, current) => previous.accountStatus != current.accountStatus && current.accountStatus.toUpperCase() != 'ACTIVE',
+              listenWhen: (previous, current) => previous.accountStatus != current.accountStatus && 
+                  current.accountStatus.toUpperCase() != 'ACTIVE' && 
+                  current.accountStatus.toUpperCase() != 'PROGRESS',
               listener: (context, state) {
                  final loc = AppLocalizations.of(context);
                  showDialog(
@@ -100,14 +103,14 @@ class _HomeViewState extends State<HomeView> {
                        children: [
                          const Icon(Icons.warning_rounded, color: Colors.red),
                          const SizedBox(width: 8),
-                         Text(loc.translate('account_restricted_title') ?? 'Account Restricted', style: const TextStyle(color: Colors.red, fontSize: 18)),
+                         Text(loc.translate('account_restricted_title'), style: const TextStyle(color: Colors.red, fontSize: 18)),
                        ],
                      ),
-                     content: Text(loc.translate('account_restricted_support') ?? 'Account restricted, please contact support.'),
+                     content: Text(loc.translate('account_restricted_support')),
                      actions: [
                        TextButton(
                          onPressed: () => Navigator.pop(ctx),
-                         child: Text(loc.translate('ok') ?? 'OK'),
+                         child: Text(loc.translate('ok')),
                        )
                      ],
                    )
@@ -210,36 +213,57 @@ class _HomeViewState extends State<HomeView> {
                     if (!isNotActive) return const SizedBox.shrink();
 
                     final loc = AppLocalizations.of(context);
-                    return Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade600,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                           BoxShadow(
-                             color: Colors.red.withOpacity(0.3),
-                             blurRadius: 10,
-                             offset: const Offset(0, 4),
-                           )
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.warning_rounded, color: Colors.white, size: 28),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              loc.translate('account_restricted_support') ?? "Account restricted, please contact support.",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                    final isProgress = state.accountStatus.toUpperCase() == 'PROGRESS';
+                    final bgColor = isProgress ? const Color(0xFFF59E0B) : Colors.red.shade600;
+                    final textColor = isProgress ? Colors.black87 : Colors.white;
+                    final iconColor = isProgress ? Colors.black87 : Colors.white;
+                    final shadowColor = isProgress ? const Color(0xFFF59E0B).withValues(alpha: 0.3) : Colors.red.withValues(alpha: 0.3);
+
+                    final warningText = isProgress 
+                        ? loc.translate('account_progress_warning')
+                        : loc.translate('account_restricted_support');
+
+                    return GestureDetector(
+                      onTap: () {
+                        if (isProgress) {
+                          Navigator.pushNamed(context, AppRoutes.registrationInfo);
+                        }
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: bgColor,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                             BoxShadow(
+                               color: shadowColor,
+                               blurRadius: 10,
+                               offset: const Offset(0, 4),
+                             )
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.warning_rounded, color: iconColor, size: 28),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                warningText,
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                            if (isProgress) ...[
+                              const SizedBox(width: 8),
+                              Icon(Icons.arrow_forward_ios_rounded, color: iconColor, size: 16),
+                            ],
+                          ],
+                        ),
                       ),
                     );
                   }
