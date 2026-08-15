@@ -526,7 +526,6 @@ void showEditProfileDialog({
   final nameController = TextEditingController(text: initialName);
   final emailController = TextEditingController(text: initialEmail);
   final phoneController = TextEditingController(text: initialPhone);
-  final nidController = TextEditingController();
   bool isLoading = false;
 
   showDialog(
@@ -582,17 +581,6 @@ void showEditProfileDialog({
                           color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: nidController,
-                    style:
-                        GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface),
-                    decoration: InputDecoration(
-                      labelText: 'NID Number',
-                      labelStyle: GoogleFonts.poppins(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -634,7 +622,7 @@ void showEditProfileDialog({
                         'uuid': UserDataStore.uuid,
                         'full_name': nameController.text,
                         'email': emailController.text,
-                        'nid_number': nidController.text.trim(),
+                        'nid_number': UserDataStore.userData?.data?.user?.nidNumber ?? '',
                         'is_notification_enabled':
                             (UserDataStore.userData?.data?.user?.isNotificationEnabled ??
                                     false)
