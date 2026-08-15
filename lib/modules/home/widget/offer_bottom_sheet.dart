@@ -4,34 +4,39 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../controller/home_controller.dart';
 import '../../../../core/utils/localization/app_localization.dart';
 import '../model/rental_trip_model.dart';
-import 'translated_text.dart';
 import '../helper/accepted_trip_card_helper.dart';
-import '../../../../utils/app_urls.dart';
+import 'offer_bottom_sheet_widgets.dart';
 
 class OfferBottomSheet extends StatefulWidget {
   final RentalTripModel trip;
   final bool isRideShare;
 
-  const OfferBottomSheet({super.key, required this.trip, required this.isRideShare});
+  const OfferBottomSheet(
+      {super.key, required this.trip, required this.isRideShare});
 
-  static void show(BuildContext context, RentalTripModel trip, bool isRideShare) {
+  static void show(
+      BuildContext context, RentalTripModel trip, bool isRideShare) {
     final homeController = context.read<HomeController>();
     final scaffold = Scaffold.of(context);
-    
-    scaffold.showBottomSheet(
-      backgroundColor: Colors.transparent,
-      (ctx) {
-        return BlocProvider.value(
-          value: homeController,
-          child: Padding(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-            child: OfferBottomSheet(trip: trip, isRideShare: isRideShare),
-          ),
-        );
-      },
-    ).closed.then((_) {
-      homeController.selectTripForPreview(null);
-    });
+
+    scaffold
+        .showBottomSheet(
+          backgroundColor: Colors.transparent,
+          (ctx) {
+            return BlocProvider.value(
+              value: homeController,
+              child: Padding(
+                padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(ctx).viewInsets.bottom),
+                child: OfferBottomSheet(trip: trip, isRideShare: isRideShare),
+              ),
+            );
+          },
+        )
+        .closed
+        .then((_) {
+          homeController.selectTripForPreview(null);
+        });
   }
 
   @override
@@ -50,21 +55,26 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
   @override
   void initState() {
     super.initState();
-    _bidController = TextEditingController(text: widget.trip.customerOfferAmmount.round().toString());
-    
-    final totalDuration = widget.isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
+    _bidController = TextEditingController(
+        text: widget.trip.customerOfferAmmount.round().toString());
+
+    final totalDuration = widget.isRideShare
+        ? const Duration(minutes: 1)
+        : const Duration(hours: 1);
     _totalSeconds = totalDuration.inSeconds.toDouble();
-    final createdAtStr = widget.trip.myBid?.createdAt ?? widget.trip.createdAt;
+
+    final createdAtStr =
+        widget.trip.myBid?.createdAt ?? widget.trip.createdAt;
     final createdAt = AcceptedTripCardHelper.parseCreatedAt(createdAtStr);
     final expireTime = createdAt.add(totalDuration);
-    final remaining = expireTime.difference(AcceptedTripCardHelper.getNow());
-    _remainingSeconds = remaining.isNegative ? 0.0 : remaining.inSeconds.toDouble();
+    final remaining =
+        expireTime.difference(AcceptedTripCardHelper.getNow());
+    _remainingSeconds =
+        remaining.isNegative ? 0.0 : remaining.inSeconds.toDouble();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
-      setState(() {
-        _remainingSeconds -= 1;
-      });
+      setState(() => _remainingSeconds -= 1);
       if (_remainingSeconds <= 0) {
         timer.cancel();
         if (mounted) Navigator.of(context).pop();
@@ -86,7 +96,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
     }
     final amt = double.tryParse(val);
     if (amt == null) {
-      setState(() => _bidError = "Invalid amount");
+      setState(() => _bidError = 'Invalid amount');
       return;
     }
     final baseAmount = widget.trip.customerOfferAmmount;
@@ -95,15 +105,19 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
     final loc = AppLocalizations.of(context);
     final isBangla = Localizations.localeOf(context).languageCode == 'bn';
     final currency = isBangla ? '৳' : 'BDT';
-    
+
     if (amt > maxBid) {
-      final val = isBangla ? _toBanglaDigits(maxBid.round().toString()) : maxBid.round().toString();
+      final v = isBangla
+          ? offerToBanglaDigits(maxBid.round().toString())
+          : maxBid.round().toString();
       final String maxText = loc.translate('max_bid_is') ?? 'Max bid is';
-      setState(() => _bidError = "$maxText $currency $val");
+      setState(() => _bidError = '$maxText $currency $v');
     } else if (amt < minBid) {
-      final val = isBangla ? _toBanglaDigits(minBid.round().toString()) : minBid.round().toString();
+      final v = isBangla
+          ? offerToBanglaDigits(minBid.round().toString())
+          : minBid.round().toString();
       final String minText = loc.translate('min_bid_is') ?? 'Min bid is';
-      setState(() => _bidError = "$minText $currency $val");
+      setState(() => _bidError = '$minText $currency $v');
     } else {
       setState(() => _bidError = null);
     }
@@ -111,50 +125,25 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
 
   Future<void> _submitBid(double amount) async {
     setState(() => _isSubmitting = true);
-    final error = await context.read<HomeController>().submitBid(widget.trip.uuid, amount);
+    final error = await context
+        .read<HomeController>()
+        .submitBid(widget.trip.uuid, amount);
     if (mounted) {
       setState(() => _isSubmitting = false);
       final loc = AppLocalizations.of(context);
       if (error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error), backgroundColor: Colors.red));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.translate('wait_customer_acceptance') ?? 'Waiting for customer acceptance...'), backgroundColor: Colors.green));
-        Navigator.pop(context); // Close bottom sheet
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(loc.translate('wait_customer_acceptance') ??
+                'Waiting for customer acceptance...'),
+            backgroundColor: Colors.green));
+        Navigator.pop(context);
       }
     }
   }
 
-  Future<void> _acceptRideShare() async {
-    setState(() => _isSubmitting = true);
-    final error = await context.read<HomeController>().acceptRideShareTrip(widget.trip.uuid);
-    if (mounted) {
-      setState(() => _isSubmitting = false);
-      final loc = AppLocalizations.of(context);
-      if (error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: Colors.red));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.translate('trip_accepted') ?? 'Trip accepted'), backgroundColor: Colors.green));
-        Navigator.pop(context); // Close bottom sheet
-      }
-    }
-  }
-
-  String _toBanglaDigits(String input) {
-    const englishToBanglaDigits = {
-      '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪',
-      '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯',
-    };
-    return input.split('').map((char) => englishToBanglaDigits[char] ?? char).join();
-  }
-  
-  String _translateNumbersAndCommonWords(String text, bool isBangla) {
-    if (!isBangla) return text;
-    String result = _toBanglaDigits(text);
-    result = result.replaceAll(' km', ' কি.মি.');
-    result = result.replaceAll(' away', ' দূরে');
-    result = result.replaceAll('~', '~');
-    return result;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -162,44 +151,30 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
     final loc = AppLocalizations.of(context);
     final isBangla = Localizations.localeOf(context).languageCode == 'bn';
     final currency = isBangla ? '৳' : 'BDT';
-    
+
     final baseAmount = widget.trip.customerOfferAmmount;
-    final formattedAmount = _translateNumbersAndCommonWords("${baseAmount.round()}", isBangla);
-    
+    final formattedAmount =
+        offerTranslate('${baseAmount.round()}', isBangla);
     final bid10 = (baseAmount * 1.10).round();
     final bid18 = (baseAmount * 1.18).round();
 
-    final pickupLoc = AcceptedTripCardHelper.getEffectivePickup(widget.trip);
-    final dropoffLoc = AcceptedTripCardHelper.getEffectiveDropoff(widget.trip);
+    final pickupLoc =
+        AcceptedTripCardHelper.getEffectivePickup(widget.trip);
+    final dropoffLoc =
+        AcceptedTripCardHelper.getEffectiveDropoff(widget.trip);
     final pickupAddress = pickupLoc?.address ?? '';
     final dropoffAddress = dropoffLoc?.address ?? '';
-    
-    final distanceText = AcceptedTripCardHelper.calculateTripDistance(widget.trip);
-    final customerAvatar = widget.trip.customer.isNotEmpty ? widget.trip.customer.first.profilePicture : '';
-    final customerName = widget.trip.customer.isNotEmpty && widget.trip.customer.first.name.isNotEmpty 
-        ? widget.trip.customer.first.name 
-        : loc.translate('customer') ?? "Customer";
-    final int totalTrips = widget.trip.customer.isNotEmpty ? widget.trip.customer.first.totalTripCount : widget.trip.totalTripCount;
-    final String rawRating = widget.trip.customer.isNotEmpty ? widget.trip.customer.first.averageRating.toStringAsFixed(1) : "4.5";
-    final String customerRating = totalTrips > 0 
-        ? "${_translateNumbersAndCommonWords(rawRating, isBangla)} (${_translateNumbersAndCommonWords(totalTrips.toString(), isBangla)})" 
-        : _translateNumbersAndCommonWords(rawRating, isBangla);
-    
-    // timeText calculation
-    int mins = 0;
-    if (widget.trip.pickupKm.isNotEmpty) {
-      final match = RegExp(r'([\d.]+)').firstMatch(widget.trip.pickupKm);
-      if (match != null) {
-        final dist = double.tryParse(match.group(1) ?? '0') ?? 0.0;
-        mins = (dist * 2.5).round();
-      }
-    }
-    final timeText = _translateNumbersAndCommonWords("$mins min", isBangla);
+    final distanceText =
+        AcceptedTripCardHelper.calculateTripDistance(widget.trip);
+
+    // The pickupKm-based time estimate is passed to OfferTimerHeader
+    // via the trip model; no separate local variable needed here.
 
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         child: SingleChildScrollView(
@@ -208,344 +183,107 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Service name + progress bar header
-              Builder(builder: (context) {
-                final rawService = widget.trip.serviceName.isNotEmpty
-                    ? widget.trip.serviceName
-                    : widget.trip.carService.serviceName;
-                var serviceLabel = rawService.replaceAll('_', ' ').toUpperCase();
-                if (rawService.toUpperCase() == 'HOURLY' && widget.trip.hoursBooked != null) {
-                  final hrsText = _translateNumbersAndCommonWords("${widget.trip.hoursBooked}", isBangla);
-                  serviceLabel = "$serviceLabel ($hrsText ${isBangla ? 'ঘণ্টা' : 'HOURS'})";
-                }
-                final progress = _totalSeconds > 0 ? (_remainingSeconds / _totalSeconds) : 0.0;
-                final int mins = (_remainingSeconds / 60).floor();
-                final int secs = (_remainingSeconds % 60).floor();
-                String timeStr = "$mins:${secs.toString().padLeft(2, '0')}";
-                if (isBangla) {
-                  timeStr = _translateNumbersAndCommonWords(timeStr, isBangla);
-                }
-                final Color timerColor = _remainingSeconds <= (widget.isRideShare ? 20 : 20 * 60) ? Colors.redAccent : (theme.brightness == Brightness.dark ? Colors.lightGreenAccent : Colors.green.shade700);
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: timerColor.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: timerColor.withOpacity(0.4), width: 1),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.timer_outlined, size: 14, color: timerColor),
-                              const SizedBox(width: 4),
-                              Text(
-                                timeStr,
-                                style: TextStyle(color: timerColor, fontSize: 13, fontWeight: FontWeight.w900),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: theme.colorScheme.primary.withOpacity(0.5), width: 1.5),
-                          ),
-                          child: Text(
-                            serviceLabel,
-                            style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w900),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    if (_remainingSeconds > 0)
-                      LinearProgressIndicator(
-                        value: progress,
-                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          _remainingSeconds <= (widget.isRideShare ? 20 : 20 * 60) ? Colors.redAccent : const Color(0xFFC4F934),
-                        ),
-                        minHeight: 3,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    const SizedBox(height: 8),
-                  ],
-                );
-              }),
-              // Single header row: avatar + name + rating on left, BDT + km on right
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundImage: customerAvatar.isNotEmpty
-                        ? NetworkImage(customerAvatar.startsWith('http') ? customerAvatar : '${AppUrls.imageBaseUrl}$customerAvatar')
-                        : null,
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                    child: customerAvatar.isEmpty
-                        ? Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant, size: 24)
-                        : null,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Text(
-                          customerName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 12, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(width: 6),
-                        const Icon(Icons.star, color: Colors.amber, size: 12),
-                        const SizedBox(width: 2),
-                        Text(
-                          customerRating,
-                          style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        "$currency $formattedAmount",
-                        maxLines: 1,
-                        style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 22, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        distanceText,
-                        style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.55), fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ],
+              // Timer + service label + progress bar
+              OfferTimerHeader(
+                trip: widget.trip,
+                isRideShare: widget.isRideShare,
+                remainingSeconds: _remainingSeconds,
+                totalSeconds: _totalSeconds,
+                isBangla: isBangla,
+              ),
+
+              // Customer info row
+              OfferCustomerRow(
+                trip: widget.trip,
+                isBangla: isBangla,
+                currency: currency,
+                formattedAmount: formattedAmount,
+                distanceText: distanceText,
               ),
               const SizedBox(height: 10),
-              AcceptedTripCardHelper.buildTripDateTimes(context, widget.trip, isBangla, theme),
-              
-              // Locations
-              Row(
-                children: [
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.blueAccent),
-                    alignment: Alignment.center,
-                    child: const Text('A', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TranslatedText(
-                      pickupAddress,
-                      isBangla: isBangla,
-                      maxLines: 1, 
-                      overflow: TextOverflow.ellipsis, 
-                      style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 15),
-                      location: pickupLoc,
-                    ),
-                  ),
-                ],
+
+              // Date/times
+              AcceptedTripCardHelper.buildTripDateTimes(
+                  context, widget.trip, isBangla, theme),
+
+              // Pickup location
+              OfferLocationRow(
+                label: 'A',
+                dotColor: Colors.blueAccent,
+                address: pickupAddress,
+                isBangla: isBangla,
+                location: pickupLoc,
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.green),
-                    alignment: Alignment.center,
-                    child: const Text('B', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TranslatedText(
-                      dropoffAddress,
-                      isBangla: isBangla,
-                      maxLines: 1, 
-                      overflow: TextOverflow.ellipsis, 
-                      style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 15),
-                      location: dropoffLoc,
-                    ),
-                  ),
-                ],
+
+              // Dropoff location
+              OfferLocationRow(
+                label: 'B',
+                dotColor: Colors.green,
+                address: dropoffAddress,
+                isBangla: isBangla,
+                location: dropoffLoc,
               ),
-              
               const SizedBox(height: 8),
-              
-              // Accept Button
+
+              // Accept at base price button
               ElevatedButton(
-                onPressed: _isSubmitting 
-                  ? null 
-                  : () {
-                        _submitBid(baseAmount);
-                    },
+                onPressed: _isSubmitting
+                    ? null
+                    : () => _submitBid(baseAmount),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.onSurface,
                   foregroundColor: theme.colorScheme.surface,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _isSubmitting
-                  ? SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.surface))
-                  : Text(
-                      "${loc.translate('accept_for') ?? 'Accept for'} $currency $formattedAmount",
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
-                    ),
+                    ? SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: theme.colorScheme.surface),
+                      )
+                    : Text(
+                        '${loc.translate('accept_for') ?? 'Accept for'} $currency $formattedAmount',
+                        style: const TextStyle(
+                            fontSize: 17, fontWeight: FontWeight.w900),
+                      ),
               ),
-              
               const SizedBox(height: 8),
-              
-              if (true) ...[
-                Text(
-                  loc.translate('offer_your_fare') ?? 'Offer your fare',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                
-                if (_isEditingFare)
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: TextField(
-                          controller: _bidController,
-                          autofocus: true,
-                          keyboardType: TextInputType.number,
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 18,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: loc.translate('offer_amount') ?? 'Offer Amount',
-                            labelStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 12),
-                            errorText: _bidError,
-                            filled: true,
-                            fillColor: theme.colorScheme.surfaceContainerHighest,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            prefixText: '$currency ',
-                            prefixStyle: TextStyle(
-                              color: theme.colorScheme.onSurface,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 18,
-                            ),
-                          ),
-                          onChanged: _validateBid,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        flex: 1,
-                        child: SizedBox(
-                          height: _bidError != null ? 68 : 52,
-                          child: ElevatedButton(
-                            onPressed: (_bidError == null && !_isSubmitting) 
-                              ? () {
-                                  final amount = double.tryParse(_bidController.text);
-                                  if (amount != null) {
-                                    _submitBid(amount);
-                                  }
-                                }
-                              : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.onSurface,
-                              foregroundColor: theme.colorScheme.surface,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              loc.translate('bid_now') ?? 'Bid',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _isSubmitting ? null : () => _submitBid(bid10.toDouble()),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                            foregroundColor: theme.colorScheme.onSurface,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: Text(
-                            "$currency ${_translateNumbersAndCommonWords(bid10.toString(), isBangla)}",
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _isSubmitting ? null : () => _submitBid(bid18.toDouble()),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                            foregroundColor: theme.colorScheme.onSurface,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: Text(
-                            "$currency ${_translateNumbersAndCommonWords(bid18.toString(), isBangla)}",
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _isEditingFare = true;
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                          foregroundColor: theme.colorScheme.onSurface,
-                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: const Icon(Icons.edit, size: 20),
-                      ),
-                    ],
-                  ),
-              ],
-              
+
+              // Bid section (quick bids / custom entry)
+              OfferBidSection(
+                isEditingFare: _isEditingFare,
+                isSubmitting: _isSubmitting,
+                bidController: _bidController,
+                bidError: _bidError,
+                isBangla: isBangla,
+                currency: currency,
+                bid10: bid10,
+                bid18: bid18,
+                onToggleEdit: () => setState(() => _isEditingFare = true),
+                onBidChanged: _validateBid,
+                onBidSubmitFromField: () {
+                  final amount = double.tryParse(_bidController.text);
+                  if (amount != null) _submitBid(amount);
+                },
+                onQuickBid: _submitBid,
+              ),
               const SizedBox(height: 8),
-              
+
+              // Close button
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  backgroundColor:
+                      theme.colorScheme.surfaceContainerHighest,
                   foregroundColor: theme.colorScheme.onSurface,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
                 child: Text(

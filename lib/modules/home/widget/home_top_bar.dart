@@ -36,7 +36,7 @@ class _HomeTopBarState extends State<HomeTopBar> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.4 : 0.10),
+                color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.10),
                 blurRadius: 16,
                 spreadRadius: 0,
                 offset: const Offset(0, 4),
@@ -81,7 +81,7 @@ class _HomeTopBarState extends State<HomeTopBar> {
                                       AppUrls.profileImageUrl!,
                                       key: ValueKey(AppUrls.profileImageUrl!),
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) =>
+                                      errorBuilder: (_, __, e) =>
                                           _defaultAvatar(driverName),
                                     )
                                   : _defaultAvatar(driverName),
@@ -177,14 +177,14 @@ class _HomeTopBarState extends State<HomeTopBar> {
                         height: 38,
                         decoration: BoxDecoration(
                           color: isDark
-                              ? Colors.white.withOpacity(0.08)
+                              ? Colors.white.withValues(alpha: 0.08)
                               : Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
                           Icons.notifications_none_rounded,
                           size: 22,
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ),
@@ -197,7 +197,7 @@ class _HomeTopBarState extends State<HomeTopBar> {
                 height: 1,
                 thickness: 1,
                 color: isDark
-                    ? Colors.white.withOpacity(0.07)
+                    ? Colors.white.withValues(alpha: 0.07)
                     : Colors.grey.shade100,
                 indent: 14,
                 endIndent: 14,
@@ -227,7 +227,7 @@ class _HomeTopBarState extends State<HomeTopBar> {
         ? name.trim().split(' ').map((w) => w[0]).take(2).join().toUpperCase()
         : 'D';
     return Container(
-      color: const Color(0xFF4CAF50).withOpacity(0.2),
+      color: const Color(0xFF4CAF50).withValues(alpha: 0.2),
       child: Center(
         child: Text(
           initials,
@@ -340,11 +340,11 @@ class _OnlineToggleWidgetState extends State<_OnlineToggleWidget>
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: const Color(0xFF90EE90)
-                                    .withOpacity(0.6 * (1.0 - value)),
+                                    .withValues(alpha: 0.6 * (1.0 - value)),
                                 width: 1.5,
                               ),
                               color: const Color(0xFF90EE90)
-                                  .withOpacity(0.2 * (1.0 - value)),
+                                  .withValues(alpha: 0.2 * (1.0 - value)),
                             ),
                           ),
                         ),
@@ -356,13 +356,13 @@ class _OnlineToggleWidgetState extends State<_OnlineToggleWidget>
                           shape: BoxShape.circle,
                           color: isOnline
                               ? const Color(0xFF90EE90)
-                                  .withOpacity(0.15 + (0.2 * pulse))
-                              : Colors.red.withOpacity(0.15),
+                                  .withValues(alpha: 0.15 + (0.2 * pulse))
+                              : Colors.red.withValues(alpha: 0.15),
                           border: Border.all(
                             color: isOnline
                                 ? const Color(0xFF90EE90)
-                                    .withOpacity(0.5 + (0.5 * pulse))
-                                : Colors.red.withOpacity(0.5),
+                                    .withValues(alpha: 0.5 + (0.5 * pulse))
+                                : Colors.red.withValues(alpha: 0.5),
                             width: 1.5,
                           ),
                         ),
@@ -380,7 +380,7 @@ class _OnlineToggleWidgetState extends State<_OnlineToggleWidget>
                                   ? [
                                       BoxShadow(
                                         color: const Color(0xFF90EE90)
-                                            .withOpacity(0.6 * pulse),
+                                            .withValues(alpha: 0.6 * pulse),
                                         blurRadius: 6,
                                         spreadRadius: 1,
                                       ),
