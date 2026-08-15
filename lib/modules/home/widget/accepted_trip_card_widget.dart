@@ -5,7 +5,7 @@ import '../../../../core/utils/localization/app_localization.dart';
 import '../model/rental_trip_model.dart';
 import 'translated_text_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'cancel_trip_dialog.dart';
+import 'cancel_trip_dialog_widget.dart';
 import '../helper/accepted_trip_card_helper.dart';
 import '../../../../utils/app_urls.dart';
 
