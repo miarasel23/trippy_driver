@@ -77,7 +77,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
       return const SizedBox.shrink();
     }
 
-    final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
+    final totalDuration = isRideShare ? const Duration(minutes: 2) : const Duration(hours: 1);
     final now = _getNow();
     final expireTime = createdAt.add(totalDuration);
     final remaining = expireTime.difference(now);
