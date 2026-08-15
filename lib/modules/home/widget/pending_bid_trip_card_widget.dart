@@ -82,7 +82,7 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
           final rawService = t.serviceName.isNotEmpty ? t.serviceName : t.carService.serviceName;
           final isRideShare = rawService.toUpperCase().contains('RIDE') || rawService.toUpperCase() == 'RIDE_SHARE';
           if (!isRideShare) return false;
-          final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
+          final totalDuration = isRideShare ? const Duration(minutes: 2) : const Duration(hours: 1);
           
           final expireTime = createdAt.add(totalDuration);
           if (now.isAfter(expireTime)) {
@@ -104,7 +104,7 @@ class _PendingBidTripCardState extends State<PendingBidTripCard> {
         final createdAt = _parseCreatedAt(createdAtStr);
         final rawService = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
         final isRideShare = rawService.toUpperCase().contains('RIDE') || rawService.toUpperCase() == 'RIDE_SHARE';
-        final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
+        final totalDuration = isRideShare ? const Duration(minutes: 2) : const Duration(hours: 1);
 
         final expireTime = createdAt.add(totalDuration);
         var remaining = expireTime.difference(_getNow());

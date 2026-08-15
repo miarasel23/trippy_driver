@@ -59,7 +59,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
         text: widget.trip.customerOfferAmmount.round().toString());
 
     final totalDuration = widget.isRideShare
-        ? const Duration(minutes: 1)
+        ? const Duration(minutes: 2)
         : const Duration(hours: 1);
     _totalSeconds = totalDuration.inSeconds.toDouble();
 

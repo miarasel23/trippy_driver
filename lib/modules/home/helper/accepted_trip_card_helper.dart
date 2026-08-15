@@ -68,7 +68,7 @@ class AcceptedTripCardHelper {
     try {
       final createdAt = parseCreatedAt(createdAtStr);
       final isRideShare = serviceName.toUpperCase().contains('RIDE') || serviceName.toUpperCase() == 'RIDE_SHARE';
-      final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
+      final totalDuration = isRideShare ? const Duration(minutes: 2) : const Duration(hours: 1);
       final expireTime = createdAt.add(totalDuration);
       if (getNow().isAfter(expireTime) || expireTime.difference(getNow()).inSeconds <= 0) {
         return true;

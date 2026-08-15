@@ -218,7 +218,7 @@ class _BidsScreenState extends State<BidsScreen> {
     final createdAt = AcceptedTripCardHelper.parseCreatedAt(createdAtStr);
     final rawService = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
     final isRideShare = rawService.toUpperCase().contains('RIDE') || rawService.toUpperCase() == 'RIDE_SHARE';
-    final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
+    final totalDuration = isRideShare ? const Duration(minutes: 2) : const Duration(hours: 1);
     final expireTime = createdAt.add(totalDuration);
     var remaining = expireTime.difference(now);
     if (remaining.isNegative) remaining = Duration.zero;

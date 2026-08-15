@@ -165,7 +165,7 @@ class _BidTripItemState extends State<_BidTripItem> {
     DateTime createdAt = _parseCreatedAt(createdAtStr);
     final rawService = widget.trip.serviceName.isNotEmpty ? widget.trip.serviceName : widget.trip.carService.serviceName;
     final isRideShare = rawService.toUpperCase().contains('RIDE') || rawService.toUpperCase() == 'RIDE_SHARE';
-    final totalDuration = isRideShare ? const Duration(minutes: 1) : const Duration(hours: 1);
+    final totalDuration = isRideShare ? const Duration(minutes: 2) : const Duration(hours: 1);
     _expireTime = createdAt.add(totalDuration);
     _updateRemaining();
   }
