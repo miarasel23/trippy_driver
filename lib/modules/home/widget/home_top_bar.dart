@@ -8,9 +8,14 @@ import '../../../../utils/app_urls.dart';
 import '../controller/home_controller.dart';
 import 'service_mode_bottom_sheet.dart';
 
-class HomeTopBar extends StatelessWidget {
+class HomeTopBar extends StatefulWidget {
   const HomeTopBar({super.key});
 
+  @override
+  State<HomeTopBar> createState() => _HomeTopBarState();
+}
+
+class _HomeTopBarState extends State<HomeTopBar> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -50,7 +55,14 @@ class HomeTopBar extends StatelessWidget {
                     Stack(
                       children: [
                         GestureDetector(
-                          onTap: () => Navigator.pushNamed(context, AppRoutes.profile),
+                          onTap: () async {
+                            await Navigator.pushNamed(context, AppRoutes.profile);
+                            if (!mounted) return;
+                            setState(() {});
+                            if (context.mounted) {
+                              context.read<HomeController>().checkAndUpdateRideStatusFromApi();
+                            }
+                          },
                           child: Container(
                             width: 46,
                             height: 46,
@@ -67,6 +79,7 @@ class HomeTopBar extends StatelessWidget {
                               child: AppUrls.profileImageUrl != null
                                   ? Image.network(
                                       AppUrls.profileImageUrl!,
+                                      key: ValueKey(AppUrls.profileImageUrl!),
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) =>
                                           _defaultAvatar(driverName),
@@ -99,7 +112,6 @@ class HomeTopBar extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     const SizedBox(width: 10),
 
                     // Driver name + service mode label
@@ -148,15 +160,12 @@ class HomeTopBar extends StatelessWidget {
                       ),
                     ),
 
-
-
                     // ── Online/Offline pill toggle (with active animation) ──
                     _OnlineToggleWidget(
                       isOnline: isOnline,
                       theme: theme,
                       loc: loc,
                     ),
-
 
                     const SizedBox(width: 8),
 
