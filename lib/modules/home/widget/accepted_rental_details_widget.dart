@@ -19,6 +19,9 @@ class AcceptedRentalDetails extends StatefulWidget {
 
 class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
   bool _isLoading = false;
+  bool _isCalling = false;
+  bool _isMessaging = false;
+  bool _isNavigating = false;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +51,7 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
             : loc.translate('customer') ?? "Customer";
         final customerAvatar = trip.customer.isNotEmpty ? trip.customer.first.profilePicture : '';
         final int totalTrips = trip.customer.isNotEmpty ? trip.customer.first.totalTripComplete : trip.totalTripComplete;
-        final String rawRating = trip.customer.isNotEmpty ? trip.customer.first.averageRating.toStringAsFixed(1) : "4.5";
+        final String rawRating = trip.customer.isNotEmpty ? trip.customer.first.averageRating.toStringAsFixed(1) : "5.0";
         final String customerRating = totalTrips > 0 
             ? "${AcceptedTripCardHelper.translateNumbersAndCommonWords(rawRating, isBangla)} (${AcceptedTripCardHelper.translateNumbersAndCommonWords(totalTrips.toString(), isBangla)})" 
             : AcceptedTripCardHelper.translateNumbersAndCommonWords(rawRating, isBangla);
@@ -92,6 +95,10 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
           nextStatus = 'COMPLETED';
         }
 
+        final rawService = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
+        final rawServiceUpper = rawService.toUpperCase();
+        final isRideShare = rawServiceUpper.contains('RIDE') || rawServiceUpper == 'RIDE_SHARE';
+
         return Container(
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(16),
@@ -111,18 +118,10 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ── Header: Service Badge & Close ────────────────────────
               Row(
                 children: [
-                  Icon(Icons.remove_red_eye_rounded, color: theme.colorScheme.primary, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    loc.translate('accepted_details') ?? 'Accepted Details',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
+                  AcceptedTripCardHelper.buildServiceBadge(rawService),
                   const Spacer(),
                   IconButton(
                     icon: Icon(Icons.close_rounded, color: theme.colorScheme.onSurface),
@@ -131,134 +130,160 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                     },
                     constraints: const BoxConstraints(),
                     padding: EdgeInsets.zero,
-                  )
+                  ),
                 ],
               ),
-              const Divider(height: 16),
+              const SizedBox(height: 10),
+              // Lime/Green Divider Line
+              Container(
+                height: 3,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC0CA33),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // ── Customer Profile & Price Row ─────────────────────────
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Left Column: Avatar, Name, Rating, Time
-                  SizedBox(
-                    width: 70,
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundImage: customerAvatar.isNotEmpty ? NetworkImage(customerAvatar.startsWith('http') ? customerAvatar : '${AppUrls.imageBaseUrl}$customerAvatar') : null,
-                          backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                          child: customerAvatar.isEmpty ? Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant, size: 28) : null,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          customerName,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 11, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 12),
-                            const SizedBox(width: 2),
-                            Text(
-                              customerRating,
-                              style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 11),
-                            ),
-                          ],
-                        ),
-                        // Pickup duration (timeText) removed
-                      ],
-                    ),
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundImage: customerAvatar.isNotEmpty
+                        ? NetworkImage(customerAvatar.startsWith('http') ? customerAvatar : '${AppUrls.imageBaseUrl}$customerAvatar')
+                        : null,
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                    child: customerAvatar.isEmpty ? Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant, size: 24) : null,
                   ),
-                  const SizedBox(width: 12),
-                  // Middle Column: Distance, Price, Locations
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          distanceText,
-                          style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 14),
+                          customerName,
+                          style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "$currency $displayTotalAmount",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 24,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        if (platformFee > 0)
-                          Text(
-                            "${loc.translate('platform_fee') ?? 'Platform fee'}: $currency $displayPlatformFee",
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface.withOpacity(0.6),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        const SizedBox(height: 8),
-                        AcceptedTripCardHelper.buildTripDateTimes(context, trip, isBangla, theme),
+                        const SizedBox(height: 2),
                         Row(
                           children: [
-                            Icon(Icons.my_location, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.8)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TranslatedText(
-                                pickup,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                                isBangla: isBangla,
-                                location: pickupLoc,
-                              ),
+                            const Icon(Icons.star, color: Colors.amber, size: 14),
+                            const SizedBox(width: 2),
+                            Text(
+                              customerRating,
+                              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.8), fontSize: 12),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(Icons.location_on, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.8)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TranslatedText(
-                                dropoff,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontWeight: FontWeight.w600, fontSize: 14),
-                                isBangla: isBangla,
-                                location: dropoffLoc,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (trip.note.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(Icons.edit_note_rounded, size: 16, color: theme.colorScheme.primary),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  trip.note,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface.withOpacity(0.8),
-                                    fontSize: 13,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
                       ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        "$currency $displayTotalAmount",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 22,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        distanceText,
+                        style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              // ── Date & Time Row (Hidden for RIDE_SHARE) ─────────────
+              if (!isRideShare) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_month_rounded, size: 18, color: Color(0xFF1E88E5)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        AcceptedTripCardHelper.formatStartDatetime(trip.startDatetime, isBangla),
+                        style: const TextStyle(
+                          color: Color(0xFF1E88E5),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+
+              const SizedBox(height: 12),
+
+              // ── Route Locations A & B ────────────────────────────────
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AcceptedTripCardHelper.buildLocationBadgeA(),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TranslatedText(
+                      pickup,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      isBangla: isBangla,
+                      location: pickupLoc,
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AcceptedTripCardHelper.buildLocationBadgeB(),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TranslatedText(
+                      dropoff,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontWeight: FontWeight.w500, fontSize: 14),
+                      isBangla: isBangla,
+                      location: dropoffLoc,
+                    ),
+                  ),
+                ],
+              ),
+
+              if (trip.note.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.edit_note_rounded, size: 18, color: theme.colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        trip.note,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withOpacity(0.8),
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+
+              // ── Action Buttons (Call, Message, Navigate, Cancel) ───
               if (showActionButtons) ...[
                 const SizedBox(height: 16),
                 Row(
@@ -268,10 +293,13 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                       icon: Icons.phone,
                       label: loc.translate('call') ?? "Call",
                       color: theme.colorScheme.onSurface,
+                      isLoading: _isCalling,
                       onTap: () async {
                         if (trip.customer.isNotEmpty) {
+                          setState(() => _isCalling = true);
                           final phone = trip.customer.first.phone;
                           await AcceptedTripCardHelper.launchPhoneCall(phone);
+                          if (mounted) setState(() => _isCalling = false);
                         }
                       },
                     ),
@@ -279,10 +307,13 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                       icon: Icons.message,
                       label: loc.translate('message') ?? "Message",
                       color: theme.colorScheme.onSurface,
+                      isLoading: _isMessaging,
                       onTap: () async {
+                        setState(() => _isMessaging = true);
                         final driverUuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
                         if (driverUuid == null || driverUuid.isEmpty) {
-                          if (context.mounted) {
+                          if (mounted) {
+                            setState(() => _isMessaging = false);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Driver UUID is missing. Please log in again.')),
                             );
@@ -295,7 +326,8 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                             : null;
 
                         if (customerUuid == null || customerUuid.isEmpty) {
-                          if (context.mounted) {
+                          if (mounted) {
+                            setState(() => _isMessaging = false);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Customer information is missing for this trip.')),
                             );
@@ -306,6 +338,8 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                         final String customerName = trip.customer.isNotEmpty && trip.customer.first.name.isNotEmpty
                             ? trip.customer.first.name
                             : "Customer";
+
+                        if (mounted) setState(() => _isMessaging = false);
 
                         if (globalNavigatorKey.currentState != null) {
                           globalNavigatorKey.currentState!.pushNamed(
@@ -333,11 +367,14 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                       icon: Icons.navigation,
                       label: loc.translate('navigate') ?? "Navigate",
                       color: theme.colorScheme.onSurface,
+                      isLoading: _isNavigating,
                       onTap: () async {
+                        setState(() => _isNavigating = true);
                         final navTarget = ['IN_PROGRESS', 'RIDE_STARTED', 'FIRST_COMPLETED', 'COMPLETED'].contains(currentStatus) 
                             ? dropoffLoc 
                             : pickupLoc;
                         await AcceptedTripCardHelper.launchNavigation(navTarget);
+                        if (mounted) setState(() => _isNavigating = false);
                       },
                     ),
                     AcceptedTripCardHelper.buildActionButton(
@@ -358,6 +395,8 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                   ],
                 ),
               ],
+
+              // ── Main Action Status Button ────────────────────────────
               if (actionLabel != null && nextStatus != null) ...[
                 const SizedBox(height: 16),
                 SizedBox(
