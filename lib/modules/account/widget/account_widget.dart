@@ -10,6 +10,7 @@ import '../../subscription/screen/subscription_packages_bottom_sheet.dart';
 import '../../subscription/screen/sslcommerz_payment_screen.dart';
 import '../../subscription/repository/subscription_repository.dart';
 import '../../../store/user_data_store.dart';
+import '../../../main.dart';
 
 // ─── Utility functions (shared by all widgets) ─────────────────────────────
 
@@ -248,10 +249,13 @@ class PayDueAmountDialog extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
-                      Navigator.pop(context);
+                      Navigator.pop(context); // Close dialog
                       final user = UserDataStore.userData?.data?.user;
+                      final navContext = globalNavigatorKey.currentContext;
+                      if (navContext == null) return;
+
                       final result = await Navigator.push(
-                        context,
+                        navContext,
                         MaterialPageRoute(
                           builder: (context) => SslcommerzPaymentScreen(
                             amount: displayDueBalance,
@@ -264,22 +268,24 @@ class PayDueAmountDialog extends StatelessWidget {
                       );
 
                       if (result != null && result is String) {
-                        if (!context.mounted) return;
+                        final loadingCtx = globalNavigatorKey.currentContext;
+                        if (loadingCtx == null) return;
+
                         showDialog(
-                          context: context,
+                          context: loadingCtx,
                           barrierDismissible: false,
-                          builder: (c) =>
-                              const Center(child: CircularProgressIndicator()),
+                          builder: (c) => const Center(child: CircularProgressIndicator()),
                         );
 
                         final success = await SubscriptionRepository()
                             .rechargeDriverAccount(result);
 
-                        if (!context.mounted) return;
-                        Navigator.pop(context); // close loading dialog
+                        if (globalNavigatorKey.currentState?.canPop() == true) {
+                          globalNavigatorKey.currentState!.pop(); // close loading dialog
+                        }
 
                         if (success) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          globalScaffoldMessengerKey.currentState?.showSnackBar(
                             SnackBar(
                               content: Text(
                                 loc.translate('payment_successful') ??
@@ -288,9 +294,14 @@ class PayDueAmountDialog extends StatelessWidget {
                               backgroundColor: Colors.green,
                             ),
                           );
-                          context.read<AccountBloc>().add(FetchAccountHistory());
+                          final accountCtx = globalNavigatorKey.currentContext;
+                          if (accountCtx != null) {
+                            try {
+                              accountCtx.read<AccountBloc>().add(FetchAccountHistory());
+                            } catch (_) {}
+                          }
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          globalScaffoldMessengerKey.currentState?.showSnackBar(
                             SnackBar(
                               content: Text(
                                 loc.translate('payment_failed') ??
