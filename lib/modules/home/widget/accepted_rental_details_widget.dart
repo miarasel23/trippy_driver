@@ -99,20 +99,22 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
         final rawServiceUpper = rawService.toUpperCase();
         final isRideShare = rawServiceUpper.contains('RIDE') || rawServiceUpper == 'RIDE_SHARE';
 
-        return Container(
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.all(16),
+        final canCancel = currentStatusUpper != 'RIDE_STARTED' && 
+                          currentStatusUpper != 'FIRST_COMPLETED' && 
+                          currentStatusUpper != 'COMPLETED';        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 15,
-                offset: const Offset(0, 5),
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
-            border: Border.all(color: theme.colorScheme.primary.withOpacity(0.4), width: 2),
+            border: Border.all(color: theme.colorScheme.primary.withOpacity(0.4), width: 1.5),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -133,48 +135,48 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
               // Lime/Green Divider Line
               Container(
-                height: 3,
+                height: 2,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: const Color(0xFFC0CA33),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // ── Customer Profile & Price Row ─────────────────────────
               Row(
                 children: [
                   CircleAvatar(
-                    radius: 22,
+                    radius: 20,
                     backgroundImage: customerAvatar.isNotEmpty
                         ? NetworkImage(customerAvatar.startsWith('http') ? customerAvatar : '${AppUrls.imageBaseUrl}$customerAvatar')
                         : null,
                     backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                    child: customerAvatar.isEmpty ? Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant, size: 24) : null,
+                    child: customerAvatar.isEmpty ? Icon(Icons.person, color: theme.colorScheme.onSurfaceVariant, size: 22) : null,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           customerName,
-                          style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.bold),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 14),
+                            const Icon(Icons.star, color: Colors.amber, size: 13),
                             const SizedBox(width: 2),
                             Text(
                               customerRating,
-                              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.8), fontSize: 12),
+                              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.8), fontSize: 11),
                             ),
                           ],
                         ),
@@ -188,14 +190,14 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                         "$currency $displayTotalAmount",
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
-                          fontSize: 22,
+                          fontSize: 20,
                           color: theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         distanceText,
-                        style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w500),
+                        style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5), fontSize: 11, fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
@@ -204,18 +206,18 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
 
               // ── Date & Time Row (Hidden for RIDE_SHARE) ─────────────
               if (!isRideShare) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.calendar_month_rounded, size: 18, color: Color(0xFF1E88E5)),
-                    const SizedBox(width: 8),
+                    const Icon(Icons.calendar_month_rounded, size: 16, color: Color(0xFF1E88E5)),
+                    const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         AcceptedTripCardHelper.formatStartDatetime(trip.startDatetime, isBangla),
                         style: const TextStyle(
                           color: Color(0xFF1E88E5),
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 13,
                         ),
                       ),
                     ),
@@ -223,38 +225,38 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                 ),
               ],
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // ── Route Locations A & B ────────────────────────────────
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AcceptedTripCardHelper.buildLocationBadgeA(),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: TranslatedText(
                       pickup,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                       isBangla: isBangla,
                       location: pickupLoc,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AcceptedTripCardHelper.buildLocationBadgeB(),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: TranslatedText(
                       dropoff,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontWeight: FontWeight.w500, fontSize: 14),
+                      style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontWeight: FontWeight.w500, fontSize: 13),
                       isBangla: isBangla,
                       location: dropoffLoc,
                     ),
@@ -263,18 +265,18 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
               ),
 
               if (trip.note.isNotEmpty) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.edit_note_rounded, size: 18, color: theme.colorScheme.primary),
-                    const SizedBox(width: 8),
+                    Icon(Icons.edit_note_rounded, size: 16, color: theme.colorScheme.primary),
+                    const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         trip.note,
                         style: TextStyle(
                           color: theme.colorScheme.onSurface.withOpacity(0.8),
-                          fontSize: 13,
+                          fontSize: 12,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -285,7 +287,7 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
 
               // ── Action Buttons (Call, Message, Navigate, Cancel) ───
               if (showActionButtons) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -377,28 +379,29 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                         if (mounted) setState(() => _isNavigating = false);
                       },
                     ),
-                    AcceptedTripCardHelper.buildActionButton(
-                      icon: Icons.cancel,
-                      label: loc.translate('cancel') ?? "Cancel",
-                      color: theme.colorScheme.onSurface,
-                      onTap: () {
-                        final homeController = context.read<HomeController>();
-                        showDialog(
-                          context: context,
-                          builder: (_) => BlocProvider.value(
-                            value: homeController,
-                            child: CancelTripDialog(tripUuid: trip.uuid),
-                          ),
-                        );
-                      },
-                    ),
+                    if (canCancel)
+                      AcceptedTripCardHelper.buildActionButton(
+                        icon: Icons.cancel,
+                        label: loc.translate('cancel') ?? "Cancel",
+                        color: theme.colorScheme.onSurface,
+                        onTap: () {
+                          final homeController = context.read<HomeController>();
+                          showDialog(
+                            context: context,
+                            builder: (_) => BlocProvider.value(
+                              value: homeController,
+                              child: CancelTripDialog(tripUuid: trip.uuid),
+                            ),
+                          );
+                        },
+                      ),
                   ],
                 ),
               ],
 
               // ── Main Action Status Button ────────────────────────────
               if (actionLabel != null && nextStatus != null) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -420,41 +423,41 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
                       foregroundColor: theme.brightness == Brightness.dark ? Colors.black : Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 4,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 3,
                     ),
                     child: _isLoading 
                       ? const SizedBox(
-                          height: 24,
-                          width: 24,
+                          height: 20,
+                          width: 20,
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
                       : Text(
                           actionLabel,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.1),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 1.0),
                         ),
                   ),
                 ),
               ],
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
                     context.read<HomeController>().selectTripForPreview(null);
                   },
-                  icon: const Icon(Icons.close_fullscreen_rounded, size: 18),
+                  icon: const Icon(Icons.close_fullscreen_rounded, size: 16),
                   label: Text(
                     loc.translate('close') ?? 'Close',
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.onSurface.withOpacity(0.1),
+                    backgroundColor: theme.colorScheme.onSurface.withOpacity(0.08),
                     foregroundColor: theme.colorScheme.onSurface,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
                   ),

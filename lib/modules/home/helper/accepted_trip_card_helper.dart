@@ -168,28 +168,28 @@ class AcceptedTripCardHelper {
   }) {
     return InkWell(
       onTap: isLoading ? null : onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (isLoading)
               SizedBox(
-                height: 20,
-                width: 20,
+                height: 18,
+                width: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(color),
                 ),
               )
             else
-              Icon(icon, color: color, size: 20),
-            const SizedBox(height: 4),
+              Icon(icon, color: color, size: 18),
+            const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
