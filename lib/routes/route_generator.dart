@@ -12,6 +12,10 @@ import '../modules/profile/screen/car_info_screen.dart';
 import '../modules/profile/screen/car_photo_screen.dart';
 import '../modules/profile/screen/legal_policy_screen.dart';
 import '../modules/splash/screen/splash_screen.dart';
+import '../modules/chat/controller/chat_bloc.dart';
+import '../modules/chat/repository/chat_repository.dart';
+import '../modules/chat/screen/chat_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'app_routes.dart';
 
 class RouteGenerator {
@@ -57,6 +61,24 @@ class RouteGenerator {
       case AppRoutes.legalPolicy:
         final policyType = settings.arguments as String? ?? 'TERMS_CONDITION';
         return MaterialPageRoute(settings: settings, builder: (_) => LegalPolicyScreen(policyType: policyType));
+
+      case AppRoutes.chat:
+        final args = settings.arguments as Map<String, dynamic>?;
+        if (args != null) {
+          return MaterialPageRoute(
+            settings: settings,
+            builder: (_) => BlocProvider(
+              create: (_) => ChatBloc(repository: ChatRepository()),
+              child: ChatScreen(
+                customerUuid: args['customerUuid'],
+                customerName: args['customerName'],
+                driverUuid: args['driverUuid'],
+              ),
+            ),
+          );
+        }
+        return MaterialPageRoute(settings: settings, builder: (_) => const Scaffold(body: Center(child: Text("Missing args"))));
+
 
       default:
         return MaterialPageRoute(

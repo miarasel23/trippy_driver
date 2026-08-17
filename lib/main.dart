@@ -217,7 +217,8 @@ class _MyAppState extends State<MyApp> {
                           route == AppRoutes.numberInput || 
                           route == AppRoutes.otp ||
                           route == AppRoutes.navbar ||
-                          route == AppRoutes.home) {
+                          route == AppRoutes.home ||
+                          route == AppRoutes.chat) {
                         return const SizedBox.shrink();
                       }
                       return const Positioned(

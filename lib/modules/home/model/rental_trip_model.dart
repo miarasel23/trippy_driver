@@ -115,11 +115,15 @@ class RentalTripModel {
           [],
       myBid: json['my_bid'] != null ? MyBid.fromJson(json['my_bid']) : null,
       note: tripDetails['note'] ?? json['note'] ?? '',
-      customer: (json['customer'] != null && json['customer'] is List && (json['customer'] as List).isNotEmpty)
-          ? (json['customer'] as List).map((e) => CustomerModel.fromJson(e)).toList()
-          : (json['customer_details'] != null && json['customer_details'] is Map)
-              ? [CustomerModel.fromJson(json['customer_details'] as Map<String, dynamic>)]
-              : [],
+      customer: () {
+        final custRaw = json['customer'] ?? json['customer_details'] ?? json['user'];
+        if (custRaw is List && custRaw.isNotEmpty) {
+          return custRaw.map((e) => CustomerModel.fromJson(e as Map<String, dynamic>)).toList();
+        } else if (custRaw is Map) {
+          return [CustomerModel.fromJson(custRaw as Map<String, dynamic>)];
+        }
+        return <CustomerModel>[];
+      }(),
       hoursBooked: tripDetails['hours_booked'] != null
           ? (double.tryParse(tripDetails['hours_booked'].toString())?.round() ?? int.tryParse(tripDetails['hours_booked'].toString()))
           : (json['hours_booked'] != null
@@ -295,7 +299,7 @@ class CustomerModel {
   factory CustomerModel.fromJson(Map<String, dynamic> json) {
     return CustomerModel(
       rentBidUuid: json['rent_bid_uuid'] ?? '',
-      customerUuid: json['customer_uuid'] ?? json['uuid'] ?? '',
+      customerUuid: json['customer_uuid'] ?? json['user_uuid'] ?? json['uuid'] ?? json['user2_uuid'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       profilePicture: json['profile_picture'] ?? '',

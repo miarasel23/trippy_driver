@@ -8,6 +8,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'cancel_trip_dialog_widget.dart';
 import '../helper/accepted_trip_card_helper.dart';
 import '../../../../utils/app_urls.dart';
+import '../../../../store/user_data_store.dart';
+import '../../../../routes/app_routes.dart';
+import '../../../../main.dart';
 
 class AcceptedTripCard extends StatefulWidget {
   const AcceptedTripCard({Key? key}) : super(key: key);
@@ -272,7 +275,56 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
                       icon: Icons.message,
                       label: loc.translate('message') ?? "Message",
                       color: theme.colorScheme.onSurface,
-                      onTap: () {},
+                      onTap: () async {
+                        print('testing messaging');
+                        final driverUuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
+                        if (driverUuid == null || driverUuid.isEmpty) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Driver UUID is missing. Please log in again.')),
+                            );
+                          }
+                          return;
+                        }
+
+                        final String? customerUuid = trip.customer.isNotEmpty && trip.customer.first.customerUuid.isNotEmpty
+                            ? trip.customer.first.customerUuid
+                            : null;
+
+                        if (customerUuid == null || customerUuid.isEmpty) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Customer information is missing for this trip.')),
+                            );
+                          }
+                          return;
+                        }
+
+                        final String customerName = trip.customer.isNotEmpty && trip.customer.first.name.isNotEmpty
+                            ? trip.customer.first.name
+                            : "Customer";
+
+                        if (globalNavigatorKey.currentState != null) {
+                          globalNavigatorKey.currentState!.pushNamed(
+                            AppRoutes.chat,
+                            arguments: {
+                              'customerUuid': customerUuid,
+                              'customerName': customerName,
+                              'driverUuid': driverUuid,
+                            },
+                          );
+                        } else if (context.mounted) {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.chat,
+                            arguments: {
+                              'customerUuid': customerUuid,
+                              'customerName': customerName,
+                              'driverUuid': driverUuid,
+                            },
+                          );
+                        }
+                      },
                     ),
                     AcceptedTripCardHelper.buildActionButton(
                       icon: Icons.navigation,

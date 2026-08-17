@@ -90,6 +90,29 @@ class ApiService {
     }
   }
 
+  Future<http.Response> multipartPost(Uri url, {Map<String, String>? headers, Map<String, String>? fields, String? fileField, String? filePath}) async {
+    try {
+      var request = http.MultipartRequest('POST', url);
+      if (headers != null) {
+        request.headers.addAll(headers);
+      }
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+      if (fileField != null && filePath != null && filePath.isNotEmpty) {
+        request.files.add(await http.MultipartFile.fromPath(fileField, filePath));
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      _handleErrorResponse(response);
+      return response;
+    } catch (e) {
+      _navigateToError(e.toString());
+      rethrow;
+    }
+  }
+
   Future<http.Response> put(Uri url, {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
     try {
       final response = await http.put(url, headers: headers, body: body, encoding: encoding);
