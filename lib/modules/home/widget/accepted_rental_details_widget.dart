@@ -87,11 +87,11 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
             actionLabel = loc.translate('first_completed') ?? 'First Completed';
             nextStatus = 'FIRST_COMPLETED';
           } else {
-            actionLabel = loc.translate('completed') ?? 'Completed';
+            actionLabel = loc.translate('complete') ?? 'Complete';
             nextStatus = 'COMPLETED';
           }
         } else if (currentStatus == 'FIRST_COMPLETED') {
-          actionLabel = loc.translate('completed') ?? 'Completed';
+          actionLabel = loc.translate('complete') ?? 'Complete';
           nextStatus = 'COMPLETED';
         }
 

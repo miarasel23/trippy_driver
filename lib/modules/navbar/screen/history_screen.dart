@@ -126,13 +126,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
           backgroundColor: theme.colorScheme.surface,
           foregroundColor: theme.colorScheme.onSurface,
           bottom: TabBar(
-            labelColor: theme.colorScheme.primary,
-            unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.5),
-            indicatorColor: theme.colorScheme.primary,
+            labelColor: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+            unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.45),
+            indicatorColor: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
             tabs: [
-              Tab(text: loc.translate('accepted')),
-              Tab(text: loc.translate('completed')),
-              Tab(text: loc.translate('cancelled')),
+              Tab(
+                icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
+                text: loc.translate('accepted') ?? 'Accepted',
+              ),
+              Tab(
+                icon: const Icon(Icons.task_alt_rounded, size: 20),
+                text: loc.translate('completed') ?? 'Completed',
+              ),
+              Tab(
+                icon: const Icon(Icons.cancel_outlined, size: 20),
+                text: loc.translate('cancelled') ?? 'Cancelled',
+              ),
             ],
           ),
           actions: [
@@ -271,13 +283,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: Colors.white,
+                  backgroundColor: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                  foregroundColor: theme.brightness == Brightness.dark ? Colors.black : Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  elevation: 0,
+                  elevation: 2,
                 ),
               ),
             ),
