@@ -123,7 +123,7 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
               // ── Header: Service Badge & Close ────────────────────────
               Row(
                 children: [
-                  AcceptedTripCardHelper.buildServiceBadge(rawService),
+                  AcceptedTripCardHelper.buildServiceBadge(rawService, hoursBooked: trip.hoursBooked),
                   const Spacer(),
                   IconButton(
                     icon: Icon(Icons.close_rounded, color: theme.colorScheme.onSurface),
@@ -203,6 +203,25 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
                   ),
                 ],
               ),
+
+              // ── Hourly Booked Time Display ──────────────────────────
+              if (trip.hoursBooked != null && trip.hoursBooked! > 0) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.access_time_filled_rounded, size: 16, color: Color(0xFF7B1FA2)),
+                    const SizedBox(width: 6),
+                    Text(
+                      "${isBangla ? 'বুকিং সময়: ' : 'Booked Time: '}${AcceptedTripCardHelper.translateNumbersAndCommonWords('${trip.hoursBooked}', isBangla)} ${isBangla ? 'ঘণ্টা' : 'Hours'}",
+                      style: const TextStyle(
+                        color: Color(0xFF7B1FA2),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
 
               // ── Date & Time Row (Hidden for RIDE_SHARE) ─────────────
               if (!isRideShare) ...[

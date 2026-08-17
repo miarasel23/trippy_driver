@@ -230,8 +230,15 @@ class AcceptedTripCardHelper {
     );
   }
 
-  static Widget buildServiceBadge(String serviceName) {
-    final text = serviceName.toUpperCase().replaceAll('_', ' ');
+  static Widget buildServiceBadge(String serviceName, {int? hoursBooked}) {
+    String text = serviceName.toUpperCase().replaceAll('_', ' ');
+    if (hoursBooked != null && hoursBooked > 0) {
+      if (text == 'HOURLY') {
+        text = 'HOURLY ($hoursBooked HRS)';
+      } else {
+        text = '$text ($hoursBooked HRS)';
+      }
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

@@ -232,11 +232,14 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                     ? null
                     : () => _submitBid(baseAmount),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.onSurface,
-                  foregroundColor: theme.colorScheme.surface,
+                  backgroundColor: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                  foregroundColor: theme.brightness == Brightness.dark ? Colors.black : Colors.white,
+                  disabledBackgroundColor: (theme.brightness == Brightness.dark ? Colors.white : Colors.black).withValues(alpha: 0.4),
+                  disabledForegroundColor: (theme.brightness == Brightness.dark ? Colors.black : Colors.white).withValues(alpha: 0.6),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
                 ),
                 child: _isSubmitting
                     ? SizedBox(
@@ -244,7 +247,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                         width: 18,
                         child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: theme.colorScheme.surface),
+                            color: theme.brightness == Brightness.dark ? Colors.black : Colors.white),
                       )
                     : Text(
                         '${loc.translate('accept_for') ?? 'Accept for'} $currency $formattedAmount',
@@ -279,7 +282,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
-                      theme.colorScheme.surfaceContainerHighest,
+                      theme.colorScheme.onSurface.withValues(alpha: 0.08),
                   foregroundColor: theme.colorScheme.onSurface,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -288,7 +291,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
                 ),
                 child: Text(
                   loc.translate('close') ?? 'Close',
-                  style: const TextStyle(fontSize: 14),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               ),
             ],

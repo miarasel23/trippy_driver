@@ -395,11 +395,14 @@ class OfferBidSection extends StatelessWidget {
                         ? onBidSubmitFromField
                         : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.onSurface,
-                      foregroundColor: theme.colorScheme.surface,
+                      backgroundColor: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                      foregroundColor: theme.brightness == Brightness.dark ? Colors.black : Colors.white,
+                      disabledBackgroundColor: (theme.brightness == Brightness.dark ? Colors.white : Colors.black).withValues(alpha: 0.3),
+                      disabledForegroundColor: (theme.brightness == Brightness.dark ? Colors.black : Colors.white).withValues(alpha: 0.6),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      elevation: 2,
                     ),
                     child: Text(
                       loc.translate('bid_now') ?? 'Bid',
@@ -419,12 +422,14 @@ class OfferBidSection extends StatelessWidget {
                   onPressed:
                       isSubmitting ? null : () => onQuickBid(bid10.toDouble()),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        theme.colorScheme.surfaceContainerHighest,
-                    foregroundColor: theme.colorScheme.onSurface,
+                    backgroundColor: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                    foregroundColor: theme.brightness == Brightness.dark ? Colors.black : Colors.white,
+                    disabledBackgroundColor: (theme.brightness == Brightness.dark ? Colors.white : Colors.black).withValues(alpha: 0.3),
+                    disabledForegroundColor: (theme.brightness == Brightness.dark ? Colors.black : Colors.white).withValues(alpha: 0.6),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
                   ),
                   child: Text(
                     '$currency ${offerTranslate(bid10.toString(), isBangla)}',
@@ -439,12 +444,14 @@ class OfferBidSection extends StatelessWidget {
                   onPressed:
                       isSubmitting ? null : () => onQuickBid(bid18.toDouble()),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        theme.colorScheme.surfaceContainerHighest,
-                    foregroundColor: theme.colorScheme.onSurface,
+                    backgroundColor: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                    foregroundColor: theme.brightness == Brightness.dark ? Colors.black : Colors.white,
+                    disabledBackgroundColor: (theme.brightness == Brightness.dark ? Colors.white : Colors.black).withValues(alpha: 0.3),
+                    disabledForegroundColor: (theme.brightness == Brightness.dark ? Colors.black : Colors.white).withValues(alpha: 0.6),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
                   ),
                   child: Text(
                     '$currency ${offerTranslate(bid18.toString(), isBangla)}',
@@ -457,12 +464,13 @@ class OfferBidSection extends StatelessWidget {
               ElevatedButton(
                 onPressed: onToggleEdit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  foregroundColor: theme.colorScheme.onSurface,
+                  backgroundColor: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                  foregroundColor: theme.brightness == Brightness.dark ? Colors.black : Colors.white,
                   padding: const EdgeInsets.symmetric(
                       vertical: 14, horizontal: 18),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
                 ),
                 child: const Icon(Icons.edit, size: 20),
               ),
