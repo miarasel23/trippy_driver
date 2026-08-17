@@ -95,33 +95,57 @@ class AcceptedTripCardHelper {
 
   static bool shouldShowAcceptedTripCard(RentalTripModel trip) {
     final status = trip.tripStatus.toUpperCase();
-    if (status == 'RIDE_STARTED' || status == 'IN_PROGRESS' || status == 'COMPLETED') {
-      return true;
+    final bidStatus = (trip.myBid?.status ?? '').toUpperCase();
+    final currentStatus = (trip.tripStatus == 'REQUESTED' ? (trip.myBid?.status ?? trip.tripStatus) : trip.tripStatus).toUpperCase();
+
+    // Do NOT show completed, cancelled, or rejected trips
+    if (status == 'COMPLETED' || status == 'CANCELLED' || status == 'REJECTED' ||
+        currentStatus == 'COMPLETED' || currentStatus == 'CANCELLED' || currentStatus == 'REJECTED' ||
+        bidStatus == 'CANCELLED' || bidStatus == 'REJECTED' || bidStatus == 'EXPIRED') {
+      return false;
     }
 
-    final rawService = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
-    if (rawService.toUpperCase().contains('RIDE') || rawService.toUpperCase() == 'RIDE_SHARE') {
-      return true;
-    }
+    final rawService = (trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName).toUpperCase();
+    final isRideShare = rawService.contains('RIDE') || rawService == 'RIDE_SHARE';
 
-    final isReturnTrip = rawService.toUpperCase() == 'RETURN' || rawService.toUpperCase() == 'ROUND_TRIP';
-    String startStr = trip.startDatetime;
-    if (isReturnTrip && status == 'FIRST_COMPLETED') {
-      startStr = trip.endDatetime.isNotEmpty ? trip.endDatetime : trip.startDatetime;
-    }
-
-    if (startStr.isEmpty) return true;
-
-    try {
-      final startTime = parseTripDateTime(startStr);
-      final now = getNow();
-      if (startTime.difference(now).inMinutes > 120) {
-        return false;
+    // 1. RIDE_SHARE: Always show if accepted until completed
+    if (isRideShare) {
+      if (status == 'ACCEPTED' || status == 'IN_PROGRESS' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' ||
+          currentStatus == 'ACCEPTED' || currentStatus == 'IN_PROGRESS' || currentStatus == 'RIDE_STARTED' || currentStatus == 'FIRST_COMPLETED' ||
+          bidStatus == 'ACCEPTED') {
+        return true;
       }
-      return true;
-    } catch (e) {
+    }
+
+    // 2. Other trips: If RIDE_STARTED, IN_PROGRESS, or FIRST_COMPLETED, always show until completed
+    if (status == 'RIDE_STARTED' || status == 'IN_PROGRESS' || status == 'FIRST_COMPLETED' ||
+        currentStatus == 'RIDE_STARTED' || currentStatus == 'IN_PROGRESS' || currentStatus == 'FIRST_COMPLETED') {
       return true;
     }
+
+    // 3. Other trips in ACCEPTED status: show if within 2 hours of start time
+    if (status == 'ACCEPTED' || currentStatus == 'ACCEPTED' || bidStatus == 'ACCEPTED') {
+      final isReturnTrip = rawService == 'RETURN' || rawService == 'ROUND_TRIP';
+      String startStr = trip.startDatetime;
+      if (isReturnTrip && status == 'FIRST_COMPLETED') {
+        startStr = trip.endDatetime.isNotEmpty ? trip.endDatetime : trip.startDatetime;
+      }
+
+      if (startStr.isEmpty) return true;
+
+      try {
+        final startTime = parseTripDateTime(startStr);
+        final now = getNow();
+        if (startTime.difference(now).inMinutes > 120) {
+          return false;
+        }
+        return true;
+      } catch (e) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   static String formatStartDatetime(String datetimeStr, bool isBangla) {

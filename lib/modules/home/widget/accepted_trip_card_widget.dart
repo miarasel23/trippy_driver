@@ -29,9 +29,16 @@ class _AcceptedTripCardState extends State<AcceptedTripCard> {
         if (!state.isOnline) return const SizedBox.shrink();
 
         final acceptedTrips = state.bidTrips.where((t) {
-          final status = t.tripStatus;
-          final bidStatus = t.myBid?.status;
-          final isAccepted = status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || status == 'COMPLETED' || bidStatus == 'ACCEPTED';
+          final status = t.tripStatus.toUpperCase();
+          final bidStatus = (t.myBid?.status ?? '').toUpperCase();
+          final currentStatus = (t.tripStatus == 'REQUESTED' ? (t.myBid?.status ?? t.tripStatus) : t.tripStatus).toUpperCase();
+
+          if (status == 'COMPLETED' || status == 'CANCELLED' || status == 'REJECTED' ||
+              currentStatus == 'COMPLETED' || currentStatus == 'CANCELLED' || currentStatus == 'REJECTED') {
+            return false;
+          }
+
+          final isAccepted = status == 'ACCEPTED' || status == 'RIDE_STARTED' || status == 'FIRST_COMPLETED' || status == 'IN_PROGRESS' || bidStatus == 'ACCEPTED';
           if (!isAccepted) return false;
           return AcceptedTripCardHelper.shouldShowAcceptedTripCard(t);
         }).toList();
