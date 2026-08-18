@@ -10,26 +10,33 @@ abstract class ChatEvent extends Equatable {
 class FetchMessages extends ChatEvent {
   final String driverUuid;
   final String customerUuid;
+  final String receiverType;
 
-  const FetchMessages({required this.driverUuid, required this.customerUuid});
+  const FetchMessages({
+    required this.driverUuid,
+    required this.customerUuid,
+    this.receiverType = 'CUSTOMER',
+  });
 
   @override
-  List<Object?> get props => [driverUuid, customerUuid];
+  List<Object?> get props => [driverUuid, customerUuid, receiverType];
 }
 
 class SendMessage extends ChatEvent {
   final String driverUuid;
   final String customerUuid;
   final String message;
+  final String receiverType;
   final String? filePath;
 
   const SendMessage({
     required this.driverUuid,
     required this.customerUuid,
     required this.message,
+    this.receiverType = 'CUSTOMER',
     this.filePath,
   });
 
   @override
-  List<Object?> get props => [driverUuid, customerUuid, message, filePath];
+  List<Object?> get props => [driverUuid, customerUuid, message, receiverType, filePath];
 }

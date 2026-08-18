@@ -6,6 +6,8 @@ import '../../../core/utils/localization/app_localization.dart';
 import '../../../store/app_globals.dart';
 import '../repository/legal_repository.dart';
 
+import 'help_center_screen.dart';
+
 class LegalPolicyScreen extends StatefulWidget {
   final String policyType;
 
@@ -42,8 +44,10 @@ class _LegalPolicyScreenState extends State<LegalPolicyScreen> {
     super.didChangeDependencies();
     if (!_hasFetched) {
       _hasFetched = true;
-      final loc = AppLocalizations.of(context);
-      _fetchPolicy(loc.locale.languageCode);
+      if (widget.policyType != 'HELP_AND_SUPPORT') {
+        final loc = AppLocalizations.of(context);
+        _fetchPolicy(loc.locale.languageCode);
+      }
     }
   }
 
@@ -152,13 +156,13 @@ class _LegalPolicyScreenState extends State<LegalPolicyScreen> {
   String _getTitle(AppLocalizations loc) {
     switch (widget.policyType) {
       case 'TERMS_CONDITION':
-        return loc.translate('terms_conditions') ?? 'Terms & Conditions';
+        return loc.translate('terms_conditions');
       case 'PRIVACY_POLICY':
-        return loc.translate('privacy_policy') ?? 'Privacy Policy';
+        return loc.translate('privacy_policy');
       case 'TRIP_POLICY':
-        return loc.translate('trip_terms_conditions') ?? 'Trip Terms & Conditions';
+        return loc.translate('trip_terms_conditions');
       case 'HELP_AND_SUPPORT':
-        return loc.translate('help') ?? 'Help & Support';
+        return loc.translate('help');
       default:
         return '';
     }
@@ -166,6 +170,9 @@ class _LegalPolicyScreenState extends State<LegalPolicyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.policyType == 'HELP_AND_SUPPORT') {
+      return const HelpCenterScreen();
+    }
     final loc = AppLocalizations.of(context);
     final title = _getTitle(loc);
     final isDark = Theme.of(context).brightness == Brightness.dark;

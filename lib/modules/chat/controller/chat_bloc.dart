@@ -13,10 +13,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<SendMessage>(_onSendMessage);
   }
 
-  void startPolling(String driverUuid, String customerUuid) {
+  void startPolling(String driverUuid, String customerUuid, {String receiverType = 'CUSTOMER'}) {
     _pollingTimer?.cancel();
     _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      add(FetchMessages(driverUuid: driverUuid, customerUuid: customerUuid));
+      add(FetchMessages(
+        driverUuid: driverUuid,
+        customerUuid: customerUuid,
+        receiverType: receiverType,
+      ));
     });
   }
 
@@ -33,6 +37,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       final messages = await repository.fetchConversations(
         driverUuid: event.driverUuid,
         customerUuid: event.customerUuid,
+        receiverType: event.receiverType,
       );
 
       emit(ChatLoaded(messages: messages, isSending: false));
@@ -54,6 +59,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         driverUuid: event.driverUuid,
         customerUuid: event.customerUuid,
         message: event.message,
+        receiverType: event.receiverType,
         filePath: event.filePath,
       );
 
@@ -61,6 +67,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         final messages = await repository.fetchConversations(
           driverUuid: event.driverUuid,
           customerUuid: event.customerUuid,
+          receiverType: event.receiverType,
         );
         emit(ChatLoaded(messages: messages, isSending: false));
       } else {

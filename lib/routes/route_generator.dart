@@ -70,9 +70,10 @@ class RouteGenerator {
             builder: (_) => BlocProvider(
               create: (_) => ChatBloc(repository: ChatRepository()),
               child: ChatScreen(
-                customerUuid: args['customerUuid'],
-                customerName: args['customerName'],
-                driverUuid: args['driverUuid'],
+                customerUuid: args['customerUuid'] ?? '',
+                customerName: args['customerName'] ?? 'Chat',
+                driverUuid: args['driverUuid'] ?? '',
+                receiverType: args['receiverType'] ?? 'CUSTOMER',
               ),
             ),
           );

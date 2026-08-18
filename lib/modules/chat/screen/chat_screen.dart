@@ -11,12 +11,14 @@ class ChatScreen extends StatefulWidget {
   final String customerUuid;
   final String customerName;
   final String driverUuid;
+  final String receiverType;
 
   const ChatScreen({
     Key? key,
     required this.customerUuid,
     required this.customerName,
     required this.driverUuid,
+    this.receiverType = 'CUSTOMER',
   }) : super(key: key);
 
   @override
@@ -31,7 +33,11 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<ChatBloc>().startPolling(widget.driverUuid, widget.customerUuid);
+    context.read<ChatBloc>().startPolling(
+          widget.driverUuid,
+          widget.customerUuid,
+          receiverType: widget.receiverType,
+        );
   }
 
   @override
@@ -60,6 +66,7 @@ class _ChatScreenState extends State<ChatScreen> {
           driverUuid: widget.driverUuid,
           customerUuid: widget.customerUuid,
           message: 'Sent an image',
+          receiverType: widget.receiverType,
           filePath: image.path,
         ),
       );
@@ -74,6 +81,7 @@ class _ChatScreenState extends State<ChatScreen> {
           driverUuid: widget.driverUuid,
           customerUuid: widget.customerUuid,
           message: text,
+          receiverType: widget.receiverType,
         ),
       );
       _messageController.clear();
