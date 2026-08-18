@@ -15,7 +15,7 @@ class CancelTripDialog extends StatefulWidget {
 class _CancelTripDialogState extends State<CancelTripDialog> {
   final TextEditingController _commentController = TextEditingController();
   bool _isSubmitting = false;
-  String? _selectedReasonKey;
+  String? _selectedReasonKey = 'waiting_for_long_time';
 
   final List<Map<String, String>> _cancelReasons = [
     {'key': 'waiting_for_long_time', 'fallback': 'Waiting for a long time'},

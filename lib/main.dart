@@ -22,7 +22,6 @@ import 'modules/account/controller/account_bloc.dart';
 import 'modules/account/repository/account_repository.dart';
 import 'modules/home/controller/home_controller.dart';
 import 'modules/home/repository/home_repository.dart';
-import 'modules/home/widget/accepted_trip_card_widget.dart';
 import 'routes/app_routes.dart';
 import 'routes/route_generator.dart';
 import 'store/user_data_store.dart';
@@ -206,37 +205,7 @@ class _MyAppState extends State<MyApp> {
             initialRoute: AppRoutes.splash,
             onGenerateRoute: RouteGenerator.generateRoute,
             navigatorObservers: [globalRouteObserver],
-            builder: (context, child) {
-              return Stack(
-                children: [
-                  child!,
-                  ValueListenableBuilder<String?>(
-                    valueListenable: globalRouteObserver.routeNotifier,
-                    builder: (context, route, _) {
-                      if (route == AppRoutes.splash || 
-                          route == AppRoutes.numberInput || 
-                          route == AppRoutes.otp ||
-                          route == AppRoutes.navbar ||
-                          route == AppRoutes.home ||
-                          route == AppRoutes.chat) {
-                        return const SizedBox.shrink();
-                      }
-                      return const Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: Material(
-                          type: MaterialType.transparency,
-                          child: SafeArea(
-                            child: AcceptedTripCard(),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              );
-            },
+            builder: (context, child) => child!,
           );
         },
       );
