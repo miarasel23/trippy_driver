@@ -494,8 +494,11 @@ class _BidsScreenState extends State<BidsScreen> {
                         style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
                       ),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: theme.colorScheme.primary,
-                        side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.5), width: 1.5),
+                        foregroundColor: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                        side: BorderSide(
+                          color: (theme.brightness == Brightness.dark ? Colors.white : Colors.black).withOpacity(0.4),
+                          width: 1.5,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -522,8 +525,8 @@ class _BidsScreenState extends State<BidsScreen> {
                 style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                foregroundColor: theme.brightness == Brightness.dark ? Colors.black : Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 11),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -590,10 +593,14 @@ class _BidsScreenState extends State<BidsScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.12),
+                      color: (theme.brightness == Brightness.dark ? Colors.white : Colors.black).withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.people_alt_rounded, color: theme.colorScheme.primary, size: 20),
+                    child: Icon(
+                      Icons.people_alt_rounded,
+                      color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -627,19 +634,22 @@ class _BidsScreenState extends State<BidsScreen> {
                 margin: const EdgeInsets.only(bottom: 14),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.12),
+                  color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: theme.colorScheme.primary.withOpacity(0.4), width: 1.5),
                 ),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
+                        color: theme.brightness == Brightness.dark ? Colors.black : Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.person_rounded, size: 18, color: Colors.white),
+                      child: Icon(
+                        Icons.person_rounded,
+                        size: 18,
+                        color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -648,22 +658,22 @@ class _BidsScreenState extends State<BidsScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 15,
-                          color: theme.colorScheme.primary,
+                          color: theme.brightness == Brightness.dark ? Colors.black : Colors.white,
                         ),
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
+                        color: theme.brightness == Brightness.dark ? Colors.black : Colors.white,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         "$currency $myBidStr",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 15,
-                          color: Colors.white,
+                          color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
                         ),
                       ),
                     ),
@@ -720,10 +730,14 @@ class _BidsScreenState extends State<BidsScreen> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.secondary.withOpacity(0.12),
+                                color: (theme.brightness == Brightness.dark ? Colors.white : Colors.black).withOpacity(0.1),
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(Icons.person_outline_rounded, size: 18, color: theme.colorScheme.secondary),
+                              child: Icon(
+                                Icons.person_outline_rounded,
+                                size: 18,
+                                color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -738,16 +752,18 @@ class _BidsScreenState extends State<BidsScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withOpacity(0.12),
+                                color: (theme.brightness == Brightness.dark ? Colors.white : Colors.black).withOpacity(0.08),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
+                                border: Border.all(
+                                  color: (theme.brightness == Brightness.dark ? Colors.white : Colors.black).withOpacity(0.2),
+                                ),
                               ),
                               child: Text(
                                 "$currency $amtStr",
                                 style: TextStyle(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 15,
-                                  color: theme.colorScheme.primary,
+                                  color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
                                 ),
                               ),
                             ),
