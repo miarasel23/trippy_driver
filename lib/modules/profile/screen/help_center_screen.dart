@@ -7,11 +7,87 @@ import '../../../core/utils/localization/app_localization.dart';
 import '../../../routes/app_routes.dart';
 import '../../../store/user_data_store.dart';
 
-class HelpCenterScreen extends StatelessWidget {
+import '../../../store/app_globals.dart';
+import '../repository/legal_repository.dart';
+
+class HelpCenterScreen extends StatefulWidget {
   const HelpCenterScreen({super.key});
-  static const String _supportPhone = '+8809611080143';
-  static const String _supportEmail = 'help@tripyservice.com';
+
+  @override
+  State<HelpCenterScreen> createState() => _HelpCenterScreenState();
+}
+
+class _HelpCenterScreenState extends State<HelpCenterScreen> {
+  bool _isLoading = true;
+  List<String> _phoneNumbers = [];
+  List<String> _emailAddresses = [];
   static const String _emergencyPhone = '999';
+  bool _hasFetched = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasFetched) {
+      _hasFetched = true;
+      final loc = AppLocalizations.of(context);
+      _fetchSupportData(loc.locale.languageCode);
+    }
+  }
+
+  Future<void> _fetchSupportData(String languageCode) async {
+    final countryCode = AppGlobals.countryCodeForLanguage(languageCode);
+    final repo = LegalRepository();
+    final policyModel = await repo.fetchPolicies(
+      languageCode: languageCode,
+      countryCode: countryCode,
+    );
+
+    final phones = <String>[];
+    final emails = <String>[];
+
+    if (policyModel != null && policyModel.data.containsKey('HELP_AND_SUPPORT')) {
+      final helpItems = policyModel.data['HELP_AND_SUPPORT']!;
+      for (final item in helpItems) {
+        final rawContent = item.content;
+        final parts = rawContent.split(RegExp(r'[\n,]'));
+        for (var part in parts) {
+          part = part.trim();
+          if (part.isEmpty) continue;
+
+          if (part.contains('@')) {
+            final emailMatch = RegExp(r'[\w\.-]+@[\w\.-]+\.\w+').firstMatch(part);
+            final email = emailMatch != null ? emailMatch.group(0)! : part;
+            if (!emails.contains(email)) {
+              emails.add(email);
+            }
+          } else {
+            final phoneMatch = RegExp(r'[\+0-9\s\-]{6,}').firstMatch(part);
+            if (phoneMatch != null) {
+              final phone = phoneMatch.group(0)!.trim();
+              if (!phones.contains(phone)) {
+                phones.add(phone);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (phones.isEmpty) {
+      phones.add('+8809611080143');
+    }
+    if (emails.isEmpty) {
+      emails.add('help@tripyservice.com');
+    }
+
+    if (mounted) {
+      setState(() {
+        _phoneNumbers = phones;
+        _emailAddresses = emails;
+        _isLoading = false;
+      });
+    }
+  }
 
   Future<void> _launchUrl(BuildContext context, String urlString) async {
     final Uri uri = Uri.parse(urlString);
@@ -111,228 +187,231 @@ class HelpCenterScreen extends StatelessWidget {
 
             // ── SCROLLABLE CONTENT ───────────────────────────────────────
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── HERO BANNER CARD ──────────────────────────────────
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        gradient: LinearGradient(
-                          colors: isDark
-                              ? [const Color(0xFF1E3A8A), const Color(0xFF0F172A)]
-                              : [const Color(0xFF0D6EFD), const Color(0xFF0040A8)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF0D6EFD).withValues(alpha: isDark ? 0.2 : 0.35),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Stack(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Background decorative circles
-                          Positioned(
-                            right: -20,
-                            top: -20,
-                            child: Container(
-                              width: 140,
-                              height: 140,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withValues(alpha: 0.08),
+                          // ── HERO BANNER CARD ──────────────────────────────────
+                          Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              gradient: LinearGradient(
+                                colors: isDark
+                                    ? [const Color(0xFF1E3A8A), const Color(0xFF0F172A)]
+                                    : [const Color(0xFF0D6EFD), const Color(0xFF0040A8)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF0D6EFD).withValues(alpha: isDark ? 0.2 : 0.35),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
                             ),
-                          ),
-                          Positioned(
-                            right: 40,
-                            bottom: -30,
-                            child: Container(
-                              width: 90,
-                              height: 90,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withValues(alpha: 0.05),
-                              ),
-                            ),
-                          ),
-
-                          // Banner Content
-                          Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Row(
+                            child: Stack(
                               children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                Positioned(
+                                  right: -20,
+                                  top: -20,
+                                  child: Container(
+                                    width: 140,
+                                    height: 140,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white.withValues(alpha: 0.08),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  right: 40,
+                                  bottom: -30,
+                                  child: Container(
+                                    width: 90,
+                                    height: 90,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white.withValues(alpha: 0.05),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Row(
                                     children: [
-                                      Text(
-                                        loc.translate('how_can_we_help'),
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                          height: 1.3,
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              loc.translate('how_can_we_help'),
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                                height: 1.3,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withValues(alpha: 0.2),
+                                                borderRadius: BorderRadius.circular(20),
+                                              ),
+                                              child: Text(
+                                                '24/7 Driver Support',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(width: 16),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        width: 68,
+                                        height: 68,
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withValues(alpha: 0.2),
-                                          borderRadius: BorderRadius.circular(20),
+                                          color: Colors.white.withValues(alpha: 0.18),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white.withValues(alpha: 0.35),
+                                            width: 2,
+                                          ),
                                         ),
-                                        child: Text(
-                                          '24/7 Driver Support',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.headset_mic_rounded,
                                             color: Colors.white,
+                                            size: 36,
                                           ),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                const SizedBox(width: 16),
-
-                                // Headset Avatar Icon Badge
-                                Container(
-                                  width: 68,
-                                  height: 68,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.18),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.35),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.headset_mic_rounded,
-                                      color: Colors.white,
-                                      size: 36,
-                                    ),
-                                  ),
-                                ),
                               ],
                             ),
                           ),
+
+                          const SizedBox(height: 28),
+
+                          // ── SUPPORT OPTIONS LIST ─────────────────────────────
+                          _HelpOptionCard(
+                            icon: Icons.chat_bubble_rounded,
+                            iconBgColor: const Color(0xFF0D6EFD),
+                            title: loc.translate('message_customer_care'),
+                            subtitle: loc.translate('message_customer_care_sub'),
+                            cardBgColor: cardBgColor,
+                            borderColor: borderColor,
+                            primaryTextColor: primaryTextColor,
+                            secondaryTextColor: secondaryTextColor,
+                            onTap: () {
+                              final driverUuid = UserDataStore.uuid ?? UserDataStore.userData?.data?.user?.uuid ?? '';
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.chat,
+                                arguments: {
+                                  'driverUuid': driverUuid,
+                                  'customerUuid': '',
+                                  'customerName': loc.translate('message_customer_care'),
+                                  'receiverType': 'ADMIN',
+                                },
+                              );
+                            },
+                          ),
+
+                          const SizedBox(height: 14),
+
+                          ..._phoneNumbers.map((phone) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 14),
+                              child: _HelpOptionCard(
+                                icon: Icons.phone_in_talk_rounded,
+                                iconBgColor: const Color(0xFF0284C7),
+                                title: phone,
+                                subtitle: loc.translate('talk_to_customer_care_sub'),
+                                cardBgColor: cardBgColor,
+                                borderColor: borderColor,
+                                primaryTextColor: primaryTextColor,
+                                secondaryTextColor: secondaryTextColor,
+                                onTap: () => _launchUrl(context, 'tel:$phone'),
+                              ),
+                            );
+                          }),
+
+                          ..._emailAddresses.map((email) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 14),
+                              child: _HelpOptionCard(
+                                icon: Icons.mark_email_unread_rounded,
+                                iconBgColor: const Color(0xFF3B82F6),
+                                title: email,
+                                subtitle: loc.translate('email_support_sub'),
+                                cardBgColor: cardBgColor,
+                                borderColor: borderColor,
+                                primaryTextColor: primaryTextColor,
+                                secondaryTextColor: secondaryTextColor,
+                                onTap: () => _launchUrl(context, 'mailto:$email'),
+                              ),
+                            );
+                          }),
+
+                          _HelpOptionCard(
+                            iconWidget: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFDC2626),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'জাতীয়',
+                                    style: GoogleFonts.hindSiliguri(
+                                      fontSize: 7,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      height: 1,
+                                    ),
+                                  ),
+                                  Text(
+                                    '৯৯৯',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            title: loc.translate('emergency_service_999'),
+                            subtitle: loc.translate('emergency_service_sub'),
+                            cardBgColor: cardBgColor,
+                            borderColor: borderColor,
+                            primaryTextColor: primaryTextColor,
+                            secondaryTextColor: secondaryTextColor,
+                            isEmergency: true,
+                            onTap: () => _launchUrl(context, 'tel:$_emergencyPhone'),
+                          ),
+
+                          const SizedBox(height: 32),
                         ],
                       ),
                     ),
-
-                    const SizedBox(height: 28),
-
-                    // ── SUPPORT OPTIONS LIST ─────────────────────────────
-                    _HelpOptionCard(
-                      icon: Icons.chat_bubble_rounded,
-                      iconBgColor: const Color(0xFF0D6EFD),
-                      title: loc.translate('message_customer_care'),
-                      subtitle: loc.translate('message_customer_care_sub'),
-                      cardBgColor: cardBgColor,
-                      borderColor: borderColor,
-                      primaryTextColor: primaryTextColor,
-                      secondaryTextColor: secondaryTextColor,
-                      onTap: () {
-                        final driverUuid = UserDataStore.uuid ?? UserDataStore.userData?.data?.user?.uuid ?? '';
-                        Navigator.pushNamed(
-                          context,
-                          AppRoutes.chat,
-                          arguments: {
-                            'driverUuid': driverUuid,
-                            'customerUuid': '',
-                            'customerName': loc.translate('message_customer_care'),
-                            'receiverType': 'ADMIN',
-                          },
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    _HelpOptionCard(
-                      icon: Icons.phone_in_talk_rounded,
-                      iconBgColor: const Color(0xFF0284C7),
-                      title: loc.translate('talk_to_customer_care'),
-                      subtitle: loc.translate('talk_to_customer_care_sub'),
-                      cardBgColor: cardBgColor,
-                      borderColor: borderColor,
-                      primaryTextColor: primaryTextColor,
-                      secondaryTextColor: secondaryTextColor,
-                      onTap: () => _launchUrl(context, 'tel:$_supportPhone'),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    _HelpOptionCard(
-                      icon: Icons.mark_email_unread_rounded,
-                      iconBgColor: const Color(0xFF3B82F6),
-                      title: _supportEmail,
-                      subtitle: loc.translate('email_support_sub'),
-                      cardBgColor: cardBgColor,
-                      borderColor: borderColor,
-                      primaryTextColor: primaryTextColor,
-                      secondaryTextColor: secondaryTextColor,
-                      onTap: () => _launchUrl(context, 'mailto:$_supportEmail'),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    _HelpOptionCard(
-                      iconWidget: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFDC2626),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'জাতীয়',
-                              style: GoogleFonts.hindSiliguri(
-                                fontSize: 7,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                height: 1,
-                              ),
-                            ),
-                            Text(
-                              '৯৯৯',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w900,
-                                height: 1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      title: loc.translate('emergency_service_999'),
-                      subtitle: loc.translate('emergency_service_sub'),
-                      cardBgColor: cardBgColor,
-                      borderColor: borderColor,
-                      primaryTextColor: primaryTextColor,
-                      secondaryTextColor: secondaryTextColor,
-                      isEmergency: true,
-                      onTap: () => _launchUrl(context, 'tel:$_emergencyPhone'),
-                    ),
-
-                    const SizedBox(height: 32),
-                  ],
-                ),
-              ),
             ),
           ],
         ),
