@@ -36,9 +36,6 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
 
         final pickupLoc = AcceptedTripCardHelper.getEffectivePickup(trip);
         final dropoffLoc = AcceptedTripCardHelper.getEffectiveDropoff(trip);
-        
-        final pickup = pickupLoc?.address ?? 'Unknown';
-        final dropoff = dropoffLoc?.address ?? 'Unknown';
         final bidAmount = trip.myBid?.amount ?? trip.customerOfferAmmount;
         final totalAmount = trip.myBid?.totalAmount ?? bidAmount;
         final platformFee = totalAmount - bidAmount;
@@ -246,41 +243,11 @@ class _AcceptedRentalDetailsState extends State<AcceptedRentalDetails> {
 
               const SizedBox(height: 8),
 
-              // ── Route Locations A & B ────────────────────────────────
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AcceptedTripCardHelper.buildLocationBadgeA(),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TranslatedText(
-                      pickup,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                      isBangla: isBangla,
-                      location: pickupLoc,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AcceptedTripCardHelper.buildLocationBadgeB(),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TranslatedText(
-                      dropoff,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontWeight: FontWeight.w500, fontSize: 13),
-                      isBangla: isBangla,
-                      location: dropoffLoc,
-                    ),
-                  ),
-                ],
+              AcceptedTripCardHelper.buildAllLocationRows(
+                context: context,
+                trip: trip,
+                isBangla: isBangla,
+                theme: theme,
               ),
 
               if (trip.note.isNotEmpty) ...[

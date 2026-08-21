@@ -318,42 +318,155 @@ class AcceptedTripCardHelper {
   }
 
   static LocationModel? getEffectivePickup(RentalTripModel trip) {
-    final service = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
-    final isReturnTrip = service.toUpperCase() == 'RETURN' || service.toUpperCase() == 'ROUND_TRIP';
-    final currentStatus = trip.tripStatus == 'REQUESTED' ? (trip.myBid?.status ?? trip.tripStatus) : trip.tripStatus;
-    if (isReturnTrip && currentStatus == 'FIRST_COMPLETED') {
-      return trip.dropoffLocations.isNotEmpty ? trip.dropoffLocations.first : (trip.pickupLocations.isNotEmpty ? trip.pickupLocations.first : null);
-    }
-    return trip.pickupLocations.isNotEmpty ? trip.pickupLocations.first : null;
+    final pickups = getEffectivePickups(trip);
+    return pickups.isNotEmpty ? pickups.first : null;
   }
 
   static LocationModel? getEffectiveDropoff(RentalTripModel trip) {
+    final dropoffs = getEffectiveDropoffs(trip);
+    return dropoffs.isNotEmpty ? dropoffs.first : null;
+  }
+
+  static List<LocationModel> getEffectivePickups(RentalTripModel trip) {
     final service = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
     final isReturnTrip = service.toUpperCase() == 'RETURN' || service.toUpperCase() == 'ROUND_TRIP';
     final currentStatus = trip.tripStatus == 'REQUESTED' ? (trip.myBid?.status ?? trip.tripStatus) : trip.tripStatus;
     if (isReturnTrip && currentStatus == 'FIRST_COMPLETED') {
-      return trip.pickupLocations.isNotEmpty ? trip.pickupLocations.first : (trip.dropoffLocations.isNotEmpty ? trip.dropoffLocations.first : null);
+      return trip.dropoffLocations.isNotEmpty ? trip.dropoffLocations : trip.pickupLocations;
     }
-    return trip.dropoffLocations.isNotEmpty ? trip.dropoffLocations.first : null;
+    return trip.pickupLocations;
+  }
+
+  static List<LocationModel> getEffectiveDropoffs(RentalTripModel trip) {
+    final service = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
+    final isReturnTrip = service.toUpperCase() == 'RETURN' || service.toUpperCase() == 'ROUND_TRIP';
+    final currentStatus = trip.tripStatus == 'REQUESTED' ? (trip.myBid?.status ?? trip.tripStatus) : trip.tripStatus;
+    if (isReturnTrip && currentStatus == 'FIRST_COMPLETED') {
+      return trip.pickupLocations.isNotEmpty ? trip.pickupLocations : trip.dropoffLocations;
+    }
+    return trip.dropoffLocations;
+  }
+
+  static Widget buildLocationBadge(String label, Color color) {
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Padding(
+          padding: const EdgeInsets.all(2.0),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Widget buildAllLocationRows({
+    required BuildContext context,
+    required RentalTripModel trip,
+    required bool isBangla,
+    required ThemeData theme,
+    TextStyle? pickupStyle,
+    TextStyle? dropoffStyle,
+    double spacing = 6.0,
+  }) {
+    final pickups = getEffectivePickups(trip);
+    final dropoffs = getEffectiveDropoffs(trip);
+
+    List<Widget> locationWidgets = [];
+
+    // Render all Pickups
+    for (int i = 0; i < pickups.length; i++) {
+      final loc = pickups[i];
+      if (loc.address.trim().isEmpty) continue;
+      final label = pickups.length > 1 ? 'A${i + 1}' : 'A';
+      locationWidgets.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            buildLocationBadge(label, Colors.blueAccent),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TranslatedText(
+                loc.address,
+                isBangla: isBangla,
+                style: pickupStyle ?? TextStyle(color: theme.colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w600),
+                location: loc,
+              ),
+            ),
+          ],
+        ),
+      );
+      locationWidgets.add(SizedBox(height: spacing));
+    }
+
+    // Render all Dropoffs
+    for (int i = 0; i < dropoffs.length; i++) {
+      final loc = dropoffs[i];
+      if (loc.address.trim().isEmpty) continue;
+      final label = dropoffs.length > 1 ? 'B${i + 1}' : 'B';
+      locationWidgets.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            buildLocationBadge(label, const Color(0xFFE53935)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TranslatedText(
+                loc.address,
+                isBangla: isBangla,
+                style: dropoffStyle ?? TextStyle(color: theme.colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w500),
+                location: loc,
+              ),
+            ),
+          ],
+        ),
+      );
+      if (i < dropoffs.length - 1) {
+        locationWidgets.add(SizedBox(height: spacing));
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: locationWidgets,
+    );
   }
 
   static String calculateTripDistance(RentalTripModel trip) {
-    final pickupLoc = getEffectivePickup(trip);
-    final dropoffLoc = getEffectiveDropoff(trip);
+    final pickups = getEffectivePickups(trip);
+    final dropoffs = getEffectiveDropoffs(trip);
     
-    if (pickupLoc == null || dropoffLoc == null) {
+    final allLocs = <LocationModel>[...pickups, ...dropoffs];
+    if (allLocs.length < 2) {
       return "0.0 km";
     }
 
     try {
-      double distanceInMeters = Geolocator.distanceBetween(
-        pickupLoc.latitude,
-        pickupLoc.longitude,
-        dropoffLoc.latitude,
-        dropoffLoc.longitude,
-      );
+      double totalMeters = 0.0;
+      for (int i = 0; i < allLocs.length - 1; i++) {
+        totalMeters += Geolocator.distanceBetween(
+          allLocs[i].latitude,
+          allLocs[i].longitude,
+          allLocs[i + 1].latitude,
+          allLocs[i + 1].longitude,
+        );
+      }
       
-      double distanceInKm = distanceInMeters / 1000;
+      double distanceInKm = totalMeters / 1000;
       
       final rawService = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
       if (rawService.toUpperCase() == 'RETURN' || rawService.toUpperCase() == 'ROUND_TRIP') {
@@ -510,8 +623,6 @@ class AcceptedTripCardHelper {
   }) {
     final pickupLoc = getEffectivePickup(trip);
     final dropoffLoc = getEffectiveDropoff(trip);
-    final pickupAddress = pickupLoc?.address ?? '';
-    final dropoffAddress = dropoffLoc?.address ?? '';
     
     final formattedTotalDistance = translateNumbersAndCommonWords(calculateTripDistance(trip), isBangla);
     final distanceText = formattedTotalDistance;
@@ -671,18 +782,11 @@ class AcceptedTripCardHelper {
               ),
               const SizedBox(height: 6),
               buildTripDateTimes(context, trip, isBangla, theme),
-              TranslatedText(
-                pickupAddress,
+              buildAllLocationRows(
+                context: context,
+                trip: trip,
                 isBangla: isBangla,
-                style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w600),
-                location: pickupLoc,
-              ),
-              const SizedBox(height: 4),
-              TranslatedText(
-                dropoffAddress,
-                isBangla: isBangla,
-                style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
-                location: dropoffLoc,
+                theme: theme,
               ),
               if (trip.note.isNotEmpty) ...[
                 const SizedBox(height: 6),

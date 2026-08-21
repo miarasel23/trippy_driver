@@ -274,18 +274,11 @@ class _NewRequestCardState extends State<NewRequestCard> {
                   ),
                   const SizedBox(height: 6),
                   AcceptedTripCardHelper.buildTripDateTimes(context, widget.trip, isBangla, theme),
-                  TranslatedText(
-                    pickupAddress,
+                  AcceptedTripCardHelper.buildAllLocationRows(
+                    context: context,
+                    trip: widget.trip,
                     isBangla: isBangla,
-                    style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w600),
-                    location: pickupLoc,
-                  ),
-                  const SizedBox(height: 4),
-                  TranslatedText(
-                    dropoffAddress,
-                    isBangla: isBangla,
-                    style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
-                    location: dropoffLoc,
+                    theme: theme,
                   ),
                   if (widget.trip.note.isNotEmpty) ...[
                     const SizedBox(height: 6),

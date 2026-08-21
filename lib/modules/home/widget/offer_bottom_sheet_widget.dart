@@ -158,12 +158,6 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
     final bid10 = (baseAmount * 1.10).round();
     final bid18 = (baseAmount * 1.18).round();
 
-    final pickupLoc =
-        AcceptedTripCardHelper.getEffectivePickup(widget.trip);
-    final dropoffLoc =
-        AcceptedTripCardHelper.getEffectiveDropoff(widget.trip);
-    final pickupAddress = pickupLoc?.address ?? '';
-    final dropoffAddress = dropoffLoc?.address ?? '';
     final distanceText =
         AcceptedTripCardHelper.calculateTripDistance(widget.trip);
 
@@ -206,23 +200,11 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
               AcceptedTripCardHelper.buildTripDateTimes(
                   context, widget.trip, isBangla, theme),
 
-              // Pickup location
-              OfferLocationRow(
-                label: 'A',
-                dotColor: Colors.blueAccent,
-                address: pickupAddress,
+              AcceptedTripCardHelper.buildAllLocationRows(
+                context: context,
+                trip: widget.trip,
                 isBangla: isBangla,
-                location: pickupLoc,
-              ),
-              const SizedBox(height: 12),
-
-              // Dropoff location
-              OfferLocationRow(
-                label: 'B',
-                dotColor: Colors.green,
-                address: dropoffAddress,
-                isBangla: isBangla,
-                location: dropoffLoc,
+                theme: theme,
               ),
               const SizedBox(height: 8),
 
