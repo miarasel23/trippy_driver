@@ -776,6 +776,9 @@ class HomeController extends Cubit<HomeState> {
   }
 
   void selectTripForPreview(RentalTripModel? trip) {
+    if (trip != null) {
+      repository.markTripAsSeen(tripUuid: trip.uuid);
+    }
     emit(state.copyWith(previewTrip: trip, clearPreview: trip == null));
     _generateAndEmitMapData(state.bidTrips);
   }

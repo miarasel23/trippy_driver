@@ -206,6 +206,45 @@ class HomeRepository {
     }
   }
 
+  Future<void> markTripAsSeen({required String tripUuid}) async {
+    try {
+      final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
+      final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
+
+      if (uuid == null || token == null || tripUuid.isEmpty) return;
+
+      String platform = "web";
+      if (Platform.isAndroid) {
+        platform = "android";
+      } else if (Platform.isIOS) {
+        platform = "ios";
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      final languageCode = prefs.getString('active_language_code') ?? 'en';
+
+      final Map<String, String> body = {
+        "platform": platform,
+        "language_code": languageCode,
+        "action_when": "trip_seen",
+        "trip_uuid": tripUuid,
+        "driver_uuid": uuid,
+      };
+
+      await http.post(
+        Uri.parse(AppUrls.tripSeen),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+        },
+        body: body,
+      );
+    } catch (_) {
+      // Silent background call
+    }
+  }
+
   Future<List<RentalTripModel>?> getBidTripList() async {
     final String? uuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
     final String? token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();

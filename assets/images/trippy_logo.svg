@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 280" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@1,900&amp;display=swap');
+      .trippy-bold-italic {
+        font-family: 'Exo 2', 'Montserrat', 'Arial Black', sans-serif;
+        font-weight: 900;
+        font-style: italic;
+        font-size: 135px;
+        fill: #000000;
+        letter-spacing: 6px;
+      }
+    </style>
+    <linearGradient id="neonGreenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#84CC16" />
+      <stop offset="40%" stop-color="#A3E635" />
+      <stop offset="100%" stop-color="#39FF14" />
+    </linearGradient>
+  </defs>
+
+  <!-- Clean White Background -->
+  <rect width="920" height="280" rx="18" fill="#FFFFFF"/>
+
+  <!-- Logo Group -->
+  <g transform="translate(45, 50)">
+
+    <!-- 1. Text: TRIPPY (Exact Italicized Bold Black Typography) -->
+    <text x="30" y="165" class="trippy-bold-italic">TRIPPY</text>
+
+    <!-- 2. Light Green Top Road Direction Arrow sweeping across TOP of word extending from 'T' -->
+    <g transform="translate(0, 0)">
+      <!-- Smooth Road Bar over the top of the letters -->
+      <path d="M 15,70 
+               C 15,50 35,42 65,42 
+               L 720,42 
+               C 745,42 765,36 785,26 
+               L 790,40 
+               C 770,52 745,58 720,58 
+               L 65,58 
+               C 45,58 31,64 31,76 
+               Z" 
+            fill="url(#neonGreenGrad)"/>
+
+      <!-- Top Right Arrow Head Tip pointing up-right above Y -->
+      <path d="M 770,12 
+               L 835,-8 
+               L 815,48 
+               L 792,30 
+               L 778,36 
+               Z" 
+            fill="url(#neonGreenGrad)"/>
+    </g>
+
+  </g>
+</svg>
