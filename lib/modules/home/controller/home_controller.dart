@@ -455,7 +455,6 @@ class HomeController extends Cubit<HomeState> {
       if (detailedTrip != null) {
         final index = updatedBids.indexWhere((t) => t.uuid == detailedTrip.uuid);
         if (index != -1) {
-          final old = updatedBids[index];
           // We always want to update the trip details if we got a successful response from the detailed API,
           // because it contains fields like bid_summary which might not be in the list API.
           updatedBids[index] = detailedTrip;
@@ -621,12 +620,6 @@ class HomeController extends Cubit<HomeState> {
       return double.tryParse(s) ?? 0.0;
     }
     
-    final pickupKm = parseKm(trip.pickupKm);
-    final totalKm = trip.totalDistance;
-    
-    final pickupMins = (pickupKm * 3.5).round(); // approx 3.5 mins per km
-    final dropoffMins = (totalKm * 3.5).round();
-
     for (int i = 0; i < effectivePickups.length; i++) {
        final pickup = effectivePickups[i];
        final title = isBangla ? 'পিকআপ ${toBanglaDigits('${i+1}')}' : 'Pickup ${i+1}';
