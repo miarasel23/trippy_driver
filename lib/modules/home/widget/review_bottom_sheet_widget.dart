@@ -96,11 +96,6 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
     
     final paymentMethod = widget.trip.paymentMethod ?? 'CASH';
 
-    final effPickup = AcceptedTripCardHelper.getEffectivePickup(widget.trip);
-    final effDropoff = AcceptedTripCardHelper.getEffectiveDropoff(widget.trip);
-    final pickupLoc = effPickup?.address ?? 'Unknown';
-    final dropoffLoc = effDropoff?.address ?? 'Unknown';
-
     DateTime? tripDate;
     try {
       tripDate = DateTime.parse(widget.trip.createdAt);
@@ -275,65 +270,18 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
                         Divider(color: theme.colorScheme.onSurface.withOpacity(0.2), thickness: 4),
                         const SizedBox(height: 12),
                         
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Column(
-                              children: [
-                                const SizedBox(height: 4),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.onSurface.withOpacity(0.3),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                Container(
-                                  width: 2,
-                                  height: 30,
-                                  color: theme.colorScheme.onSurface.withOpacity(0.2),
-                                ),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.black,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    loc.translate('pickup') ?? 'Pickup',
-                                    style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withOpacity(0.5)),
-                                  ),
-                                  Text(
-                                    pickupLoc,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    loc.translate('destination') ?? 'Destination',
-                                    style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withOpacity(0.5)),
-                                  ),
-                                  Text(
-                                    dropoffLoc,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                        AcceptedTripCardHelper.buildAllLocationRows(
+                          context: context,
+                          trip: widget.trip,
+                          isBangla: isBangla,
+                          theme: theme,
+                          pickupStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                          dropoffStyle: TextStyle(
+                            color: theme.colorScheme.onSurface.withOpacity(0.9),
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                          ),
+                          spacing: 8.0,
                         ),
                       ],
                     ),

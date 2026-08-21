@@ -381,6 +381,8 @@ class AcceptedTripCardHelper {
     TextStyle? pickupStyle,
     TextStyle? dropoffStyle,
     double spacing = 6.0,
+    int? maxLines,
+    TextOverflow? overflow,
   }) {
     final pickups = getEffectivePickups(trip);
     final dropoffs = getEffectiveDropoffs(trip);
@@ -403,6 +405,8 @@ class AcceptedTripCardHelper {
                 loc.address,
                 isBangla: isBangla,
                 style: pickupStyle ?? TextStyle(color: theme.colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w600),
+                maxLines: maxLines,
+                overflow: overflow,
                 location: loc,
               ),
             ),
@@ -428,6 +432,8 @@ class AcceptedTripCardHelper {
                 loc.address,
                 isBangla: isBangla,
                 style: dropoffStyle ?? TextStyle(color: theme.colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w500),
+                maxLines: maxLines,
+                overflow: overflow,
                 location: loc,
               ),
             ),
