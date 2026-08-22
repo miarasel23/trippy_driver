@@ -87,7 +87,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
     final customerRating = customer != null ? customer.averageRating.toStringAsFixed(1) : '4.5';
     final displayRating = AcceptedTripCardHelper.translateNumbersAndCommonWords(customerRating, isBangla);
 
-    final carType = widget.trip.carCategory.carType;
+    final carType = widget.trip.carCategory.carType.replaceAll('_', ' ');
     
     final bidAmount = widget.trip.myBid?.amount ?? widget.trip.customerOfferAmmount;
     final totalAmount = widget.trip.myBid?.totalAmount ?? bidAmount;

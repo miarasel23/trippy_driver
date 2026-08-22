@@ -827,7 +827,7 @@ class AcceptedTripCardHelper {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      trip.carCategory.carType,
+                      trip.carCategory.carType.replaceAll('_', ' '),
                       style: TextStyle(color: theme.colorScheme.primary, fontSize: 10, fontWeight: FontWeight.bold),
                     ),
                   ),

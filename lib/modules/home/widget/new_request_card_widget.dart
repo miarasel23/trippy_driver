@@ -310,7 +310,7 @@ class _NewRequestCardState extends State<NewRequestCard> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          widget.trip.carCategory.carType,
+                          widget.trip.carCategory.carType.replaceAll('_', ' '),
                           style: TextStyle(
                               color: theme.colorScheme.primary,
                               fontSize: 10,
