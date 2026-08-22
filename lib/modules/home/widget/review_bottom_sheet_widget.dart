@@ -30,10 +30,10 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
   }
 
   final List<String> _compliments = [
-    'Clean car',
-    'Great music',
-    'Professional',
-    'Smooth ride',
+    'Polite behavior',
+    'On time',
+    'Good communication',
+    'Great passenger',
     'Others',
   ];
 
