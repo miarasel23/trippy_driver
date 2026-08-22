@@ -139,6 +139,8 @@ class HomeController extends Cubit<HomeState> {
     });
   }
 
+  Position? _lastTrackedPosition;
+
   Future<void> _trackLocation() async {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -149,6 +151,16 @@ class HomeController extends Cubit<HomeState> {
       if (permission == LocationPermission.deniedForever) return;
 
       Position position = await Geolocator.getCurrentPosition();
+      if (_lastTrackedPosition != null) {
+        double distance = Geolocator.distanceBetween(
+          _lastTrackedPosition!.latitude,
+          _lastTrackedPosition!.longitude,
+          position.latitude,
+          position.longitude,
+        );
+        if (distance < 10) return;
+      }
+
       final _geocoder = Geocoding();
       List<Placemark> placemarks = await _geocoder.placemarkFromCoordinates(position.latitude, position.longitude).timeout(const Duration(seconds: 3));
       
@@ -166,6 +178,7 @@ class HomeController extends Cubit<HomeState> {
         final geoUuid = await repository.searchLocation(address);
         if (geoUuid != null) {
           await repository.trackDriverLocation(geoUuid);
+          _lastTrackedPosition = position;
         }
       }
     } catch (e) {

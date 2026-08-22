@@ -31,6 +31,7 @@ class _BidsScreenState extends State<BidsScreen> {
   bool _isLoading = true;
   Timer? _timer;
   int _secondsCounter = 0;
+  final ValueNotifier<int> _secondsTicker = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -38,7 +39,7 @@ class _BidsScreenState extends State<BidsScreen> {
     _fetchBids(showLoading: true);
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
-        setState(() {});
+        _secondsTicker.value++;
         _secondsCounter++;
         if (_secondsCounter % 15 == 0) {
           _fetchBids(showLoading: false);
@@ -57,6 +58,7 @@ class _BidsScreenState extends State<BidsScreen> {
   void dispose() {
     widget.refreshTrigger?.removeListener(_onRefreshTriggered);
     _timer?.cancel();
+    _secondsTicker.dispose();
     super.dispose();
   }
 
@@ -280,7 +282,25 @@ class _BidsScreenState extends State<BidsScreen> {
           // ── 1. Top Header Row: Timer Badge & Service Badge ───────────
           Row(
             children: [
-              AcceptedTripCardHelper.buildTimerBadge(timeStr),
+              ValueListenableBuilder<int>(
+                valueListenable: _secondsTicker,
+                builder: (context, value, child) {
+                  final nowTime = DateTime.now();
+                  var rem = expireTime.difference(nowTime);
+                  if (rem.isNegative) rem = Duration.zero;
+                  final int sec = rem.inSeconds.clamp(0, double.maxFinite.toInt());
+                  final int h = sec ~/ 3600;
+                  final int m = (sec % 3600) ~/ 60;
+                  final int s = sec % 60;
+                  String badgeTimeStr = h > 0 
+                      ? "$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}"
+                      : "$m:${s.toString().padLeft(2, '0')}";
+                  if (isBangla) {
+                    badgeTimeStr = AcceptedTripCardHelper.translateNumbersAndCommonWords(badgeTimeStr, isBangla);
+                  }
+                  return AcceptedTripCardHelper.buildTimerBadge(badgeTimeStr);
+                },
+              ),
               const Spacer(),
               AcceptedTripCardHelper.buildServiceBadge(rawService, hoursBooked: trip.hoursBooked),
             ],

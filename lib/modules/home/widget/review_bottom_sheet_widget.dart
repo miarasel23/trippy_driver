@@ -40,7 +40,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
   void _submitReview() async {
     if (_rating == 0) {
       final loc = AppLocalizations.of(context);
-      UiUtils.showAppSnackBar(context, loc.translate('please_select_rating') ?? 'Please select a rating', type: 'error');
+      UiUtils.showAppSnackBar(context, loc.translate('please_select_rating'), type: 'error');
       return;
     }
 
@@ -67,7 +67,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
       });
       if (error == null) {
         final loc = AppLocalizations.of(context);
-        UiUtils.showAppSnackBar(context, loc.translate('review_submitted_successfully') ?? 'Review submitted successfully!', type: 'success');
+        UiUtils.showAppSnackBar(context, loc.translate('review_submitted_successfully'), type: 'success');
         Navigator.of(context).pop();
       } else {
         UiUtils.showApiErrorPopup(context, error);
@@ -82,7 +82,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
     final isBangla = Localizations.localeOf(context).languageCode == 'bn';
     
     final customer = widget.trip.customer.isNotEmpty ? widget.trip.customer.first : null;
-    final customerName = customer?.name ?? loc.translate('customer') ?? 'Customer';
+    final customerName = (customer != null && customer.name.isNotEmpty) ? customer.name : loc.translate('customer');
     final customerAvatar = customer?.profilePicture ?? '';
     final customerRating = customer != null ? customer.averageRating.toStringAsFixed(1) : '4.5';
     final displayRating = AcceptedTripCardHelper.translateNumbersAndCommonWords(customerRating, isBangla);
