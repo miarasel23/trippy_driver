@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/localization/app_localization.dart';
+import '../../../core/utils/sslcommerz_helper.dart';
 import '../controller/account_bloc.dart';
 import '../model/package_details_model.dart';
 import '../model/transaction_model.dart';
@@ -254,17 +255,13 @@ class PayDueAmountDialog extends StatelessWidget {
                       final navContext = globalNavigatorKey.currentContext;
                       if (navContext == null) return;
 
-                      final result = await Navigator.push(
-                        navContext,
-                        MaterialPageRoute(
-                          builder: (context) => SslcommerzPaymentScreen(
-                            amount: displayDueBalance,
-                            packageName: 'Due Payment',
-                            fullName: user?.fullName ?? '',
-                            email: user?.email ?? '',
-                            phone: user?.phoneNumber ?? '',
-                          ),
-                        ),
+                      final result = await SslcommerzHelper.initiatePayment(
+                        context: navContext,
+                        amount: displayDueBalance,
+                        packageName: 'Due Payment',
+                        fullName: user?.fullName,
+                        email: user?.email,
+                        phone: user?.phoneNumber,
                       );
 
                       if (result != null && result is String) {

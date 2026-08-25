@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/utils/localization/app_localization.dart';
+import '../../../../core/utils/sslcommerz_helper.dart';
 import '../../../../main.dart';
 import '../../../../store/user_data_store.dart';
 import '../../subscription/repository/subscription_repository.dart';
@@ -121,17 +122,13 @@ class _AccountRechargeDialogState extends State<AccountRechargeDialog> {
     final navContext = globalNavigatorKey.currentContext;
     if (navContext == null) return;
 
-    final result = await Navigator.push(
-      navContext,
-      MaterialPageRoute(
-        builder: (context) => SslcommerzPaymentScreen(
-          amount: amount,
-          packageName: 'Account Recharge',
-          fullName: user?.fullName ?? '',
-          email: user?.email ?? '',
-          phone: user?.phoneNumber ?? '',
-        ),
-      ),
+    final result = await SslcommerzHelper.initiatePayment(
+      context: navContext,
+      amount: amount,
+      packageName: 'Account Recharge',
+      fullName: user?.fullName,
+      email: user?.email,
+      phone: user?.phoneNumber,
     );
     if (result != null && result is String) {
       final loadingCtx = globalNavigatorKey.currentContext;

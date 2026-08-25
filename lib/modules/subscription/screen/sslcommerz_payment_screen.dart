@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_sslcommerz/model/SSLCCustomerInfoInitializer.dart';
+import 'package:flutter_sslcommerz/model/SSLCShipmentInfoInitializer.dart';
 import 'package:flutter_sslcommerz/model/SSLCommerzInitialization.dart';
 import 'package:flutter_sslcommerz/model/SSLCurrencyType.dart';
 import 'package:flutter_sslcommerz/model/SSLCSdkType.dart';
@@ -6,6 +8,7 @@ import 'package:flutter_sslcommerz/model/SSLCTransactionInfoModel.dart';
 import 'package:flutter_sslcommerz/sslcommerz.dart';
 
 import '../../../data/services/api_key_repository.dart';
+import '../../../store/user_data_store.dart';
 
 class SslcommerzPaymentScreen extends StatefulWidget {
   final double amount;
@@ -75,17 +78,71 @@ class _SslcommerzPaymentScreenState extends State<SslcommerzPaymentScreen> {
       // ── 3. Launch SSLCommerz SDK ──────────────────────────────────────────
       final tranId = 'TRX_${DateTime.now().millisecondsSinceEpoch}';
 
-      final sslcommerz = Sslcommerz(
+      var user = UserDataStore.userData?.data?.user;
+      if (user == null) {
+        final currentUserModel = await UserDataStore.getUserData();
+        user = currentUserModel?.data?.user;
+      }
+
+      final String rawName = widget.fullName.trim();
+      final String rawEmail = widget.email.trim();
+      final String rawPhone = widget.phone.trim();
+
+      final String customerName = rawName.isNotEmpty
+          ? rawName
+          : ((user?.fullName != null && user!.fullName!.trim().isNotEmpty)
+              ? user.fullName!.trim()
+              : 'Driver User');
+
+      final String customerEmail = (rawEmail.isNotEmpty && rawEmail.contains('@'))
+          ? rawEmail
+          : ((user?.email != null && user!.email!.trim().isNotEmpty && user.email!.contains('@'))
+              ? user.email!.trim()
+              : 'driver@trippy.com');
+
+      String formattedPhone = rawPhone.isNotEmpty
+          ? rawPhone
+          : ((user?.phoneNumber != null && user!.phoneNumber!.trim().isNotEmpty)
+              ? user.phoneNumber!.trim()
+              : '01700000000');
+
+      // Sanitize phone number (strip non-digits and leading country code 88 if present)
+      String cleanPhone = formattedPhone.replaceAll(RegExp(r'\D'), '');
+      if (cleanPhone.startsWith('880')) {
+        cleanPhone = cleanPhone.substring(2);
+      }
+      final String customerPhone = (cleanPhone.length >= 11) ? cleanPhone : '01700000000';
+
+
+      final customerInfo = SSLCCustomerInfoInitializer(
+        customerName: customerName,
+        customerEmail: customerEmail,
+        customerAddress1: 'Dhaka',
+        customerAddress2: 'Dhaka',
+        customerCity: 'Dhaka',
+        customerState: 'Dhaka',
+        customerPostCode: '1206',
+        customerCountry: 'Bangladesh',
+        customerPhone: customerPhone,
+        customerFax: customerPhone,
+      );
+
+      Sslcommerz sslcommerz = Sslcommerz(
         initializer: SSLCommerzInitialization(
           store_id: storeId,
           store_passwd: storePassword,
           total_amount: widget.amount,
           currency: SSLCurrencyType.BDT,
           tran_id: tranId,
-          product_category: 'Subscription',
+          product_category: widget.packageName.isNotEmpty ? widget.packageName : 'Subscription',
           sdkType: sdkType,
         ),
       );
+
+      sslcommerz = sslcommerz.addCustomerInfoInitializer(
+        customerInfoInitializer: customerInfo,
+      );
+
 
       final SSLCTransactionInfoModel result = await sslcommerz.payNow();
 
