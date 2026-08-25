@@ -165,36 +165,68 @@ class AcceptedTripCardHelper {
     required Color color,
     required VoidCallback onTap,
     bool isLoading = false,
+    Color? buttonColor,
   }) {
+    Color circleColor = buttonColor ?? color;
+
+    if (buttonColor == null) {
+      if (icon == Icons.phone || icon == Icons.call || label.toLowerCase().contains('call')) {
+        circleColor = const Color(0xFF26D07C);
+      } else if (icon == Icons.message || icon == Icons.chat || icon == Icons.chat_bubble || label.toLowerCase().contains('message') || label.toLowerCase().contains('chat')) {
+        circleColor = const Color(0xFF0052FF);
+      } else if (icon == Icons.navigation || icon == Icons.near_me || label.toLowerCase().contains('navigate')) {
+        circleColor = const Color(0xFF0284C7);
+      } else if (icon == Icons.cancel || icon == Icons.close || label.toLowerCase().contains('cancel')) {
+        circleColor = const Color(0xFFEF4444);
+      }
+    }
+
+    IconData displayIcon = icon;
+    if (icon == Icons.message) {
+      displayIcon = Icons.chat_bubble;
+    }
+
     return InkWell(
       onTap: isLoading ? null : onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(10),
-        ),
+      borderRadius: BorderRadius.circular(30),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (isLoading)
-              SizedBox(
-                height: 18,
-                width: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
-                ),
-              )
-            else
-              Icon(icon, color: color, size: 18),
-            const SizedBox(height: 2),
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: circleColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: circleColor.withOpacity(0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: isLoading
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Icon(displayIcon, color: Colors.white, size: 24),
+              ),
+            ),
+            const SizedBox(height: 6),
             Text(
               label,
               style: TextStyle(
                 color: color,
-                fontSize: 10,
+                fontSize: 12.5,
                 fontWeight: FontWeight.bold,
               ),
             ),
