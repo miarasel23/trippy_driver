@@ -111,9 +111,8 @@ class _NavbarScreenState extends State<NavbarScreen> {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(Icons.grid_view_rounded, loc.translate('home'), 0, theme),
               _buildNavItem(Icons.car_rental, loc.translate('nav_bids'), 1, theme, badgeCount: _bidCount),
@@ -129,6 +128,12 @@ class _NavbarScreenState extends State<NavbarScreen> {
 
   Widget _buildNavItem(IconData icon, String label, int index, ThemeData theme, {int badgeCount = 0}) {
     final isSelected = _selectedIndex == index;
+    // Compute a responsive font size based on screen width
+    final screenWidth = MediaQuery.of(context).size.width;
+    final labelFontSize = (screenWidth / 5 < 72) ? 10.0 : 12.0;
+    final iconSize = (screenWidth / 5 < 72) ? 24.0 : 28.0;
+    final itemHPad = (screenWidth / 5 < 72) ? 4.0 : 10.0;
+
     Color color = isSelected
         ? theme.colorScheme.onSurface
         : theme.colorScheme.onSurface.withOpacity(0.5);
@@ -140,81 +145,88 @@ class _NavbarScreenState extends State<NavbarScreen> {
       }
     }
 
-    return GestureDetector(
-      onTap: () {
-        if (index == 0) {
-          final homeCtrl = context.read<HomeController>();
-          homeCtrl.selectTripForPreview(null);
-          homeCtrl.clearTripToReview();
-        }
-        _onItemTapped(index);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? theme.colorScheme.onSurface.withOpacity(0.15)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(icon, color: color, size: 30),
-                if (badgeCount > 0)
-                  Positioned(
-                    top: -4,
-                    right: -8,
-                    child: AnimatedScale(
-                      scale: 1.0,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.elasticOut,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.lightGreen.shade500,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.lightGreen.withOpacity(0.5),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 18,
-                          minHeight: 18,
-                        ),
-                        child: Text(
-                          badgeCount > 99 ? '99+' : '$badgeCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            height: 1.2,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          if (index == 0) {
+            final homeCtrl = context.read<HomeController>();
+            homeCtrl.selectTripForPreview(null);
+            homeCtrl.clearTripToReview();
+          }
+          _onItemTapped(index);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.symmetric(horizontal: itemHPad, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? theme.colorScheme.onSurface.withOpacity(0.15)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(icon, color: color, size: iconSize),
+                  if (badgeCount > 0)
+                    Positioned(
+                      top: -4,
+                      right: -8,
+                      child: AnimatedScale(
+                        scale: 1.0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.elasticOut,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.lightGreen.shade500,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.lightGreen.withOpacity(0.5),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                          textAlign: TextAlign.center,
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            badgeCount > 99 ? '99+' : '$badgeCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              height: 1.2,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 5),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: labelFontSize,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

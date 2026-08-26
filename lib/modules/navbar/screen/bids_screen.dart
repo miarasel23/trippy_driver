@@ -396,26 +396,8 @@ class _BidsScreenState extends State<BidsScreen> {
             ),
           ],
 
-          // ── 5. Date & Time Row ───────────────────────────────────────
-          if (trip.startDatetime.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.calendar_month_rounded, size: 16, color: Color(0xFF1E88E5)),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    AcceptedTripCardHelper.formatStartDatetime(trip.startDatetime, isBangla),
-                    style: const TextStyle(
-                      color: Color(0xFF1E88E5),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+          // ── 5. Date & Time (Start + Return if RETURN/ROUND_TRIP) ─────
+          AcceptedTripCardHelper.buildTripDateTimes(context, trip, isBangla, theme),
 
           const SizedBox(height: 8),
 
