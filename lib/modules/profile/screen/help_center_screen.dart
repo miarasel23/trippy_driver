@@ -89,20 +89,87 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     }
   }
 
+  Future<void> _launchEmail(BuildContext context, String email) async {
+    final cleanEmail = email.trim();
+    final Uri emailLaunchUri = Uri(
+      scheme: 'mailto',
+      path: cleanEmail,
+      queryParameters: {
+        'subject': 'Trippy Driver Support',
+      },
+    );
+
+    try {
+      final launched = await launchUrl(
+        emailLaunchUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        final fallbackUri = Uri.parse('mailto:$cleanEmail');
+        final fallbackLaunched = await launchUrl(
+          fallbackUri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (!fallbackLaunched && context.mounted) {
+          _copyToClipboard(context, cleanEmail, isEmail: true);
+        }
+      }
+    } catch (_) {
+      try {
+        final fallbackUri = Uri.parse('mailto:$cleanEmail');
+        await launchUrl(fallbackUri, mode: LaunchMode.platformDefault);
+      } catch (e) {
+        if (context.mounted) {
+          _copyToClipboard(context, cleanEmail, isEmail: true);
+        }
+      }
+    }
+  }
+
+  Future<void> _launchPhone(BuildContext context, String phone) async {
+    final cleanPhone = phone.replaceAll(RegExp(r'\s+'), '');
+    final Uri phoneUri = Uri(scheme: 'tel', path: cleanPhone);
+    try {
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri, mode: LaunchMode.externalApplication);
+      } else {
+        final launched = await launchUrl(phoneUri, mode: LaunchMode.externalApplication);
+        if (!launched && context.mounted) {
+          _copyToClipboard(context, cleanPhone, isEmail: false);
+        }
+      }
+    } catch (_) {
+      try {
+        await launchUrl(phoneUri, mode: LaunchMode.platformDefault);
+      } catch (_) {
+        if (context.mounted) {
+          _copyToClipboard(context, cleanPhone, isEmail: false);
+        }
+      }
+    }
+  }
+
+  void _copyToClipboard(BuildContext context, String text, {required bool isEmail}) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isEmail
+              ? 'Could not open email app. Copied $text to clipboard.'
+              : 'Could not open dialer. Copied $text to clipboard.',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Future<void> _launchUrl(BuildContext context, String urlString) async {
     final Uri uri = Uri.parse(urlString);
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Could not launch $urlString'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
       }
     } catch (e) {
       if (context.mounted) {
@@ -345,7 +412,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                                 borderColor: borderColor,
                                 primaryTextColor: primaryTextColor,
                                 secondaryTextColor: secondaryTextColor,
-                                onTap: () => _launchUrl(context, 'tel:$phone'),
+                                onTap: () => _launchPhone(context, phone),
                               ),
                             );
                           }),
@@ -362,7 +429,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                                 borderColor: borderColor,
                                 primaryTextColor: primaryTextColor,
                                 secondaryTextColor: secondaryTextColor,
-                                onTap: () => _launchUrl(context, 'mailto:$email'),
+                                onTap: () => _launchEmail(context, email),
                               ),
                             );
                           }),

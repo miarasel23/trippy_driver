@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/utils/localization/app_localization.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../store/user_data_store.dart';
-import '../../../../utils/to_title_case.dart';
-import '../../../../utils/app_urls.dart';
 import '../repository/personal_info_repository.dart';
 import '../repository/car_photo_repository.dart';
 
@@ -20,7 +17,6 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
   bool _isLoading = true;
   List<dynamic> _documents = [];
   List<dynamic> _carPhotos = [];
-  String? _errorMessage;
 
   @override
   void initState() {
@@ -31,7 +27,6 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
   Future<void> _fetchDocuments() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
     try {
@@ -46,10 +41,9 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString();
           _isLoading = false;
         });
       }
@@ -173,7 +167,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          loc.translate("registration_info") ?? "Registration Info",
+          loc.translate("registration_info"),
           style: GoogleFonts.poppins(
             color: Theme.of(context).colorScheme.onSurface,
             fontSize: 20,
@@ -208,12 +202,12 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
                             ),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
                               width: 1.5,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.02),
+                                color: Colors.black.withValues(alpha: 0.02),
                                 blurRadius: 15,
                                 offset: const Offset(0, 8),
                               ),
@@ -226,7 +220,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      loc.translate("status") ?? 'Account Status',
+                                      loc.translate("status"),
                                       style: GoogleFonts.poppins(
                                         fontSize: 14,
                                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -281,7 +275,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
                         _buildRegistrationCard(
                           context: context,
                           icon: Icons.person_rounded,
-                          title: loc.translate("personal_info") ?? "Personal Info",
+                          title: loc.translate("personal_info"),
                           subtitle: "Driver name, NID card and Driving license copies",
                           isVerified: _isPersonalInfoVerified,
                           isWarning: !_isPersonalInfoVerified,
@@ -292,7 +286,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
                         _buildRegistrationCard(
                           context: context,
                           icon: Icons.directions_car_rounded,
-                          title: loc.translate("car_info") ?? "Car Info",
+                          title: loc.translate("car_info"),
                           subtitle: "Registration, tax token and fitness certificate documents",
                           isVerified: _isCarInfoVerified,
                           isWarning: !_isCarInfoVerified,
@@ -303,7 +297,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
                         _buildRegistrationCard(
                           context: context,
                           icon: Icons.local_taxi_rounded,
-                          title: loc.translate("car_photo") ?? "Car Photo",
+                          title: loc.translate("car_photo"),
                           subtitle: "External image copy of the registered vehicle",
                           isVerified: _isCarPhotoVerified,
                           isWarning: !_isCarPhotoVerified,
@@ -336,52 +330,60 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
     Widget? statusBadge;
 
     if (isVerified) {
-      itemBorderColor = Colors.green.withValues(alpha: 0.2);
-      iconBgColor = Colors.green.shade50;
-      iconColor = Colors.green.shade700;
+      itemBorderColor = Colors.green.withValues(alpha: isDark ? 0.35 : 0.2);
+      iconBgColor = isDark ? Colors.green.withValues(alpha: 0.15) : Colors.green.shade50;
+      iconColor = isDark ? Colors.green.shade300 : Colors.green.shade700;
       statusBadge = Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.green.shade50,
+          color: isDark ? Colors.green.withValues(alpha: 0.18) : Colors.green.shade50,
           borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Colors.green.withValues(alpha: isDark ? 0.4 : 0.25),
+            width: 1,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle_rounded, color: Colors.green.shade700, size: 14),
-            const SizedBox(width: 4),
+            Icon(Icons.check_circle_rounded, color: isDark ? Colors.green.shade300 : Colors.green.shade700, size: 14),
+            const SizedBox(width: 5),
             Text(
               'Verified',
               style: GoogleFonts.poppins(
                 fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: Colors.green.shade700,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.green.shade300 : Colors.green.shade700,
               ),
             ),
           ],
         ),
       );
     } else if (isWarning) {
-      itemBorderColor = Colors.red.withValues(alpha: 0.2);
-      iconBgColor = Colors.red.shade50;
-      iconColor = Colors.red.shade700;
+      itemBorderColor = Colors.red.withValues(alpha: isDark ? 0.35 : 0.2);
+      iconBgColor = isDark ? Colors.red.withValues(alpha: 0.15) : Colors.red.shade50;
+      iconColor = isDark ? Colors.red.shade300 : Colors.red.shade700;
       statusBadge = Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.red.shade50,
+          color: isDark ? Colors.red.withValues(alpha: 0.18) : Colors.red.shade50,
           borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Colors.red.withValues(alpha: isDark ? 0.4 : 0.25),
+            width: 1,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline_rounded, color: Colors.red.shade700, size: 14),
-            const SizedBox(width: 4),
+            Icon(Icons.error_outline_rounded, color: isDark ? Colors.red.shade300 : Colors.red.shade700, size: 14),
+            const SizedBox(width: 5),
             Text(
               'Action Needed',
               style: GoogleFonts.poppins(
                 fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: Colors.red.shade700,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.red.shade300 : Colors.red.shade700,
               ),
             ),
           ],
@@ -397,7 +399,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: itemBorderColor,
@@ -405,7 +407,7 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.015),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -417,8 +419,9 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
           onTap: onTap,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 18.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Left Icon with dynamic color scheme matching completion state
                 Container(
@@ -433,8 +436,8 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
                     size: 24,
                   ),
                 ),
-                const SizedBox(width: 18),
-                // Title and Subtitle
+                const SizedBox(width: 14),
+                // Title, Subtitle at top, and Status Badge at bottom
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,27 +445,29 @@ class _RegistrationInfoScreenState extends State<RegistrationInfoScreen> {
                       Text(
                         title,
                         style: GoogleFonts.poppins(
-                          fontSize: 17,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.onSurface,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(
                         subtitle,
                         style: GoogleFonts.poppins(
-                          fontSize: 13,
+                          fontSize: 12.5,
                           color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.35,
                         ),
                       ),
+                      if (statusBadge != null) ...[
+                        const SizedBox(height: 10),
+                        statusBadge,
+                      ],
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                // Completion badge
-                if (statusBadge != null) statusBadge,
-                const SizedBox(width: 8),
-                // Trailing Arrow icon shown for ALL tabs
+                const SizedBox(width: 10),
+                // Trailing Arrow icon
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
