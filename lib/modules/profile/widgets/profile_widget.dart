@@ -62,6 +62,8 @@ class ProfileHeader extends StatelessWidget {
       children: [
         Text(
           name,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: GoogleFonts.poppins(
             fontSize: 28,
             fontWeight: FontWeight.bold,

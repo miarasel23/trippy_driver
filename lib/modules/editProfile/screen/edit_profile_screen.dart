@@ -54,7 +54,7 @@ class _EditprofileScreenState extends State<EditprofileScreen> {
     _name.text = loc.translate("user_name");
     _phoneNumber.text = loc.translate("user_phone_number");
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         title: Text(

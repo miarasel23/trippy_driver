@@ -194,6 +194,8 @@ class _NewRequestCardState extends State<NewRequestCard> {
                   Text(
                     customerName,
                     textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
