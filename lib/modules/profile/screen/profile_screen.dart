@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/network/api_service.dart';
 import '../../../core/utils/localization/app_localization.dart';
 import '../../../routes/app_routes.dart';
+import '../../../store/app_globals.dart';
 import '../../../store/user_data_store.dart';
 import '../../../utils/app_urls.dart';
 import '../../../utils/custom_map_body_builder.dart';
@@ -118,12 +120,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
 
-              // ProfileListItem(
-              //   icon: Icons.menu_book,
-              //   title: loc.translate('tutorial'),
-              //   onTap: () {},
-              // ),
-
               const Divider(),
 
               // ── LEGAL ─────────────────────────────────────────────────────
@@ -156,6 +152,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () => Navigator.pushNamed(
                     context, AppRoutes.legalPolicy,
                     arguments: 'PRIVACY_POLICY'),
+              ),
+              ProfileListItem(
+                icon: Icons.delete_forever_outlined,
+                title: loc.translate('delete_account'),
+                onTap: () => _confirmDeleteAccount(context, loc),
+                isDestructive: true,
               ),
               ProfileListItem(
                 icon: Icons.logout,
@@ -226,6 +228,175 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } finally {
       if (mounted) {
         setState(() => _isNotifLoading = false);
+      }
+    }
+  }
+
+  // ─── LOGIC: delete account ───────────────────────────────────────────────
+  Future<void> _confirmDeleteAccount(BuildContext context, AppLocalizations loc) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.delete_forever_rounded, color: Colors.red, size: 28),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  loc.translate('delete_account'),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                loc.translate('delete_account_confirm'),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.red.withValues(alpha: 0.15) : const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.info_outline, color: Colors.red, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        loc.translate('delete_account_warning'),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark ? Colors.red.shade200 : Colors.red.shade900,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(
+                loc.translate('cancel'),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.shade600,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                elevation: 0,
+              ),
+              child: Text(loc.translate('delete')),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true && mounted) {
+      await _executeDeleteAccount(loc);
+    }
+  }
+
+  Future<void> _executeDeleteAccount(AppLocalizations loc) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      final user = UserDataStore.userData?.data?.user ?? (await UserDataStore.getUserData())?.data?.user;
+      final phoneNumber = user?.phoneNumber ?? '';
+      final token = UserDataStore.accessToken ?? await UserDataStore.getAccessToken();
+      final langCode = loc.locale.languageCode;
+      final platform = AppGlobals.platform;
+
+      final uri = Uri.parse(AppUrls.deleteAccountRequest).replace(queryParameters: {
+        'platform': platform,
+        'language_code': langCode,
+        'action_when': 'user_delete_request',
+        'phone_number': phoneNumber,
+        'user_type': 'DRIVER',
+      });
+
+      final response = await ApiService().get(
+        uri,
+        headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      // Dismiss loading dialog
+      if (mounted) {
+        Navigator.pop(context);
+      }
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        if (jsonData['status'] == true) {
+          final message = jsonData['message']?.toString() ?? loc.translate('delete_account_success');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(message),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+          await UserDataStore.clearAllData();
+          if (mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.numberInput,
+              (route) => false,
+            );
+          }
+        } else {
+          final errorMsg = jsonData['message']?.toString() ?? 'Failed to submit delete request';
+          if (mounted) {
+            UiUtils.showApiErrorPopup(context, errorMsg);
+          }
+        }
+      } else {
+        if (mounted) {
+          UiUtils.showApiErrorPopup(context, 'Failed to submit delete request (${response.statusCode})');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).popUntil((route) => route is! DialogRoute);
+        UiUtils.showApiErrorPopup(context, 'An error occurred: $e');
       }
     }
   }

@@ -41,6 +41,7 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   final Completer<GoogleMapController> _mapController = Completer<GoogleMapController>();
+  bool _isReviewSheetOpen = false;
 
   Future<void> _goToCurrentLocation() async {
     bool serviceEnabled;
@@ -159,20 +160,30 @@ class _HomeViewState extends State<HomeView> {
               child: const SizedBox.shrink(),
             ),
             BlocListener<HomeController, HomeState>(
-              listenWhen: (previous, current) => previous.tripToReview?.uuid != current.tripToReview?.uuid && current.tripToReview != null,
-              listener: (context, state) {
-                if (state.tripToReview != null) {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (_) => BlocProvider.value(
-                      value: context.read<HomeController>(),
-                      child: ReviewBottomSheet(trip: state.tripToReview!),
-                    ),
-                  ).whenComplete(() {
-                    context.read<HomeController>().clearTripToReview();
-                  });
+              listenWhen: (previous, current) =>
+                  !_isReviewSheetOpen &&
+                  current.tripToReview != null &&
+                  previous.tripToReview?.uuid != current.tripToReview?.uuid,
+              listener: (context, state) async {
+                if (state.tripToReview != null && !_isReviewSheetOpen) {
+                  _isReviewSheetOpen = true;
+                  final trip = state.tripToReview!;
+                  try {
+                    await showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => BlocProvider.value(
+                        value: context.read<HomeController>(),
+                        child: ReviewBottomSheet(trip: trip),
+                      ),
+                    );
+                  } finally {
+                    _isReviewSheetOpen = false;
+                    if (mounted) {
+                      context.read<HomeController>().clearTripToReview();
+                    }
+                  }
                 }
               },
               child: const SizedBox.shrink(),

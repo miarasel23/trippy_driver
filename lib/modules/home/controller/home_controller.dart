@@ -104,6 +104,15 @@ class HomeController extends Cubit<HomeState> {
     if (ignoredRentals != null) {
       _ignoredRentalTripIds.addAll(ignoredRentals);
     }
+    final reviewedTrips = prefs.getStringList('reviewedOrDismissedTripIds');
+    if (reviewedTrips != null) {
+      _reviewedOrDismissedTripIds.addAll(reviewedTrips);
+    }
+  }
+
+  Future<void> _saveReviewedOrDismissedTripIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('reviewedOrDismissedTripIds', _reviewedOrDismissedTripIds.toList());
   }
 
   bool _isFetchingTrips = false;
@@ -311,6 +320,7 @@ class HomeController extends Cubit<HomeState> {
 
   final Set<String> _ignoredRentalTripIds = {};
   final Set<String> _ignoredBidTripIds = {};
+  final Set<String> _reviewedOrDismissedTripIds = {};
 
   Future<void> fetchRentalTrips({bool showLoading = true}) async {
     if (!state.isOnline) return;
@@ -408,7 +418,9 @@ class HomeController extends Cubit<HomeState> {
         }
         
         if (ts == 'COMPLETED') {
-           if (t.givenReview == false && state.tripToReview?.uuid != t.uuid) {
+           if (t.givenReview == false && !_reviewedOrDismissedTripIds.contains(t.uuid) && state.tripToReview?.uuid != t.uuid) {
+               _reviewedOrDismissedTripIds.add(t.uuid);
+               _saveReviewedOrDismissedTripIds();
                newTripToReview = t;
            }
            return false;
@@ -476,7 +488,9 @@ class HomeController extends Cubit<HomeState> {
           if (detailedTrip.tripStatus == 'CANCELLED' || detailedTrip.myBid?.status == 'CANCELLED') {
               newToastKey = 'customer_cancelled_trip_${DateTime.now().millisecondsSinceEpoch}';
           }
-          if (detailedTrip.tripStatus == 'COMPLETED' && detailedTrip.givenReview == false && state.tripToReview?.uuid != detailedTrip.uuid) {
+          if (detailedTrip.tripStatus == 'COMPLETED' && detailedTrip.givenReview == false && !_reviewedOrDismissedTripIds.contains(detailedTrip.uuid) && state.tripToReview?.uuid != detailedTrip.uuid) {
+              _reviewedOrDismissedTripIds.add(detailedTrip.uuid);
+              _saveReviewedOrDismissedTripIds();
               newTripToReview = detailedTrip;
           }
         }
@@ -733,24 +747,32 @@ class HomeController extends Cubit<HomeState> {
       status: status,
     );
     if (error == null) {
-      if (state.previewTrip?.uuid == tripUuid) {
-        final updatedTrip = state.previewTrip!.copyWith(tripStatus: status);
-        if (status == 'COMPLETED') {
-          emit(state.copyWith(
-            clearPreview: true,
-            tripToReview: updatedTrip,
-          ));
+      if (status == 'COMPLETED') {
+        _reviewedOrDismissedTripIds.add(tripUuid);
+        _saveReviewedOrDismissedTripIds();
+
+        RentalTripModel? tripToReview;
+        if (state.previewTrip?.uuid == tripUuid) {
+          tripToReview = state.previewTrip!.copyWith(tripStatus: status);
         } else {
-          emit(state.copyWith(previewTrip: updatedTrip));
+          final matching = state.bidTrips.where((t) => t.uuid == tripUuid);
+          if (matching.isNotEmpty) {
+            tripToReview = matching.first.copyWith(tripStatus: status);
+          }
         }
+
+        emit(state.copyWith(
+          clearPreview: true,
+          tripToReview: tripToReview,
+        ));
+      } else if (state.previewTrip?.uuid == tripUuid) {
+        emit(state.copyWith(previewTrip: state.previewTrip!.copyWith(tripStatus: status)));
       }
       await fetchBidTrips();
       await fetchActiveRideShareDetails();
     }
     return error;
   }
-
-
 
   Future<String?> submitReview({
     required String tripUuid,
@@ -760,6 +782,9 @@ class HomeController extends Cubit<HomeState> {
   }) async {
     final driverUuid = UserDataStore.uuid ?? await UserDataStore.getUuid();
     if (driverUuid == null) return "User not authenticated";
+
+    _reviewedOrDismissedTripIds.add(tripUuid);
+    _saveReviewedOrDismissedTripIds();
 
     final error = await repository.submitReview(
       customerUuid: customerUuid,
@@ -778,6 +803,10 @@ class HomeController extends Cubit<HomeState> {
   }
   
   void clearTripToReview() {
+    if (state.tripToReview != null) {
+      _reviewedOrDismissedTripIds.add(state.tripToReview!.uuid);
+      _saveReviewedOrDismissedTripIds();
+    }
     emit(state.copyWith(clearReview: true));
   }
 
