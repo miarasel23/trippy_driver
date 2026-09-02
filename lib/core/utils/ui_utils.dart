@@ -1,24 +1,76 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'localization/app_localization.dart';
 import 'package:trippy_rider/widgets/custom_message_widget.dart';
 
 class UiUtils {
   static OverlayEntry? _currentToastEntry;
 
-  /// Displays an API error message in a standardized popup dialog
+  /// Displays an API error message in a standardized popup dialog with red warning styling
   static void showApiErrorPopup(BuildContext context, String errorMessage) {
+    final cleanMsg = errorMessage.replaceAll('Exception: ', '').replaceAll('Error: ', '');
+    final isRateLimit = cleanMsg.toLowerCase().contains('blocked') ||
+        cleanMsg.toLowerCase().contains('too many');
+
     showDialog(
       context: context,
       builder: (ctx) {
-        final loc = AppLocalizations.of(context);
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        const warningRed = Color(0xFFD32F2F);
         return AlertDialog(
-          title: Text(loc.translate("message")),
-          content: Text(errorMessage.replaceAll('Exception: ', '').replaceAll('Error: ', '')),
+          backgroundColor: isDark ? const Color(0xFF1E2433) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: warningRed, width: 1.5),
+          ),
+          icon: Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: warningRed.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isRateLimit ? Icons.timer_off_rounded : Icons.warning_amber_rounded,
+              color: warningRed,
+              size: 36,
+            ),
+          ),
+          title: Text(
+            isRateLimit ? "Too Many Requests" : "Warning",
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: warningRed,
+            ),
+          ),
+          content: Text(
+            cleanMsg,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              height: 1.6,
+              color: isDark ? Colors.white70 : Colors.grey.shade700,
+            ),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
           actions: [
-            TextButton(
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: warningRed,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+              ),
               onPressed: () => Navigator.pop(ctx),
-              child: Text("OK"),
+              child: Text(
+                "OK",
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+              ),
             ),
           ],
         );

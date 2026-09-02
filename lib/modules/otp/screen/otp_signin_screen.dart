@@ -91,7 +91,7 @@ class _OtpSignInState extends State<OtpSignIn> {
             BlocListener<OtpReceiveBloc, OtpReceiveState>(
               listener: (context, state) {
                 if (state.status == OtpReceiveStatus.failure) {
-                  UiUtils.showApiErrorPopup(context, state.errorMessage ?? "Otp failed");
+                  UiUtils.showApiErrorPopup(context, state.errorMessage ?? "Invalid OTP.");
                 }
                 if (state.status == OtpReceiveStatus.success) {
                   Navigator.pushNamedAndRemoveUntil(

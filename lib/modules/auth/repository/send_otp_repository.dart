@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart';
@@ -36,6 +37,13 @@ class SendOtpRepository {
       if (response.statusCode == 200) {
         return null;
       } else {
+        // Parse the backend's own "message" field from the JSON body
+        try {
+          final body = jsonDecode(response.body);
+          if (body is Map && body['message'] != null) {
+            return body['message'].toString();
+          }
+        } catch (_) {}
         return "Server error: ${response.statusCode}";
       }
     } on SocketException {

@@ -8,7 +8,6 @@ import '../../../routes/app_routes.dart';
 import '../../../store/app_globals.dart';
 import '../../../store/user_data_store.dart';
 import '../../../utils/app_urls.dart';
-import '../../../utils/images.dart';
 import '../../../utils/custom_map_body_builder.dart';
 import '../../../utils/to_title_case.dart';
 import '../../../core/utils/ui_utils.dart';
