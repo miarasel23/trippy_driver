@@ -21,6 +21,7 @@ import '../widget/review_bottom_sheet_widget.dart';
 import '../../../routes/app_routes.dart';
 import '../../../core/utils/ui_utils.dart';
 import '../../../store/user_data_store.dart';
+import '../../../utils/images.dart';
 import '../../../../core/utils/localization/app_localization.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -210,11 +211,27 @@ class _HomeViewState extends State<HomeView> {
               },
             ),
           
+            // ── Watermark logo — just above the bottom cards ─────────
+            IgnorePointer(
+              child: Positioned.fill(
+                child: Align(
+                  alignment: const Alignment(0, 0.88),
+                  child: Opacity(
+                    opacity: 0.18,
+                    child: Image.asset(
+                      Images.logo,
+                      width: 160,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+            ),
 
           SafeArea(
             child: Column(
               children: [
-                // 2. Custom Top App Bar
+                // 2. Custom Top App Bar (card)
                 const HomeTopBar(),
 
                 // Inactive/Restricted Account Banner
