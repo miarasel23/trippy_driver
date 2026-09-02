@@ -7,13 +7,13 @@ import '../../../routes/app_routes.dart';
 import '../../../store/app_globals.dart';
 import '../../../store/user_data_store.dart';
 import '../../../utils/app_urls.dart';
+import '../../../utils/images.dart';
 import '../../../utils/custom_map_body_builder.dart';
 import '../../../utils/to_title_case.dart';
 import '../../../core/utils/ui_utils.dart';
 import '../../splash/model/current_user_model.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
 import '../widgets/profile_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -166,6 +166,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 isDestructive: true,
               ),
 
+              const SizedBox(height: 32),
+              Center(
+                child: Column(
+                  children: [
+                    Image.asset(
+                      Images.logo,
+                      height: 36,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'App Version 1.0.0',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 40),
             ],
           ),
