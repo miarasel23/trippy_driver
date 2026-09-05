@@ -510,6 +510,9 @@ class HomeController extends Cubit<HomeState> {
   }
 
   Future<void> _generateAndEmitMapData(List<RentalTripModel> bids, [String? toastKey, RentalTripModel? newTripToReview]) async {
+    // Fetch Google Maps API key dynamically from backend
+    final googleApiKey = await AppUrls.getGoogleMapsApiKey();
+
     final acceptedTrips = bids.where((t) {
       final status = t.tripStatus;
       final bidStatus = t.myBid?.status;
@@ -583,7 +586,7 @@ class HomeController extends Cubit<HomeState> {
        try {
          final pickup = effectivePickups.first;
          PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-           googleApiKey: AppUrls.googleApiKey,
+           googleApiKey: googleApiKey,
            request: PolylineRequest(
               origin: PointLatLng(driverPosition.latitude, driverPosition.longitude),
               destination: PointLatLng(pickup.latitude, pickup.longitude),
@@ -615,7 +618,7 @@ class HomeController extends Cubit<HomeState> {
          List<LatLng> polylineCoords = [];
          for (int i = 0; i < tripPoints.length - 1; i++) {
             PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-              googleApiKey: AppUrls.googleApiKey,
+              googleApiKey: googleApiKey,
               request: PolylineRequest(
                  origin: tripPoints[i],
                  destination: tripPoints[i+1],

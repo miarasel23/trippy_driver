@@ -1,7 +1,12 @@
 import '../store/user_data_store.dart';
+import '../data/services/api_key_repository.dart';
 
 class AppUrls {
-  static const String googleApiKey = 'AIzaSyAYf-MPMgwHhXT2h-kKSchXFH5GiwuURcw';
+  // Google Maps API key is fetched dynamically from the backend.
+  // Use AppUrls.getGoogleMapsApiKey() instead of a hardcoded constant.
+  static Future<String> getGoogleMapsApiKey() async {
+    return await ApiKeyRepository.getKeyValue('GOOGLE_MAP_API') ?? '';
+  }
   static const String baseUrl = "http://3.209.161.158/api";
   static const String imageBaseUrl ="$baseUrl/assets/uploads/images/";
   // customer
