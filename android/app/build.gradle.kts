@@ -47,7 +47,7 @@ android {
         versionName = flutter.versionName
         // Inject Google Maps API key from key.properties into AndroidManifest at build time
         manifestPlaceholders["GOOGLE_MAPS_API_KEY"] =
-            keystoreProperties.getProperty("googleMapsApiKey", "")
+            keystoreProperties.getProperty("googleMapsApiKey", "AIzaSyAYf-MPMgwHhXT2h-kKSchXFH5GiwuURcw")
     }
 
     buildTypes {

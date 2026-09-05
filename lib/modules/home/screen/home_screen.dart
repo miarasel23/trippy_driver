@@ -212,8 +212,8 @@ class _HomeViewState extends State<HomeView> {
             ),
           
             // ── Watermark logo — just above the bottom cards ─────────
-            IgnorePointer(
-              child: Positioned.fill(
+            Positioned.fill(
+              child: IgnorePointer(
                 child: Align(
                   alignment: const Alignment(0, 0.88),
                   child: Opacity(

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:google_maps_flutter_android/google_maps_flutter_android.dart';
+import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/background_service.dart';
+import 'core/services/api_key_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -33,12 +36,16 @@ import 'modules/theme/controller/theme_bloc.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   AppGlobals.init();
-  await initializeBackgroundService();
   
   // Pre-load saved user credentials from local storage before running app
   try { await UserDataStore.getUserData(); } catch (_) {}
   try { await UserDataStore.getAccessToken(); } catch (_) {}
   try { await UserDataStore.getUuid(); } catch (_) {}
+  
+  // Fetch dynamic Google Maps API key from backend and inject into Native
+  await ApiKeyService.fetchAndSetApiKeys();
+
+  await initializeBackgroundService();
   
   final prefs = await SharedPreferences.getInstance();
   final initialLang = prefs.getString('active_language_code') ?? 'en';
