@@ -12,6 +12,7 @@ import '../../subscription/screen/sslcommerz_payment_screen.dart';
 import '../../subscription/repository/subscription_repository.dart';
 import '../../../store/user_data_store.dart';
 import '../../../main.dart';
+import '../../../utils/to_title_case.dart';
 
 // ─── Utility functions (shared by all widgets) ─────────────────────────────
 
@@ -428,7 +429,7 @@ class AccountPackageSection extends StatelessWidget {
           const Divider(height: 24),
           AccountInfoRow(
             label: loc.translate('subscription_type') ?? 'Package Type',
-            value: package.carSubscriptionType,
+            value: formatSubscriptionType(package.carSubscriptionType, loc),
             highlight: true,
           ),
           const SizedBox(height: 8),

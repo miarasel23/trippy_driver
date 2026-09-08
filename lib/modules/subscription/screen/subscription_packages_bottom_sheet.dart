@@ -7,6 +7,7 @@ import '../../account/controller/account_bloc.dart';
 import '../controller/subscription_bloc.dart';
 import '../repository/subscription_repository.dart';
 import '../model/subscription_package_model.dart';
+import '../../../utils/to_title_case.dart';
 
 class SubscriptionPackagesBottomSheet extends StatelessWidget {
   final bool isBangla;
@@ -109,7 +110,7 @@ class SubscriptionPackagesBottomSheet extends StatelessWidget {
   }
 
   Widget _buildPackageCard(BuildContext context, SubscriptionPackageModel package, ThemeData theme, AppLocalizations loc) {
-    String title = package.subscriptionType;
+    String title = formatSubscriptionType(package.subscriptionType, loc);
 
     return Container(
       padding: const EdgeInsets.all(16),
