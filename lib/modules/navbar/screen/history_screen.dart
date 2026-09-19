@@ -463,30 +463,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
             ],
           ),
-
-          // ── 4. Hourly Booked Time (if applicable) ────────────────────
-          if (trip.hoursBooked != null && trip.hoursBooked! > 0) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.access_time_filled_rounded, size: 16, color: Color(0xFF7B1FA2)),
-                const SizedBox(width: 6),
-                Text(
-                  "${isBangla ? 'বুকিং সময়: ' : 'Booked Time: '}${AcceptedTripCardHelper.translateNumbersAndCommonWords('${trip.hoursBooked}', isBangla)} ${isBangla ? 'ঘণ্টা' : 'Hours'}",
-                  style: const TextStyle(
-                    color: Color(0xFF7B1FA2),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ],
-
-          // ── 5. Date & Time (Start + Return if RETURN/ROUND_TRIP) ─────
-          AcceptedTripCardHelper.buildTripDateTimes(context, trip, isBangla, theme),
-
           const SizedBox(height: 8),
+
+          // ── 4. Date & Time (Start + Return if RETURN/ROUND_TRIP, Booked Time) ─────
+          AcceptedTripCardHelper.buildTripDateTimes(context, trip, isBangla, theme),
 
           AcceptedTripCardHelper.buildAllLocationRows(
             context: context,

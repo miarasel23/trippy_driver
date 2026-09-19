@@ -569,7 +569,9 @@ class AcceptedTripCardHelper {
     }
 
     final rawService = trip.serviceName.isNotEmpty ? trip.serviceName : trip.carService.serviceName;
-    if (rawService.toUpperCase() == 'HOURLY' && trip.hoursBooked != null) {
+    final rawServiceUpper = rawService.toUpperCase();
+    final isHourly = rawServiceUpper.contains('HOURLY') || (trip.hoursBooked != null && trip.hoursBooked! > 0);
+    if (isHourly && trip.hoursBooked != null && trip.hoursBooked! > 0) {
       if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 4));
       final hrsVal = translateNumbersAndCommonWords("${trip.hoursBooked}", isBangla);
       widgets.add(

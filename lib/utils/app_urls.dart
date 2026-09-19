@@ -7,7 +7,9 @@ class AppUrls {
   static Future<String> getGoogleMapsApiKey() async {
     return await ApiKeyRepository.getKeyValue('GOOGLE_MAP_API') ?? '';
   }
-  static const String baseUrl = "http://3.209.161.158/api";
+  
+    // static const String baseUrl = "http://3.209.161.158/api";
+  static const String baseUrl = "https://apitrippy.online";
   static const String imageBaseUrl ="$baseUrl/assets/uploads/images/";
   // customer
   static const String sendOtpCustomer =
